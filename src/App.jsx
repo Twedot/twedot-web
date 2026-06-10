@@ -1,0 +1,27 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import TwedotLanding from './Twedotlanding ';
+import AboutPage from './pages/AboutPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
+import CareersPage from './pages/CareersPage';
+import StarField from './components/StarField';
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <ThemeProvider>
+        <StarField />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <Routes>
+            <Route path="/" element={<TwedotLanding />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/careers" element={<CareersPage />} />
+          </Routes>
+        </div>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
+}
