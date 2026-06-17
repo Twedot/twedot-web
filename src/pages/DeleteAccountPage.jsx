@@ -9,16 +9,21 @@ const steps = [
   },
   {
     step: '2',
-    title: 'Go to Settings',
-    description: 'Tap your profile photo, then tap the Settings icon in the top corner.',
+    title: 'Go to your Profile',
+    description: 'Tap the Profile tab at the bottom of the screen.',
   },
   {
     step: '3',
-    title: 'Select "Delete Account"',
-    description: 'Scroll to the bottom of Settings and tap "Delete Account".',
+    title: 'Tap "Account"',
+    description: 'On your profile page, tap "Account" to open your account settings.',
   },
   {
     step: '4',
+    title: 'Tap "Delete Account"',
+    description: 'Scroll down and tap "Delete Account".',
+  },
+  {
+    step: '5',
     title: 'Confirm deletion',
     description: 'Read the confirmation prompt and tap "Delete" to permanently delete your account.',
   },
