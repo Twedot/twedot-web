@@ -5,6 +5,7 @@ import AboutPage from './pages/AboutPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import CareersPage from './pages/CareersPage';
+import DeleteAccountPage from './pages/DeleteAccountPage';
 import StarField from './components/StarField';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/careers" element={<CareersPage />} />
+            <Route path="/delete-account" element={<DeleteAccountPage />} />
           </Routes>
         </div>
       </ThemeProvider>
