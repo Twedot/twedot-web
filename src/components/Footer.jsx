@@ -72,11 +72,12 @@ const LINKS = [
     { label: 'Contact', href: '#' },
   ]},
   { title: 'Legal', items: [
-    { label: 'Privacy',    href: '/privacy' },
-    { label: 'Terms',      href: '/terms' },
-    { label: 'Cookies',    href: '#' },
-    { label: 'Guidelines', href: '#' },
-    { label: 'GDPR',       href: '#' },
+    { label: 'Privacy',         href: '/privacy' },
+    { label: 'Terms',           href: '/terms' },
+    { label: 'Child Safety',    href: '/child-safety' },
+    { label: 'Delete Account',  href: '/delete-account' },
+    { label: 'Cookies',         href: '#' },
+    { label: 'GDPR',            href: '#' },
   ]},
 ];
 
@@ -88,7 +89,7 @@ const TwedotLogo = () => (
 
 export default function Footer() {
   return (
-    <footer style={{ background: 'var(--bg-alt)', borderTop: '1px solid var(--border-sub)', padding: '72px 64px 0', transition: 'background 0.35s', position: 'relative', zIndex: 1 }}>
+    <footer className="footer-wrap" style={{ background: 'var(--bg-alt)', borderTop: '1px solid var(--border-sub)', padding: '72px 64px 0', transition: 'background 0.35s', position: 'relative', zIndex: 1 }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
         {/* Newsletter */}
@@ -97,11 +98,11 @@ export default function Footer() {
             <div style={{ fontWeight: 800, fontSize: 18, color: 'var(--text)', marginBottom: 6, letterSpacing: '-0.3px' }}>Stay in the loop</div>
             <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Product updates, local commerce insights, and early access to new features.</div>
           </div>
-          <div style={{ display: 'flex', gap: 0, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 0, alignItems: 'center', width: '100%', maxWidth: 380 }}>
             <input
               type="email"
               placeholder="Enter your email"
-              style={{ padding: '13px 18px', borderRadius: '28px 0 0 28px', border: '1.5px solid var(--border)', borderRight: 'none', background: 'var(--bg)', color: 'var(--text)', fontSize: 14, outline: 'none', width: 240, fontFamily: 'inherit' }}
+              style={{ padding: '13px 18px', borderRadius: '28px 0 0 28px', border: '1.5px solid var(--border)', borderRight: 'none', background: 'var(--bg)', color: 'var(--text)', fontSize: 14, outline: 'none', flex: 1, minWidth: 0, fontFamily: 'inherit' }}
             />
             <button style={{ padding: '13px 24px', borderRadius: '0 28px 28px 0', background: 'var(--purple)', color: '#fff', border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.background = '#6d28d9'}

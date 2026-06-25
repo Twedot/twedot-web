@@ -62,7 +62,7 @@ function FeatureRow({ feat }) {
   const [ref, inView] = useInView();
 
   return (
-    <section id={feat.id} style={{ background: 'transparent', padding: '100px 0', position: 'relative', zIndex: 1 }}>
+    <section id={feat.id} className="feat-section" style={{ background: 'transparent', padding: '100px 0', position: 'relative', zIndex: 1 }}>
       <div
         ref={ref}
         className="feat-row"
@@ -80,7 +80,7 @@ function FeatureRow({ feat }) {
         </div>
 
         {/* Text */}
-        <div className={`reveal ${feat.reverse ? 'from-left' : 'from-right'} ${inView ? 'visible delay-1' : ''}`} style={{ flex: '0 0 380px' }}>
+        <div className={`feat-text-col reveal ${feat.reverse ? 'from-left' : 'from-right'} ${inView ? 'visible delay-1' : ''}`} style={{ flex: '0 0 380px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
             <div style={{ width: 24, height: 2, background: 'var(--purple)', borderRadius: 2 }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{feat.label}</span>
@@ -88,8 +88,8 @@ function FeatureRow({ feat }) {
 
           <h2
             style={{
-              fontSize: 'clamp(40px, 5vw, 68px)', fontWeight: 900,
-              lineHeight: 0.95, letterSpacing: '-3px', textTransform: 'uppercase',
+              fontSize: 'clamp(32px, 5vw, 68px)', fontWeight: 800,
+              lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase',
               color: 'var(--text)', marginBottom: 24, whiteSpace: 'pre-line',
             }}
           >

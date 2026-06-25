@@ -49,8 +49,8 @@ export default function AboutPage() {
         </div>
 
         <h1 style={{
-          fontSize: 'clamp(44px, 7vw, 88px)', fontWeight: 900,
-          lineHeight: 0.93, letterSpacing: '-4px', textTransform: 'uppercase',
+          fontSize: 'clamp(36px, 7vw, 88px)', fontWeight: 800,
+          lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase',
           color: 'var(--text)', maxWidth: 800,
         }}>
           BUILDING THE<br />
@@ -79,8 +79,8 @@ export default function AboutPage() {
             </div>
 
             <h2 style={{
-              fontSize: 'clamp(36px, 4vw, 56px)', fontWeight: 900,
-              lineHeight: 0.93, letterSpacing: '-2px', textTransform: 'uppercase',
+              fontSize: 'clamp(28px, 4vw, 56px)', fontWeight: 800,
+              lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase',
               color: 'var(--text)', marginBottom: 8,
             }}>
               PRINCE RANDY
@@ -198,8 +198,8 @@ export default function AboutPage() {
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>What We Stand For</span>
           </div>
           <h2 style={{
-            fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 900,
-            letterSpacing: '-2px', textTransform: 'uppercase',
+            fontSize: 'clamp(24px, 4vw, 48px)', fontWeight: 800,
+            letterSpacing: '0px', textTransform: 'uppercase',
             color: 'var(--text)', marginBottom: 48,
           }}>
             OUR VALUES

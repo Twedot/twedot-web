@@ -56,12 +56,11 @@ export default function Nav() {
 
   return (
     <nav
-      className={scrolled ? 'nav-scrolled' : ''}
+      className={`nav-wrap${scrolled ? ' nav-scrolled' : ''}`}
       style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         height: 68,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 48px',
         background: bg,
         backdropFilter: scrolled ? 'blur(20px)' : 'none',
         WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
@@ -89,6 +88,7 @@ export default function Nav() {
           href="https://play.google.com/store/search?q=twedot&c=apps"
           target="_blank"
           rel="noopener noreferrer"
+          className="nav-download-btn"
           style={{
             background: '#7c3aed', borderRadius: 8, padding: '9px 20px',
             color: '#fff', fontWeight: 700, fontSize: 14, transition: 'background 0.2s',

@@ -86,14 +86,14 @@ export default function Hero() {
         style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '120px 64px 40px', maxWidth: 1280, margin: '0 auto', width: '100%', gap: 40 }}
       >
         {/* Left: Text */}
-        <div style={{ flex: 1, zIndex: 1 }}>
+        <div className="hero-content" style={{ flex: 1, zIndex: 1 }}>
           <h1
             style={{
-              fontSize: 'clamp(52px, 7.5vw, 100px)',
-              fontWeight: 900,
+              fontSize: 'clamp(38px, 7.5vw, 100px)',
+              fontWeight: 800,
               color: '#fff',
-              lineHeight: 0.94,
-              letterSpacing: '-4px',
+              lineHeight: 1.05,
+              letterSpacing: '0px',
               textTransform: 'uppercase',
               marginBottom: 32,
             }}
@@ -108,7 +108,7 @@ export default function Hero() {
           </p>
 
           {/* Avatar row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 40 }}>
+          <div className="hero-avatar" style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 40 }}>
             <div style={{ display: 'flex' }}>
               {[['AC','#7c3aed','#a78bfa'],['TH','#4c1d95','#7c3aed'],['FK','#6d28d9','#a78bfa'],['MK','#5b21b6','#c4b5fd']].map(([init,c1,c2],i)=>(
                 <div key={i} style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg,${c1},${c2})`, border: '2px solid rgba(255,255,255,0.2)', marginLeft: i===0?0:-10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', zIndex: 4-i }}>
@@ -120,6 +120,16 @@ export default function Hero() {
               <strong style={{ color: '#fff' }}>50,000+</strong> users already connected
             </span>
           </div>
+
+          {/* Mobile-only download button */}
+          <a
+            href="https://play.google.com/store/search?q=twedot&c=apps"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hero-download-mobile"
+          >
+            Download the App
+          </a>
         </div>
 
         {/* Right: Phone + floating vendor cards */}

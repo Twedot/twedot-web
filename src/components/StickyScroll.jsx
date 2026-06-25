@@ -229,15 +229,15 @@ export default function StickyScroll() {
   }, []);
 
   return (
-    <section id="how-it-works" style={{ padding: '100px 0', position: 'relative', zIndex: 1 }}>
+    <section id="how-it-works" className="sticky-section" style={{ padding: '100px 0', position: 'relative', zIndex: 1 }}>
       {/* Header */}
-      <div ref={headerRef} style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 64px' }}>
+      <div ref={headerRef} className="section-header-pad" style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 64px' }}>
         <div className={`reveal ${headerInView ? 'visible' : ''}`}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
             <div style={{ width: 24, height: 2, background: 'var(--purple)', borderRadius: 2 }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>How it Works</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(40px, 5vw, 68px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-3px', textTransform: 'uppercase', color: 'var(--text)', maxWidth: 520 }}>
+          <h2 style={{ fontSize: 'clamp(32px, 5vw, 68px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase', color: 'var(--text)', maxWidth: 520 }}>
             ONE APP.<br /><span style={{ color: 'var(--purple)' }}>ENDLESS USE.</span>
           </h2>
           <p style={{ fontSize: 16, color: 'var(--text-muted)', marginTop: 18, maxWidth: 460, lineHeight: 1.75 }}>
@@ -250,12 +250,13 @@ export default function StickyScroll() {
       <div className="sticky-scroll-wrap" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 64px', display: 'flex', gap: 80, alignItems: 'flex-start' }}>
 
         {/* Left: scrollable text panels */}
-        <div style={{ flex: '0 0 400px' }}>
+        <div className="sticky-text-col" style={{ flex: '0 0 400px' }}>
           {SLIDES.map((slide, i) => (
             <div
               key={i}
               data-idx={String(i)}
               ref={el => sectionRefs.current[i] = el}
+              className="sticky-slide"
               style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', padding: '60px 0', opacity: active === i ? 1 : 0.28, transition: 'opacity 0.5s ease' }}
             >
               <div>
@@ -264,7 +265,7 @@ export default function StickyScroll() {
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{slide.label}</span>
                 </div>
 
-                <h3 style={{ fontSize: 'clamp(36px, 4vw, 58px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-2.5px', textTransform: 'uppercase', color: 'var(--text)', marginBottom: 24 }}>
+                <h3 style={{ fontSize: 'clamp(28px, 4vw, 58px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase', color: 'var(--text)', marginBottom: 24 }}>
                   {slide.title.map((line, li) => (
                     <span key={li} style={{ display: 'block', color: li === slide.title.length - 1 ? 'var(--purple)' : 'var(--text)' }}>{line}</span>
                   ))}
@@ -293,7 +294,7 @@ export default function StickyScroll() {
         </div>
 
         {/* Right: sticky visual */}
-        <div style={{ flex: 1, position: 'sticky', top: '15vh', height: '70vh', alignSelf: 'flex-start' }}>
+        <div className="sticky-visual-col" style={{ flex: 1, position: 'sticky', top: '15vh', height: '70vh', alignSelf: 'flex-start' }}>
           <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 28, overflow: 'hidden', boxShadow: '0 40px 100px rgba(124,58,237,0.22)' }}>
             {SLIDES.map((slide, i) => (
               <div key={i} style={{ position: 'absolute', inset: 0, opacity: active === i ? 1 : 0, transform: active === i ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.97)', transition: 'opacity 0.5s ease, transform 0.5s ease', pointerEvents: active === i ? 'auto' : 'none' }}>

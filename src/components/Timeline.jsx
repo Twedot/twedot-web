@@ -105,10 +105,12 @@ export default function Timeline() {
   return (
     <section
       ref={sectionRef}
+      className="timeline-section"
       style={{ background: 'transparent', padding: '100px 0', position: 'relative', zIndex: 1 }}
     >
       {/* Header */}
       <div
+        className="timeline-header"
         style={{
           display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
           padding: '0 64px', marginBottom: 32, flexWrap: 'wrap', gap: 24,
@@ -121,7 +123,7 @@ export default function Timeline() {
             <div style={{ width: 24, height: 2, background: 'var(--purple)', borderRadius: 2 }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Our Story</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(32px, 4vw, 56px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: '-2px', textTransform: 'uppercase', color: 'var(--text)' }}>
+          <h2 style={{ fontSize: 'clamp(32px, 4vw, 56px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase', color: 'var(--text)' }}>
             BUILT FOR <span style={{ color: 'var(--purple)' }}>PEOPLE.</span>
           </h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', marginTop: 12, lineHeight: 1.7 }}>
@@ -144,6 +146,7 @@ export default function Timeline() {
 
       {/* Progress bar */}
       <div
+        className="timeline-progress"
         style={{
           padding: '0 64px', marginBottom: 56,
           opacity: visible ? 1 : 0,
@@ -197,6 +200,7 @@ export default function Timeline() {
 
       {/* Single active content panel */}
       <div
+        className="timeline-content"
         style={{ padding: '0 64px' }}
       >
         <div
@@ -218,12 +222,12 @@ export default function Timeline() {
             {m.year}
           </div>
 
-          <div style={{ fontWeight: 900, fontSize: 'clamp(28px, 3.5vw, 46px)', letterSpacing: '-1.5px', color: 'var(--text)', marginBottom: 16, lineHeight: 1.05 }}>
+          <div style={{ fontWeight: 800, fontSize: 'clamp(24px, 3.5vw, 46px)', letterSpacing: '0px', color: 'var(--text)', marginBottom: 16, lineHeight: 1.1 }}>
             {m.title}
           </div>
 
           {m.highlight && (
-            <div style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 900, color: '#7c3aed', letterSpacing: '-2px', lineHeight: 1, marginBottom: 20 }}>
+            <div style={{ fontSize: 'clamp(28px, 5vw, 56px)', fontWeight: 800, color: '#7c3aed', letterSpacing: '0px', lineHeight: 1.1, marginBottom: 20 }}>
               {m.highlight}
             </div>
           )}

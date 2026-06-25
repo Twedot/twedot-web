@@ -404,7 +404,7 @@ export default function TermsPage() {
     <>
       <Nav />
       <main style={{ paddingTop: 68, minHeight: '100vh' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', padding: '80px 56px 120px' }}>
+        <div className="page-inner" style={{ maxWidth: 1000, margin: '0 auto', padding: '80px 56px 120px' }}>
 
           {/* Page header */}
           <div style={{ marginBottom: 72 }}>
@@ -413,9 +413,9 @@ export default function TermsPage() {
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>Legal</span>
             </div>
             <h1 style={{
-              fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 900,
-              letterSpacing: '-3px', color: 'var(--text)',
-              lineHeight: 0.92, textTransform: 'uppercase', marginBottom: 20,
+              fontSize: 'clamp(32px, 6vw, 72px)', fontWeight: 800,
+              letterSpacing: '0px', color: 'var(--text)',
+              lineHeight: 1.05, textTransform: 'uppercase', marginBottom: 20,
             }}>
               Terms &<br /><span style={{ color: 'var(--purple)' }}>Conditions</span>
             </h1>
@@ -429,13 +429,14 @@ export default function TermsPage() {
             {sections.map((s, i) => (
               <div
                 key={i}
+                className="legal-section-row"
                 style={{
                   display: 'flex', gap: 56, alignItems: 'flex-start',
                   padding: '40px 0',
                   borderTop: '1px solid var(--border-sub)',
                 }}
               >
-                <div style={{ width: 220, flexShrink: 0 }}>
+                <div className="legal-sidebar" style={{ width: 220, flexShrink: 0 }}>
                   <span style={{
                     display: 'block', fontSize: 11, fontWeight: 700,
                     color: 'var(--purple)', opacity: 0.55,

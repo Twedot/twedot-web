@@ -54,15 +54,15 @@ export default function VendorParade() {
 
   return (
     <section style={{ background: 'transparent', padding: '100px 0', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
-      <div ref={ref} style={{ textAlign: 'center', padding: '0 64px', marginBottom: 56 }}>
+      <div ref={ref} className="vendor-header" style={{ textAlign: 'center', padding: '0 64px', marginBottom: 56 }}>
         <div className={`reveal ${inView ? 'visible' : ''}`}>
           <div style={{ display: 'inline-block', fontSize: 12, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 20 }}>
             — Our Community —
           </div>
           <h2
             style={{
-              fontSize: 'clamp(40px, 5vw, 72px)', fontWeight: 900,
-              lineHeight: 0.95, letterSpacing: '-3px', textTransform: 'uppercase',
+              fontSize: 'clamp(28px, 5vw, 72px)', fontWeight: 800,
+              lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase',
               color: 'var(--text)',
             }}
           >

@@ -13,7 +13,7 @@ export default function CareersPage() {
     <>
       <Nav />
       <main style={{ paddingTop: 68, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, maxWidth: 900, margin: '0 auto', padding: '100px 56px 120px', width: '100%' }}>
+        <div className="careers-inner" style={{ flex: 1, maxWidth: 900, margin: '0 auto', padding: '100px 56px 120px', width: '100%' }}>
 
           {/* Header */}
           <div style={{ marginBottom: 80 }}>
@@ -22,9 +22,9 @@ export default function CareersPage() {
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>Careers</span>
             </div>
             <h1 style={{
-              fontSize: 'clamp(40px, 6vw, 76px)', fontWeight: 900,
-              letterSpacing: '-3px', color: 'var(--text)',
-              lineHeight: 0.92, textTransform: 'uppercase', marginBottom: 24,
+              fontSize: 'clamp(32px, 6vw, 76px)', fontWeight: 800,
+              letterSpacing: '0px', color: 'var(--text)',
+              lineHeight: 1.05, textTransform: 'uppercase', marginBottom: 24,
             }}>
               COME BUILD<br /><span style={{ color: 'var(--purple)' }}>WITH US.</span>
             </h1>

@@ -4,7 +4,7 @@ export default function CTASection() {
   const [ref, inView] = useInView(0.2);
 
   return (
-    <section id="download" style={{ background: 'transparent', padding: '100px 0', position: 'relative', zIndex: 1 }}>
+    <section id="download" className="cta-section" style={{ background: 'transparent', padding: '100px 0', position: 'relative', zIndex: 1 }}>
       <div
         ref={ref}
         className="feat-row"
@@ -16,7 +16,7 @@ export default function CTASection() {
             <div style={{ width: 24, height: 2, background: 'var(--purple)', borderRadius: 2 }} />
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Download Now</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(42px, 5.5vw, 78px)', fontWeight: 900, lineHeight: 0.93, letterSpacing: '-3.5px', textTransform: 'uppercase', color: 'var(--text)', marginBottom: 28 }}>
+          <h2 style={{ fontSize: 'clamp(30px, 5.5vw, 78px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase', color: 'var(--text)', marginBottom: 28 }}>
             <span style={{ display: 'block' }}>WE'RE</span>
             <span style={{ display: 'block' }}>WAITING</span>
             <span style={{ display: 'block', color: 'var(--purple)' }}>FOR YOU.</span>
