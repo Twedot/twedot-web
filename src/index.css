@@ -42,7 +42,7 @@
 
 /* ── Reset ───────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; overflow-x: hidden; }
+html { scroll-behavior: smooth; overflow-x: clip; }
 body {
   background-color: var(--bg);
   background-image: radial-gradient(circle, var(--star-dot) 1px, transparent 1px);
@@ -50,7 +50,7 @@ body {
   color: var(--text);
   font-family: 'Manrope', system-ui, -apple-system, sans-serif;
   transition: background-color 0.35s, color 0.35s;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 }
 a { text-decoration: none; }
