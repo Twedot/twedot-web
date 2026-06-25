@@ -1,7 +1,38 @@
 import { useState, useEffect, useRef } from 'react';
 
+// Returns the index of the last milestone whose date has passed
+function getActiveByDate() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let last = 0;
+  for (let i = 0; i < MILESTONES.length; i++) {
+    const d = MILESTONES[i].date;
+    if (d && d <= today) last = i;
+  }
+  return last;
+}
+
+// Returns 0-100 representing where TODAY falls along the full timeline
+function getTodayPct() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // Give the open-ended future entry a concrete far date for interpolation
+  const dates = MILESTONES.map(m => m.date || new Date('2026-12-31'));
+  const n = dates.length - 1;
+  if (today <= dates[0]) return 0;
+  if (today >= dates[n]) return 100;
+  for (let i = 0; i < n; i++) {
+    if (today >= dates[i] && today < dates[i + 1]) {
+      const frac = (today - dates[i]) / (dates[i + 1] - dates[i]);
+      return ((i + frac) / n) * 100;
+    }
+  }
+  return 100;
+}
+
 const MILESTONES = [
   {
+    date: new Date('2025-11-01'),
     year: 'Nov 2025',
     title: 'The Problem Became Personal',
     desc: (
@@ -18,6 +49,7 @@ const MILESTONES = [
     color: '#7c3aed',
   },
   {
+    date: new Date('2025-12-01'),
     year: 'Dec 2025',
     title: 'The Idea Expanded',
     desc: (
@@ -35,6 +67,7 @@ const MILESTONES = [
     color: '#7c3aed',
   },
   {
+    date: new Date('2026-04-01'),
     year: 'Apr 2026',
     title: 'First Technical Test Launch',
     desc: (
@@ -51,6 +84,7 @@ const MILESTONES = [
     color: '#7c3aed',
   },
   {
+    date: new Date('2026-05-17'),
     year: '17 May 2026',
     title: 'Securing the Brand',
     desc: 'We officially secured our domain — marking the beginning of establishing the project\'s identity publicly.',
@@ -58,6 +92,7 @@ const MILESTONES = [
     highlight: 'twedot.com',
   },
   {
+    date: new Date('2026-05-22'),
     year: '22 May 2026',
     title: 'First Non-Technical Test',
     desc: (
@@ -73,13 +108,34 @@ const MILESTONES = [
     ),
     color: '#6d28d9',
   },
-  { year: '2026 →', title: 'Await our story and progress', desc: null, color: '#4c1d95' },
+  {
+    date: null, year: '2026 →', title: 'The Story Continues',
+    desc: (
+      <>
+        <p style={{ marginBottom: 12 }}>We're actively building. Right now the team is focused on:</p>
+        <ul style={{ paddingLeft: 20, margin: '0 0 12px' }}>
+          <li>expanding vendor discovery features</li>
+          <li>refining the messaging experience</li>
+          <li>growing our early user community</li>
+          <li>preparing for a wider public launch</li>
+        </ul>
+        <p>The next chapter isn't written yet — check back as we hit new milestones.</p>
+      </>
+    ),
+    color: '#4c1d95',
+  },
 ];
 
+const TODAY_LABEL = (() => {
+  const d = new Date();
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+})();
+
 export default function Timeline() {
-  const [active, setActive] = useState(4);
+  const [active, setActive] = useState(getActiveByDate);
   const [visible, setVisible] = useState(false);
-  const [contentKey, setContentKey] = useState(4);
+  const [contentKey, setContentKey] = useState(getActiveByDate);
+  const [todayHover, setTodayHover] = useState(false);
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -99,7 +155,7 @@ export default function Timeline() {
   const prev = () => goTo(Math.max(0, active - 1));
   const next = () => goTo(Math.min(MILESTONES.length - 1, active + 1));
 
-  const progressPct = MILESTONES.length > 1 ? (active / (MILESTONES.length - 1)) * 100 : 0;
+  const progressPct = getTodayPct();
   const m = MILESTONES[active];
 
   return (
@@ -158,6 +214,37 @@ export default function Timeline() {
           <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', height: 4, background: 'var(--border)', borderRadius: 4 }} />
           {/* Fill */}
           <div style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', height: 4, background: 'var(--purple)', borderRadius: 4, width: `${progressPct}%`, transition: 'width 0.45s cubic-bezier(0.4,0,0.2,1)' }} />
+          {/* Today marker */}
+          <div
+            style={{ position: 'absolute', left: `${progressPct}%`, top: '50%', transform: 'translate(-50%, -50%)', zIndex: 10 }}
+            onMouseEnter={() => setTodayHover(true)}
+            onMouseLeave={() => setTodayHover(false)}
+            onClick={() => goTo(MILESTONES.length - 1)}
+          >
+            {/* Tooltip */}
+            <div style={{
+              position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%', transform: 'translateX(-50%)',
+              background: '#0a0010', color: '#fff', fontSize: 11, fontWeight: 700,
+              padding: '5px 10px', borderRadius: 8, whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              opacity: todayHover ? 1 : 0,
+              transition: 'opacity 0.2s',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            }}>
+              Today · {TODAY_LABEL}
+              {/* Arrow */}
+              <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: '5px solid #0a0010' }} />
+            </div>
+            {/* Marker dot */}
+            <div style={{
+              width: 14, height: 14, borderRadius: '50%',
+              background: '#fff',
+              border: '3px solid var(--purple)',
+              boxShadow: `0 0 0 3px rgba(124,58,237,0.25)${todayHover ? ', 0 0 0 6px rgba(124,58,237,0.12)' : ''}`,
+              transition: 'box-shadow 0.2s',
+              cursor: 'pointer',
+            }} />
+          </div>
           {/* Dots */}
           <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'space-between' }}>
             {MILESTONES.map((ms, i) => (
