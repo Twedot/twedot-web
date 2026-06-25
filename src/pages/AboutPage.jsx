@@ -3,6 +3,27 @@ import { Link } from 'react-router-dom';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 
+const MASTHEAD = [
+  {
+    name: 'Prince R.',
+    role: 'Founder · Software Engineer',
+    avatar: '/avatars/michael.png',
+    accent: '#7c3aed',
+  },
+  {
+    name: 'Charles S.',
+    role: 'Co-founder · Director of Publicity',
+    avatar: '/avatars/charles.png',
+    accent: '#5b21b6',
+  },
+  {
+    name: 'Caleb U.',
+    role: 'Co-founder · Software Engineer',
+    avatar: '/avatars/chris.png',
+    accent: '#6d28d9',
+  },
+];
+
 const VALUES = [
   {
     icon: (
@@ -186,6 +207,55 @@ export default function AboutPage() {
                 <svg width="16" height="14" viewBox="0 0 42 36" fill="none"><path d="M26.5986 0C35.1033 0.00026388 41.9988 6.89476 41.999 15.3994C41.999 23.9043 35.1034 30.7995 26.5986 30.7998H16.4082L5.80957 35.4531C5.54529 35.5691 5.24913 35.3755 5.24902 35.0869V26.9795C2.03162 24.157 0 20.0157 0 15.3994C0.000256501 6.8946 6.89454 0 15.3994 0H26.5986ZM29.0479 7C26.1484 7 23.7979 9.35056 23.7979 12.25C23.7979 12.8524 23.9011 13.4309 24.0879 13.9697L17.8779 16.04C17.1406 14.0326 15.2114 12.6008 12.9482 12.6006C10.0491 12.6008 7.69846 14.9505 7.69824 17.8496C7.69845 20.7488 10.0491 23.0994 12.9482 23.0996C15.8474 23.0994 18.198 20.7487 18.1982 17.8496C18.1982 17.6338 18.1826 17.4209 18.1572 17.2119L24.6143 15.0596C25.5455 16.5255 27.1825 17.5 29.0479 17.5C31.9468 17.4997 34.2976 15.149 34.2979 12.25C34.2979 9.35077 31.947 7.00035 29.0479 7Z" fill="white"/></svg>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Masthead ── */}
+      <section style={{ padding: '0 clamp(24px, 6vw, 80px) clamp(80px, 10vw, 120px)', background: 'transparent' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ width: 24, height: 2, background: 'var(--purple)', borderRadius: 2 }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>The Masthead</span>
+          </div>
+          <h2 style={{
+            fontSize: 'clamp(24px, 4vw, 48px)', fontWeight: 800,
+            textTransform: 'uppercase', color: 'var(--text)', marginBottom: 56,
+          }}>
+            MEET THE TEAM
+          </h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 40 }}>
+            {MASTHEAD.map((m, i) => (
+              <div key={i} style={{ textAlign: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                  <div style={{
+                    width: 160,
+                    height: 160,
+                    borderRadius: '50%',
+                    background: 'rgba(245,242,255,0.95)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    boxShadow: `0 8px 40px ${m.accent}28, 0 0 0 4px ${m.accent}18`,
+                    flexShrink: 0,
+                  }}>
+                    <img
+                      src={m.avatar}
+                      alt={m.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  </div>
+                </div>
+                <div style={{ fontWeight: 900, fontSize: 20, color: 'var(--text)', letterSpacing: '-0.4px', marginBottom: 6 }}>
+                  {m.name}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: m.accent, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  {m.role}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
