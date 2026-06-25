@@ -220,9 +220,13 @@ button { font-family: inherit; }
   /* Careers inner */
   .careers-inner { padding: 60px 24px 80px !important; }
 
-  /* How it Works: disable sticky scroll, stack as plain list */
+  /* How it Works: tighten padding but keep sticky layout at tablet */
   .sticky-section     { padding: 64px 0 !important; }
   .section-header-pad { padding: 0 24px !important; margin-bottom: 40px !important; }
+}
+
+/* Sticky scroll collapses to stacked list only on true mobile */
+@media (max-width: 768px) {
   .sticky-scroll-wrap { flex-direction: column !important; gap: 0 !important; padding: 0 24px !important; }
   .sticky-text-col    { flex: none !important; width: 100% !important; }
   .sticky-visual-col  { display: none !important; }
@@ -261,6 +265,7 @@ button { font-family: inherit; }
   .sticky-section     { padding: 48px 0 !important; }
   .section-header-pad { padding: 0 16px !important; }
   .sticky-scroll-wrap { padding: 0 16px !important; }
+  .sticky-slide       { padding: 24px 0 !important; }
   .footer-wrap  { padding: 40px 16px 0 !important; }
   .vendor-header { padding: 0 16px !important; }
   .cta-section   { padding: 48px 0 !important; }
