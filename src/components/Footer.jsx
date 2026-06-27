@@ -53,7 +53,7 @@ const LINKS = [
   { title: 'Product',  items: [
     { label: 'Features',  href: '/#features' },
     { label: 'Security',  href: '/#security' },
-    { label: 'Download',  href: 'https://play.google.com/store/search?q=twedot&c=apps', external: true },
+    { label: 'Download',  href: 'https://play.google.com/store/apps/details?id=com.twedot&pli=1', external: true },
     { label: 'Changelog', href: '#' },
     { label: 'Status',    href: '#' },
   ]},
@@ -144,7 +144,7 @@ export default function Footer() {
                   </div>
                 </a>
                 <a
-                  href="https://play.google.com/store/search?q=twedot&c=apps"
+                  href="https://play.google.com/store/apps/details?id=com.twedot&pli=1"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', textDecoration: 'none', transition: 'border-color 0.2s' }}

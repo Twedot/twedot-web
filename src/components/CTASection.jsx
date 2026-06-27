@@ -26,7 +26,7 @@ export default function CTASection() {
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 28 }}>
             <a
-              href="https://play.google.com/store/search?q=twedot&c=apps"
+              href="https://play.google.com/store/apps/details?id=com.twedot&pli=1"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary"
@@ -35,7 +35,7 @@ export default function CTASection() {
               Download the App
             </a>
             <a
-              href="https://play.google.com/store/search?q=twedot&c=apps"
+              href="https://play.google.com/store/apps/details?id=com.twedot&pli=1"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-outline"

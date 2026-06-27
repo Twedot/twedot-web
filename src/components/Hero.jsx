@@ -123,7 +123,7 @@ export default function Hero() {
 
           {/* Mobile-only download button */}
           <a
-            href="https://play.google.com/store/search?q=twedot&c=apps"
+            href="https://play.google.com/store/apps/details?id=com.twedot&pli=1"
             target="_blank"
             rel="noopener noreferrer"
             className="hero-download-mobile"
