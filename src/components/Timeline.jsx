@@ -109,6 +109,31 @@ const MILESTONES = [
     color: '#6d28d9',
   },
   {
+    date: new Date('2026-06-27'),
+    year: '27 Jun 2026',
+    title: 'Twedot Goes Live',
+    desc: (
+      <>
+        <p style={{ marginBottom: 12 }}>
+          We don't announce arrivals. We arrive.
+        </p>
+        <p style={{ marginBottom: 12 }}>
+          After months in the shadows — building, testing, refusing to ship anything less than right —
+          Twedot officially hit the Google Play Store. No fanfare. No launch party.
+          Just the product, standing on its own, in the hands of real people for the first time.
+        </p>
+        <p style={{ marginBottom: 12 }}>
+          The streets have been waiting long enough.
+        </p>
+        <p>
+          This isn't a beginning. It's the moment everything we built in silence became loud.
+        </p>
+      </>
+    ),
+    color: '#16a34a',
+    highlight: 'Now on Google Play',
+  },
+  {
     date: null, year: '2026 →', title: 'The Story Continues',
     desc: (
       <>
