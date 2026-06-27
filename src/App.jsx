@@ -7,6 +7,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import CareersPage from './pages/CareersPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
 import ChildSafetyPage from './pages/ChildSafetyPage';
+import UserLinkPage from './pages/UserLinkPage';
 import StarField from './components/StarField';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/delete-account" element={<DeleteAccountPage />} />
             <Route path="/child-safety" element={<ChildSafetyPage />} />
+            <Route path="/u/:userId" element={<UserLinkPage />} />
           </Routes>
         </div>
       </ThemeProvider>
