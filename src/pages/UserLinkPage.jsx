@@ -19,17 +19,20 @@ export default function UserLinkPage() {
   useEffect(() => {
     if (!token) { setStatus('error'); return; }
 
-    // Resolve token → userId. If it looks like a UUID (old-format link), use it directly.
+    // Resolve token/phone → userId.
+    // Priority: UUID (old links) → phone number → invite token
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const resolveUserId = UUID_RE.test(token)
-      ? Promise.resolve(token)
-      : fetch(`${API_BASE}/users/invite/${token}`)
-          .then(r => r.ok ? r.json() : Promise.reject())
-          .then(body => {
-            const uid = body?.data?.userId;
-            if (!uid) return Promise.reject();
-            return uid;
-          });
+    const PHONE_RE = /^\+?[0-9]{7,15}$/;
+    const decoded = decodeURIComponent(token);
+    const resolveUserId = UUID_RE.test(decoded)
+      ? Promise.resolve(decoded)
+      : PHONE_RE.test(decoded)
+        ? fetch(`${API_BASE}/users/by-phone/${encodeURIComponent(decoded)}`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(body => { const uid = body?.data?.userId; if (!uid) return Promise.reject(); return uid; })
+        : fetch(`${API_BASE}/users/invite/${decoded}`)
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(body => { const uid = body?.data?.userId; if (!uid) return Promise.reject(); return uid; });
 
     resolveUserId
       .then(userId => {
