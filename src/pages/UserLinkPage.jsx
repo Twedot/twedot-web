@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+const API_BASE = 'https://prodapi.twedot.com/api/v1';
 const PLAY_STORE = 'https://play.google.com/store/apps/details?id=com.twedot';
 const APP_STORE  = 'https://apps.apple.com/app/twedot/id6744031056';
 
@@ -11,20 +12,25 @@ function getStoreLink() {
 }
 
 export default function UserLinkPage() {
-  const { userId } = useParams();
-  const [status, setStatus] = useState('opening'); // opening | download
+  const { token } = useParams();
+  const [status, setStatus] = useState('opening'); // opening | download | error
+  const [resolvedUserId, setResolvedUserId] = useState(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!token) { setStatus('error'); return; }
 
-    // Attempt to open the app via custom scheme
-    const appLink = `twedot://chat/${userId}`;
-    window.location.href = appLink;
-
-    // If still here after 1.5s, the app isn't installed — show download prompt
-    const timer = setTimeout(() => setStatus('download'), 1500);
-    return () => clearTimeout(timer);
-  }, [userId]);
+    // Resolve token → userId, then deep-link
+    fetch(`${API_BASE}/users/invite/${token}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(body => {
+        const userId = body?.data?.userId;
+        if (!userId) { setStatus('error'); return; }
+        setResolvedUserId(userId);
+        window.location.href = `twedot://chat/${userId}`;
+        setTimeout(() => setStatus('download'), 1500);
+      })
+      .catch(() => setStatus('error'));
+  }, [token]);
 
   const handleDownload = () => {
     window.location.href = getStoreLink();
@@ -54,9 +60,8 @@ export default function UserLinkPage() {
         <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>Twedot</span>
       </div>
 
-      {status === 'opening' ? (
+      {status === 'opening' && (
         <div style={{ textAlign: 'center' }}>
-          {/* Spinner */}
           <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
             <div style={{
               width: 48, height: 48, borderRadius: '50%',
@@ -70,7 +75,27 @@ export default function UserLinkPage() {
             Taking you straight to the chat
           </p>
         </div>
-      ) : (
+      )}
+
+      {status === 'error' && (
+        <div style={{ textAlign: 'center', maxWidth: 360 }}>
+          <p style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 12 }}>Link not found</p>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, marginBottom: 40 }}>
+            This invite link is invalid or has expired.
+          </p>
+          <button onClick={handleDownload} style={{
+            width: '100%', padding: '16px 24px',
+            background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+            border: 'none', borderRadius: 14, color: '#fff',
+            fontSize: 16, fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(124,58,237,0.4)',
+          }}>
+            Download Twedot
+          </button>
+        </div>
+      )}
+
+      {status === 'download' && (
         <div style={{ textAlign: 'center', maxWidth: 360 }}>
           <p style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 12, lineHeight: 1.3 }}>
             You need Twedot to open this link
@@ -79,37 +104,25 @@ export default function UserLinkPage() {
             Chat, discover services, and connect with people nearby — all in one place.
           </p>
 
-          <button
-            onClick={handleDownload}
-            style={{
-              width: '100%',
-              padding: '16px 24px',
-              background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
-              border: 'none',
-              borderRadius: 14,
-              color: '#fff',
-              fontSize: 16,
-              fontWeight: 700,
-              cursor: 'pointer',
-              marginBottom: 16,
-              boxShadow: '0 8px 32px rgba(124,58,237,0.4)',
-            }}
-          >
+          <button onClick={handleDownload} style={{
+            width: '100%', padding: '16px 24px',
+            background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+            border: 'none', borderRadius: 14, color: '#fff',
+            fontSize: 16, fontWeight: 700, cursor: 'pointer',
+            marginBottom: 16,
+            boxShadow: '0 8px 32px rgba(124,58,237,0.4)',
+          }}>
             Download Twedot
           </button>
 
           <button
-            onClick={() => window.location.href = `twedot://chat/${userId}`}
+            onClick={() => resolvedUserId && (window.location.href = `twedot://chat/${resolvedUserId}`)}
             style={{
-              width: '100%',
-              padding: '14px 24px',
+              width: '100%', padding: '14px 24px',
               background: 'transparent',
               border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 14,
-              color: 'rgba(255,255,255,0.5)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
+              borderRadius: 14, color: 'rgba(255,255,255,0.5)',
+              fontSize: 14, fontWeight: 600, cursor: 'pointer',
             }}
           >
             I already have the app

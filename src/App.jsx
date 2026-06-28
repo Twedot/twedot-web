@@ -24,7 +24,7 @@ export default function App() {
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/delete-account" element={<DeleteAccountPage />} />
             <Route path="/child-safety" element={<ChildSafetyPage />} />
-            <Route path="/u/:userId" element={<UserLinkPage />} />
+            <Route path="/u/:token" element={<UserLinkPage />} />
           </Routes>
         </div>
       </ThemeProvider>
