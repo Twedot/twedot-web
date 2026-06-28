@@ -19,12 +19,20 @@ export default function UserLinkPage() {
   useEffect(() => {
     if (!token) { setStatus('error'); return; }
 
-    // Resolve token → userId, then deep-link
-    fetch(`${API_BASE}/users/invite/${token}`)
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(body => {
-        const userId = body?.data?.userId;
-        if (!userId) { setStatus('error'); return; }
+    // Resolve token → userId. If it looks like a UUID (old-format link), use it directly.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const resolveUserId = UUID_RE.test(token)
+      ? Promise.resolve(token)
+      : fetch(`${API_BASE}/users/invite/${token}`)
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .then(body => {
+            const uid = body?.data?.userId;
+            if (!uid) return Promise.reject();
+            return uid;
+          });
+
+    resolveUserId
+      .then(userId => {
         setResolvedUserId(userId);
         window.location.href = `twedot://chat/${userId}`;
         setTimeout(() => setStatus('download'), 1500);
