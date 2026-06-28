@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.twedot",
+      "sha256_cert_fingerprints": [
+        "A6:A6:42:5D:AA:C2:CF:C9:45:EF:2F:61:11:AE:D2:1E:33:3D:F4:F4:4A:AF:0B:4A:4D:14:D2:47:B0:9C:0E:AA"
+      ]
+    }
+  }
+]
