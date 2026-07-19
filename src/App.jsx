@@ -8,6 +8,7 @@ import CareersPage from './pages/CareersPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
 import ChildSafetyPage from './pages/ChildSafetyPage';
 import UserLinkPage from './pages/UserLinkPage';
+import WithdrawEarningsPage from './pages/WithdrawEarningsPage';
 import StarField from './components/StarField';
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/delete-account" element={<DeleteAccountPage />} />
             <Route path="/child-safety" element={<ChildSafetyPage />} />
+            <Route path="/withdraw-earnings" element={<WithdrawEarningsPage />} />
             <Route path="/u/:token" element={<UserLinkPage />} />
           </Routes>
         </div>
