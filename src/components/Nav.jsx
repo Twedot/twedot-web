@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
 
 const TwedotLogo = ({ fill }) => (
   <svg width="32" height="28" viewBox="0 0 42 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -11,38 +10,45 @@ const TwedotLogo = ({ fill }) => (
   </svg>
 );
 
-const MoonIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+// Nigeria flag — same green/white/green as Bolt's own country selector.
+const NigeriaFlag = () => (
+  <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}>
+    <rect width="20" height="14" fill="#fff" />
+    <rect width="6.67" height="14" fill="#008751" />
+    <rect x="13.33" width="6.67" height="14" fill="#008751" />
   </svg>
 );
 
-const SunIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="15" height="15">
-    <circle cx="12" cy="12" r="5" />
-    <line x1="12" y1="1" x2="12" y2="3" />
-    <line x1="12" y1="21" x2="12" y2="23" />
-    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-    <line x1="1" y1="12" x2="3" y2="12" />
-    <line x1="21" y1="12" x2="23" y2="12" />
-    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+const MenuIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="20" height="20">
+    <path d="M4 7h16M4 12h16M4 17h16" />
   </svg>
 );
+
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.twedot&pli=1';
+
+const MENU_ITEMS = [
+  { label: 'About', href: '/about' },
+  { label: 'Careers', href: '/careers' },
+  { label: 'Download', href: PLAY_STORE_URL, external: true },
+  { label: 'Privacy', href: '/privacy' },
+  { label: 'Terms', href: '/terms' },
+];
 
 export default function Nav() {
-  const { isDark, toggle } = useTheme();
-  const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   const location = useLocation();
   const isHome = location.pathname === '/';
 
+  // Plain, always-solid header — Bolt/Uber never render a transparent hero-overlay
+  // nav, just a simple white bar with a bottom border. Only the hide-on-scroll-down
+  // behaviour is kept.
   useEffect(() => {
     let last = 0;
     const h = () => {
       const y = window.scrollY;
-      setScrolled(y > 40);
       setHidden(y > last && y > 80);
       last = y;
     };
@@ -50,56 +56,109 @@ export default function Nav() {
     return () => window.removeEventListener('scroll', h);
   }, []);
 
-  const bg = scrolled ? 'var(--nav-bg)' : 'transparent';
-  const logoFill = scrolled && !isDark ? 'var(--purple)' : 'rgba(255,255,255,0.92)';
-  const logoText = scrolled && !isDark ? 'var(--text)' : '#fff';
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
 
   return (
     <nav
-      className={`nav-wrap${scrolled ? ' nav-scrolled' : ''}`}
+      className="nav-wrap nav-scrolled"
       style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+        // Leaflet's internal panes/controls use z-index up to 1000 and don't sit
+        // in the nav's stacking context — anything lower here gets drawn under
+        // the hero map (and its dropdown menu along with it).
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100,
         height: 68,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: bg,
-        backdropFilter: scrolled ? 'blur(20px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
-        borderBottom: scrolled ? '1px solid var(--border-sub)' : 'none',
+        background: '#fff',
+        borderBottom: '1px solid var(--border-sub)',
         transform: hidden ? 'translateY(-100%)' : 'translateY(0)',
-        transition: 'background 0.3s, border-color 0.3s, transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+        transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
       }}
     >
       {/* Logo */}
       <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-        <TwedotLogo fill={logoFill} />
-        <span style={{ fontWeight: 800, fontSize: 19, color: logoText, letterSpacing: '-0.3px', transition: 'color 0.3s' }}>Twedot</span>
+        <TwedotLogo fill="var(--purple)" />
+        <span style={{ fontWeight: 800, fontSize: 19, color: 'var(--text)', letterSpacing: '-0.3px' }}>Twedot</span>
       </Link>
 
-      {/* Nav links */}
-      <div className="nav-links" style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-        <a href={isHome ? '#features'     : '/#features'}     className="nav-link">Features</a>
-        <a href={isHome ? '#how-it-works' : '/#how-it-works'} className="nav-link">How it Works</a>
-        <a href={isHome ? '#security'     : '/#security'}     className="nav-link">Security</a>
-      </div>
+      {/* Right controls — matches Bolt's header exactly: flag + language, Support link,
+          a pill Register/Download button, then a hamburger menu for everything else. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, cursor: 'default' }} className="nav-flag">
+          <NigeriaFlag />
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>EN</span>
+        </div>
 
-      {/* Right controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a href="mailto:support@twedot.com" className="nav-link nav-support">Support</a>
+
         <a
-          href="https://play.google.com/store/apps/details?id=com.twedot&pli=1"
+          href={PLAY_STORE_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="nav-download-btn"
           style={{
-            background: '#7c3aed', borderRadius: 8, padding: '9px 20px',
-            color: '#fff', fontWeight: 700, fontSize: 14, transition: 'background 0.2s',
-            textDecoration: 'none',
+            background: 'var(--text)', borderRadius: 24, padding: '9px 22px',
+            color: '#fff', fontWeight: 700, fontSize: 14, transition: 'opacity 0.2s',
+            textDecoration: 'none', marginLeft: 6,
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#6d28d9'}
-          onMouseLeave={e => e.currentTarget.style.background = '#7c3aed'}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
-          Download
+          Register
         </a>
+
+        <div ref={menuRef} style={{ position: 'relative', marginLeft: 4 }}>
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Menu"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 38, height: 38, borderRadius: '50%', border: 'none',
+              background: menuOpen ? 'var(--purple-dim)' : 'transparent',
+              color: 'var(--text)', cursor: 'pointer', transition: 'background 0.2s',
+            }}
+          >
+            <MenuIcon />
+          </button>
+
+          {menuOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 10px)', right: 0, minWidth: 190,
+              background: '#fff', border: '1px solid var(--border)', borderRadius: 14,
+              boxShadow: '0 16px 40px rgba(10,0,16,0.14)', overflow: 'hidden', padding: 6,
+            }}>
+              {MENU_ITEMS.map(item => (
+                <a
+                  key={item.label}
+                  href={isHome || !item.href.startsWith('#') ? item.href : `/${item.href}`}
+                  {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  onClick={() => setMenuOpen(false)}
+                  style={{
+                    display: 'block', padding: '10px 14px', borderRadius: 8,
+                    color: 'var(--text)', fontSize: 14.5, fontWeight: 600, textDecoration: 'none',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--purple-dim)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      <style>{`
+        @media (max-width: 640px) {
+          .nav-support { display: none !important; }
+        }
+      `}</style>
     </nav>
   );
 }

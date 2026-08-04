@@ -3,6 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Loaded here (not via CSS @import) so it fetches in parallel with the
+         page instead of blocking on the stylesheet parse — a slow/blocked
+         @import is what made different sections briefly render in different
+         fallback fonts before Inter kicked in. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Twedot — Private Chats & Local Vendor Discovery Near You</title>
     <meta name="description" content="Twedot is a private messaging app with built-in local vendor discovery. Chat securely and find trusted service providers in your neighbourhood, anywhere in the world." />

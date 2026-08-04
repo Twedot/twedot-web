@@ -1,174 +1,237 @@
-// Star positions derived deterministically (no Math.random on every render)
-const STARS = Array.from({ length: 58 }, (_, i) => ({
-  id: i,
-  x: ((i * 61.803) % 100).toFixed(2),
-  y: ((i * 38.197 + i * i * 0.13) % 100).toFixed(2),
-  isPlus: i % 3 === 0,
-  opacity: (0.2 + (i % 7) * 0.07).toFixed(2),
-  delay: ((i * 0.37) % 4).toFixed(2),
-  dur: (2.2 + (i % 5) * 0.4).toFixed(1),
-}));
+import { useEffect, useState, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, CircleMarker } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-const VENDORS = [
-  { init: 'AC', name: 'Ade Cobblers',  type: 'Shoe Maker',    dist: '0.3 km', c1: '#7c3aed', c2: '#a78bfa', cls: 'floatA', pos: { top: 44,  left: 0   } },
-  { init: 'TH', name: 'TechFix Hub',   type: 'Screen Repair', dist: '0.8 km', c1: '#4c1d95', c2: '#7c3aed', cls: 'floatB', pos: { top: 20,  right: 0  } },
-  { init: 'MK', name: "Mama's Kitchen", type: 'Food Vendor',  dist: '0.5 km', c1: '#6d28d9', c2: '#a78bfa', cls: 'floatC', pos: { bottom: 64, left: 4  } },
-  { init: 'FK', name: 'Fabric Kings',  type: 'Tailor',        dist: '1.1 km', c1: '#5b21b6', c2: '#7c3aed', cls: 'floatA', pos: { bottom: 40, right: 0 } },
+// Same tile source + pin style as the mobile app's map screen (Leaflet + OSM/CartoDB,
+// no API key) — see app/nearby/map.tsx's buildMapHTML in the mobile repo.
+const CENTER = [6.5244, 3.3792]; // Lagos
+
+// 40 vendors, one per service type, spread deterministically (golden-ratio offsets, same
+// technique used elsewhere in this file for star placement — no Math.random) across the
+// whole visible map extent at zoom 11, edges included, not clustered near the center.
+const VENDOR_TYPES = [
+  ['Ade Cobblers', 'Shoe Maker'], ['TechFix Hub', 'Screen Repair'], ["Mama's Kitchen", 'Food Vendor'],
+  ['Fabric Kings', 'Tailor'], ['Bright Electrics', 'Electrician'], ['QuickFix Plumbing', 'Plumber'],
+  ['GlowUp Studio', 'Hair Stylist'], ['CodeCraft Devs', 'Software Developer'], ['Snap Studio', 'Photographer'],
+  ['CleanPro Services', 'Cleaner'], ['MoveIt Logistics', 'Delivery'], ['FixIt Auto', 'Mechanic'],
+  ['Bloom Florals', 'Florist'], ['Prime Cuts', 'Butcher'], ['Nail Bar Lagos', 'Nail Technician'],
+  ['Fresh Press', 'Laundry'], ['SecureGuard', 'Security'], ['PixelWorks', 'Graphic Designer'],
+  ['Sweet Treats', 'Baker'], ['Handy Carpentry', 'Carpenter'], ['AC Masters', 'AC Repair'],
+  ['Glam Makeup', 'Makeup Artist'], ['Legal Aid NG', 'Lawyer'], ['FitLife PT', 'Personal Trainer'],
+  ['TutorHub', 'Tutor'], ['PaintPro', 'Painter'], ['WeldWorks', 'Welder'], ['GreenThumb', 'Gardener'],
+  ['PestOut', 'Pest Control'], ['EventCraft', 'Event Planner'], ['SoundWave DJ', 'DJ'],
+  ['CakeCraft', 'Cake Maker'], ['RoofRight', 'Roofer'], ['GlassFix', 'Glazier'], ['LockSmiths NG', 'Locksmith'],
+  ['PetCare Plus', 'Pet Groomer'], ['DriveEasy', 'Driver'], ['UpholsterIt', 'Upholsterer'],
+  ['SolarTech NG', 'Solar Installer'], ['CCTV Pro', 'CCTV Installer'],
 ];
 
-function VendorCard({ v }) {
+const VENDOR_PINS = VENDOR_TYPES.map(([name, type], i) => {
+  const fx = (i * 0.618034) % 1;               // golden-ratio spread, 0..1
+  const fy = ((i * 0.381966) + i * i * 0.008) % 1;
+  return {
+    id: i + 1,
+    name,
+    type,
+    pos: [6.35 + fx * 0.35, 3.24 + fy * 0.32],
+  };
+});
+
+// Small pin, service title baked right into the marker (not just a hover popup) — a
+// permanent white label pill sits above the dot, always visible on the map.
+function pinIcon(type) {
+  const html = `
+    <div style="display:flex;flex-direction:column;align-items:center;transform:translateY(-2px);">
+      <div style="background:#fff;color:#0a0010;font:700 8.5px Manrope,sans-serif;padding:2px 6px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(10,0,16,0.18);margin-bottom:2px;">${type}</div>
+      <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.5" fill="#7c3aed" stroke="#fff" stroke-width="2"/></svg>
+    </div>`;
+  return L.divIcon({ html, className: '', iconSize: [12, 12], iconAnchor: [6, 6] });
+}
+
+const CATEGORIES = ['Hair Stylist', 'Electrician', 'Plumber', 'Tailor', 'Software Developer', 'Photographer'];
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.twedot&pli=1';
+
+// A single stacked, light-gray field — matches Uber's "Get a ride" card fields
+// exactly (plain flat gray pill, small marker icon on the left, no borders).
+function Field({ icon, children }) {
   return (
-    <div
-      style={{
-        ...v.pos,
-        position: 'absolute',
-        animation: `${v.cls} ${v.cls === 'floatB' ? 5 : v.cls === 'floatC' ? 4.5 : 4}s ease-in-out infinite`,
-        background: 'rgba(30,15,60,0.85)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(167,139,250,0.25)',
-        borderRadius: 16, padding: '12px 14px', width: 162,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg,${v.c1},${v.c2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{v.init}</div>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>{v.name}</div>
-          <div style={{ fontSize: 10, color: '#a78bfa' }}>{v.type}</div>
-        </div>
-      </div>
-      <div style={{ marginTop: 9, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 11, color: '#a78bfa', fontWeight: 600 }}>📍 {v.dist}</div>
-        <div style={{ fontSize: 10, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} /> Open
-        </div>
-      </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#f2f1f6', borderRadius: 10, padding: '13px 16px' }}>
+      <span style={{ flexShrink: 0, display: 'flex', color: '#5c4b80' }}>{icon}</span>
+      {children}
     </div>
   );
 }
 
+const DotIcon = () => <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />;
+const SquareIcon = () => <span style={{ width: 8, height: 8, background: '#0a0010', display: 'inline-block' }} />;
+const ListIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="15" height="15">
+    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+  </svg>
+);
+
 export default function Hero() {
+  const [locationLabel, setLocationLabel] = useState('');
+  const [locationStatus, setLocationStatus] = useState('idle'); // idle | detecting | done | denied
+  const [category, setCategory] = useState('');
+  const [showCategoryList, setShowCategoryList] = useState(false);
+  const [description, setDescription] = useState('');
+  const categoryBoxRef = useRef(null);
+
+  // Real browser geolocation + reverse geocode via Nominatim (same OSM stack as the map,
+  // no API key) — mirrors the mobile app's auto-fill-on-open behaviour.
+  useEffect(() => {
+    if (!navigator.geolocation) { setLocationStatus('denied'); return; }
+    setLocationStatus('detecting');
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await res.json();
+          const a = data.address || {};
+          const label = [a.suburb || a.neighbourhood || a.road, a.city || a.town || a.state].filter(Boolean).join(', ');
+          setLocationLabel(label || data.display_name || 'Current location');
+        } catch {
+          setLocationLabel('Current location');
+        }
+        setLocationStatus('done');
+      },
+      () => setLocationStatus('denied'),
+      { timeout: 8000 },
+    );
+  }, []);
+
+  useEffect(() => {
+    const onClickOutside = (e) => {
+      if (categoryBoxRef.current && !categoryBoxRef.current.contains(e.target)) setShowCategoryList(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
+
+  const canSubmit = category.trim().length > 0 && description.trim().length > 0;
+
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    // No web account/session exists to actually create the request against — the real
+    // flow lives in the app. Hand off there with everything already filled in on their end.
+    window.open(PLAY_STORE_URL, '_blank', 'noopener,noreferrer');
+  };
+
+  const locationText = locationStatus === 'detecting' ? 'Detecting your location…'
+    : locationStatus === 'denied' ? 'Location unavailable'
+    : locationLabel || 'Your location';
+
   return (
-    <section
-      id="home"
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(155deg, #050310 0%, #0e0625 28%, #1a0f3d 58%, #2d1b69 85%, #3b1f7a 100%)',
-        position: 'relative',
-        zIndex: 1,
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Stars */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-        {STARS.map(s => (
-          <div key={s.id} style={{ position: 'absolute', left: `${s.x}%`, top: `${s.y}%` }}>
-            {s.isPlus ? (
-              <svg width="13" height="13" viewBox="0 0 13 13" style={{ animation: `starPulse ${s.dur}s ${s.delay}s ease-in-out infinite` }}>
-                <rect x="5.5" y="0" width="2" height="13" fill={`rgba(255,255,255,${s.opacity})`} />
-                <rect x="0" y="5.5" width="13" height="2" fill={`rgba(255,255,255,${s.opacity})`} />
-              </svg>
-            ) : (
-              <div style={{ width: 5, height: 5, background: `rgba(255,255,255,${s.opacity})`, borderRadius: 1, animation: `starPulse ${s.dur}s ${s.delay}s ease-in-out infinite` }} />
-            )}
-          </div>
-        ))}
-      </div>
+    <section id="home" style={{ background: '#fff', padding: '128px 24px 72px' }}>
+      <div className="hero-row" style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', gap: 40, alignItems: 'flex-start' }}>
 
-      {/* Radial glow */}
-      <div style={{ position: 'absolute', top: '35%', right: '20%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-      {/* Main split */}
-      <div
-        className="hero-split"
-        style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '120px 64px 40px', maxWidth: 1280, margin: '0 auto', width: '100%', gap: 40 }}
-      >
-        {/* Left: Text */}
-        <div className="hero-content" style={{ flex: 1, zIndex: 1 }}>
-          <h1
-            style={{
-              fontSize: 'clamp(38px, 7.5vw, 100px)',
-              fontWeight: 800,
-              color: '#fff',
-              lineHeight: 1.05,
-              letterSpacing: '0px',
-              textTransform: 'uppercase',
-              marginBottom: 32,
-            }}
-          >
-            CHAT<br />
-            PRIVATELY.<br />
-            SHOP<br />
-            <span style={{ background: 'linear-gradient(90deg,#a78bfa,#c4b5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>LOCALLY.</span>
+        {/* ── Left: request form — plain stacked light-gray fields, same pattern as
+             Uber's "Get a ride" card (icon + field, no borders, no gradients). ── */}
+        <div className="hero-form-col" style={{ flex: '0 0 400px', width: 400, maxWidth: '100%' }}>
+          <h1 style={{ fontSize: 'clamp(30px, 3.2vw, 42px)', fontWeight: 800, color: 'var(--text)', lineHeight: 1.1, marginBottom: 28 }}>
+            Get a service
           </h1>
-          <p style={{ fontSize: 19, color: 'rgba(255,255,255,0.68)', lineHeight: 1.8, maxWidth: 460 }}>
-            Private messaging for the people in your life. Local vendor discovery for everything else. Twedot is the app that does both — securely.
-          </p>
 
-          {/* Avatar row */}
-          <div className="hero-avatar" style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 40 }}>
-            <div style={{ display: 'flex' }}>
-              {[['AC','#7c3aed','#a78bfa'],['TH','#4c1d95','#7c3aed'],['FK','#6d28d9','#a78bfa'],['MK','#5b21b6','#c4b5fd']].map(([init,c1,c2],i)=>(
-                <div key={i} style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg,${c1},${c2})`, border: '2px solid rgba(255,255,255,0.2)', marginLeft: i===0?0:-10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', zIndex: 4-i }}>
-                  {init}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Field icon={<DotIcon />}>
+              <input
+                type="text"
+                value={locationStatus === 'detecting' ? '' : locationLabel}
+                onChange={(e) => { setLocationLabel(e.target.value); setLocationStatus('done'); }}
+                placeholder={locationText}
+                style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', fontSize: 15, fontWeight: 600, color: 'var(--text)', outline: 'none', fontFamily: 'inherit' }}
+              />
+              {locationStatus === 'detecting' && (
+                <span style={{ width: 14, height: 14, border: '2px solid #ddd6f8', borderTopColor: '#7c3aed', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+              )}
+            </Field>
+
+            <div ref={categoryBoxRef} style={{ position: 'relative' }}>
+              <Field icon={<ListIcon />}>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  onFocus={() => setShowCategoryList(true)}
+                  placeholder="What service do you need?"
+                  style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', fontSize: 15, fontWeight: 600, color: 'var(--text)', outline: 'none', fontFamily: 'inherit' }}
+                />
+              </Field>
+              {showCategoryList && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 6, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,0.12)', overflow: 'hidden', zIndex: 5 }}>
+                  {CATEGORIES.filter(c => c.toLowerCase().includes(category.toLowerCase())).map(c => (
+                    <div
+                      key={c}
+                      onClick={() => { setCategory(c); setShowCategoryList(false); }}
+                      style={{ padding: '10px 16px', fontSize: 14, fontWeight: 600, color: 'var(--text)', cursor: 'pointer' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#f6f4ff'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      {c}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-            <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>
-              <strong style={{ color: '#fff' }}>50,000+</strong> users already connected
-            </span>
+
+            <Field icon={<SquareIcon />}>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe what you need done"
+                rows={1}
+                style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', fontSize: 15, fontWeight: 600, color: 'var(--text)', outline: 'none', fontFamily: 'inherit', resize: 'none' }}
+              />
+            </Field>
           </div>
 
-          {/* Mobile-only download button */}
-          <a
-            href="https://play.google.com/store/apps/details?id=com.twedot&pli=1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hero-download-mobile"
+          <button
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            style={{
+              display: 'block', width: '100%', textAlign: 'center',
+              background: canSubmit ? '#7c3aed' : '#f2f1f6', color: canSubmit ? '#fff' : '#9b8fb8',
+              border: 'none', borderRadius: 10, padding: '15px', fontWeight: 800, fontSize: 15.5,
+              marginTop: 18, cursor: canSubmit ? 'pointer' : 'not-allowed',
+              transition: 'background 0.2s', fontFamily: 'inherit',
+            }}
+            onMouseEnter={e => { if (canSubmit) e.currentTarget.style.background = '#6d28d9'; }}
+            onMouseLeave={e => { if (canSubmit) e.currentTarget.style.background = '#7c3aed'; }}
           >
-            Download the App
-          </a>
+            {canSubmit ? 'Find vendors near you' : 'Search'}
+          </button>
+
+          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 14 }}>
+            Opens the Twedot app to finish sending your request.
+          </p>
         </div>
 
-        {/* Right: Phone + floating vendor cards */}
-        <div className="hero-visual" style={{ flex: '0 0 auto', width: 500, height: 540, position: 'relative' }}>
-          {/* Glow behind phone */}
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.22) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-          {/* Phone */}
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 214, height: 380, borderRadius: 36, background: 'linear-gradient(160deg,#1a0f3d,#221842)', border: '1.5px solid rgba(124,58,237,0.4)', boxShadow: '0 32px 80px rgba(124,58,237,0.35), inset 0 0 0 1px rgba(255,255,255,0.04)', overflow: 'hidden' }}>
-            <div style={{ width: 72, height: 22, background: '#050310', borderRadius: '0 0 12px 12px', margin: '0 auto' }} />
-            <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ background: 'rgba(124,58,237,0.2)', borderRadius: 8, padding: '7px 10px', borderLeft: '3px solid #7c3aed' }}>
-                <div style={{ fontSize: 10, color: '#a78bfa', fontWeight: 600 }}>📍 Twedot Map · Nearby</div>
-              </div>
-              {[{ init: 'AC', name: 'Ade Cobblers', msg: 'Hi! Are you available? 👋', mine: true },
-                { init: 'TH', name: 'TechFix Hub',  msg: 'Yes! How can I help? 😊', mine: false }].map((c,i)=>(
-                <div key={i} style={{ background: 'rgba(124,58,237,0.1)', borderRadius: 10, padding: '8px 10px' }}>
-                  <div style={{ display: 'flex', gap: 6, marginBottom: 5 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: `linear-gradient(135deg,${i===0?'#7c3aed,#a78bfa':'#4c1d95,#7c3aed'})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, flexShrink: 0 }}>{c.init}</div>
-                    <div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{c.name}</div>
-                      <div style={{ fontSize: 9, color: '#22c55e' }}>● Online</div>
-                    </div>
-                  </div>
-                  <div style={{ background: c.mine ? 'linear-gradient(135deg,#7c3aed,#a78bfa)' : 'rgba(124,58,237,0.18)', border: c.mine ? 'none' : '1px solid rgba(124,58,237,0.3)', borderRadius: c.mine ? '10px 10px 2px 10px' : '2px 10px 10px 10px', padding: '5px 9px', fontSize: 10, color: '#fff' }}>{c.msg}</div>
-                </div>
+        {/* ── Right: real map, same Leaflet/OSM setup as the mobile app, filling the
+             rest of the hero — plain and static like Uber's homepage map. ── */}
+        <div className="hero-map-col" style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ height: 560, borderRadius: 20, overflow: 'hidden', border: '1px solid var(--border)' }}>
+            <MapContainer
+              center={CENTER}
+              zoom={11}
+              zoomControl={false}
+              dragging={false}
+              scrollWheelZoom={false}
+              doubleClickZoom={false}
+              touchZoom={false}
+              attributionControl={false}
+              style={{ width: '100%', height: '100%' }}
+            >
+              <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" subdomains="abcd" maxZoom={19} />
+              <CircleMarker center={CENTER} radius={9} pathOptions={{ fillColor: '#22c55e', color: '#fff', weight: 3, fillOpacity: 1 }} />
+              {VENDOR_PINS.map(v => (
+                <Marker key={v.id} position={v.pos} icon={pinIcon(v.type)} />
               ))}
-              <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: '6px 10px' }}>
-                <div style={{ fontSize: 9, color: '#a78bfa', marginBottom: 2 }}>🔒 End-to-end encrypted</div>
-                <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#7c3aed99' }}>aG9sbXVlcm9iYXNl...</div>
-              </div>
-            </div>
+            </MapContainer>
           </div>
-
-          {/* Floating vendor cards */}
-          {VENDORS.map(v => <VendorCard key={v.init} v={v} />)}
         </div>
       </div>
-
     </section>
   );
 }

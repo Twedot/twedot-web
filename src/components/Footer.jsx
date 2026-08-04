@@ -87,26 +87,29 @@ const TwedotLogo = () => (
   </svg>
 );
 
+// Bolt's footer is a solid, permanently-black band regardless of the rest of
+// the site's theme — colors below are hardcoded rather than pulled from the
+// light/dark CSS variables used everywhere else on this page.
 export default function Footer() {
   return (
-    <footer className="footer-wrap" style={{ background: 'var(--bg-alt)', borderTop: '1px solid var(--border-sub)', padding: '72px 64px 0', transition: 'background 0.35s', position: 'relative', zIndex: 1 }}>
+    <footer className="footer-wrap" style={{ background: '#0a0010', padding: '72px 64px 0', position: 'relative', zIndex: 1 }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
         {/* Newsletter */}
-        <div style={{ borderBottom: '1px solid var(--border-sub)', paddingBottom: 48, marginBottom: 56, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 28 }}>
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 48, marginBottom: 56, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 28 }}>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 18, color: 'var(--text)', marginBottom: 6, letterSpacing: '-0.3px' }}>Stay in the loop</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Product updates, local commerce insights, and early access to new features.</div>
+            <div style={{ fontWeight: 800, fontSize: 18, color: '#fff', marginBottom: 6, letterSpacing: '-0.3px' }}>Stay in the loop</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)' }}>Product updates, local commerce insights, and early access to new features.</div>
           </div>
           <div style={{ display: 'flex', gap: 0, alignItems: 'center', width: '100%', maxWidth: 380 }}>
             <input
               type="email"
               placeholder="Enter your email"
-              style={{ padding: '13px 18px', borderRadius: '28px 0 0 28px', border: '1.5px solid var(--border)', borderRight: 'none', background: 'var(--bg)', color: 'var(--text)', fontSize: 14, outline: 'none', flex: 1, minWidth: 0, fontFamily: 'inherit' }}
+              style={{ padding: '13px 18px', borderRadius: '28px 0 0 28px', border: '1.5px solid rgba(255,255,255,0.14)', borderRight: 'none', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 14, outline: 'none', flex: 1, minWidth: 0, fontFamily: 'inherit' }}
             />
-            <button style={{ padding: '13px 24px', borderRadius: '0 28px 28px 0', background: 'var(--purple)', color: '#fff', border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.2s' }}
+            <button style={{ padding: '13px 24px', borderRadius: '0 28px 28px 0', background: '#7c3aed', color: '#fff', border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.background = '#6d28d9'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--purple)'}
+              onMouseLeave={e => e.currentTarget.style.background = '#7c3aed'}
             >
               Subscribe
             </button>
@@ -120,53 +123,53 @@ export default function Footer() {
           <div style={{ minWidth: 200, maxWidth: 240 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 16 }}>
               <TwedotLogo />
-              <span style={{ fontWeight: 800, fontSize: 18, color: 'var(--text)', letterSpacing: '-0.3px' }}>Twedot</span>
+              <span style={{ fontWeight: 800, fontSize: 18, color: '#fff', letterSpacing: '-0.3px' }}>Twedot</span>
             </div>
 
-            <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.85, marginBottom: 24 }}>
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 1.85, marginBottom: 24 }}>
               Private. Local. Powerful. Connect with vendors and people around you — securely.
             </p>
 
             {/* Download badges */}
             <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Download</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Download</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', textDecoration: 'none', transition: 'border-color 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--purple)'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', textDecoration: 'none', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = '#7c3aed'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style={{ color: 'var(--text)', flexShrink: 0 }}>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style={{ color: '#fff', flexShrink: 0 }}>
                     <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
                   </svg>
                   <div>
-                    <div style={{ fontSize: 9, color: 'var(--text-muted)', lineHeight: 1 }}>Download on the</div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', lineHeight: 1.4 }}>App Store</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', lineHeight: 1 }}>Download on the</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.4 }}>App Store</div>
                   </div>
                 </a>
                 <a
                   href="https://play.google.com/store/apps/details?id=com.twedot&pli=1"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 12px', textDecoration: 'none', transition: 'border-color 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--purple)'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 12px', textDecoration: 'none', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = '#7c3aed'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style={{ color: 'var(--text)', flexShrink: 0 }}>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style={{ color: '#fff', flexShrink: 0 }}>
                     <path d="M3.18 23.76c.3.17.64.22.97.16L14.76 12 3.18.08c-.33-.06-.67-.01-.97.16C1.6.61 1.2 1.3 1.2 2.08v19.84c0 .78.4 1.47 1.01 1.84zM16.72 9.44L5.65 2.88l9.7 9.7-8.49 8.49 9.86-5.56c.7-.39 1.13-1.12 1.13-1.92v-.23c0-.8-.43-1.53-1.13-1.92zM21.34 10.04l-2.54-1.43-2.93 2.93 2.93 2.93 2.54-1.43c.72-.4 1.2-1.17 1.2-2.01 0-.84-.48-1.6-1.2-2z" />
                   </svg>
                   <div>
-                    <div style={{ fontSize: 9, color: 'var(--text-muted)', lineHeight: 1 }}>Get it on</div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', lineHeight: 1.4 }}>Google Play</div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', lineHeight: 1 }}>Get it on</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.4 }}>Google Play</div>
                   </div>
                 </a>
               </div>
             </div>
 
             {/* Social */}
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Social</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Social</div>
             <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
               {SOCIAL.map(({ label, icon }) => (
-                <a key={label} href="#" className="social-link" aria-label={label}>{icon}</a>
+                <a key={label} href="#" className="social-link footer-social-link" aria-label={label}>{icon}</a>
               ))}
             </div>
           </div>
@@ -175,12 +178,12 @@ export default function Footer() {
           <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap' }}>
             {LINKS.map(col => (
               <div key={col.title}>
-                <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 13, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{col.title}</div>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: 13, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{col.title}</div>
                 {col.items.map(item => (
                   <a
                     key={item.label}
                     href={item.href}
-                    className="footer-link"
+                    className="footer-link footer-link-dark"
                     {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   >
                     {item.label}
@@ -192,11 +195,11 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div style={{ borderTop: '1px solid var(--border-sub)', padding: '24px 0 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ color: 'var(--text-muted)', fontSize: 13, opacity: 0.6 }}>© 2026 Twedot Inc. All rights reserved.</div>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '24px 0 36px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>© 2026 Twedot Inc. All rights reserved.</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e' }} />
-            <span style={{ color: 'var(--text-muted)', fontSize: 12, opacity: 0.7 }}>All systems operational</span>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>All systems operational</span>
           </div>
         </div>
       </div>
