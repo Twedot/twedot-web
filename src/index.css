@@ -167,13 +167,6 @@ button { font-family: inherit; }
 .social-link { color: var(--text-muted); transition: color 0.2s, transform 0.2s; display: flex; align-items: center; }
 .social-link:hover { color: var(--purple); transform: translateY(-2px); }
 
-/* Footer is always a solid black band (matches Bolt) — overrides the
-   light/dark theme vars used by .footer-link/.social-link everywhere else. */
-.footer-link-dark { color: rgba(255,255,255,0.55) !important; }
-.footer-link-dark:hover { color: #fff !important; }
-.footer-social-link { color: rgba(255,255,255,0.55) !important; }
-.footer-social-link:hover { color: #a78bfa !important; }
-
 /* ── Marquee ─────────────────────────────────────────────────────────────── */
 .marquee-wrap { overflow: hidden; width: 100%; max-width: 100vw; }
 .marquee-track { display: flex; gap: 16px; animation: marquee 30s linear infinite; width: max-content; }

@@ -5,6 +5,7 @@ import AboutPage from './pages/AboutPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import CareersPage from './pages/CareersPage';
+import ContactPage from './pages/ContactPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
 import ChildSafetyPage from './pages/ChildSafetyPage';
 import UserLinkPage from './pages/UserLinkPage';
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/careers" element={<CareersPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/delete-account" element={<DeleteAccountPage />} />
             <Route path="/child-safety" element={<ChildSafetyPage />} />
             <Route path="/withdraw-earnings" element={<WithdrawEarningsPage />} />
