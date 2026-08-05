@@ -5,8 +5,8 @@ import Footer from '../components/Footer';
 const CONTACTS = [
   {
     label: 'Address',
-    value: '29 Aina Jakande, Ajah, Lagos, Nigeria',
-    href: 'https://www.google.com/maps/search/?api=1&query=29+Aina+Jakande+Ajah+Lagos+Nigeria',
+    value: 'Lagos, Nigeria',
+    href: 'https://www.google.com/maps/search/?api=1&query=Lagos+Nigeria',
     external: true,
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" strokeWidth="1.8" width="24" height="24">
