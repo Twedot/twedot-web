@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 
@@ -36,12 +36,47 @@ const CONTACTS = [
   },
 ];
 
+// Same stacked light-gray pill fields as the Hero's request form.
+function Field({ label, children }) {
+  return (
+    <label style={{ display: 'block' }}>
+      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>{label}</div>
+      <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '2px 4px' }}>
+        {children}
+      </div>
+    </label>
+  );
+}
+
+const inputStyle = {
+  width: '100%', border: 'none', background: 'transparent',
+  padding: '11px 12px', fontSize: 15, fontWeight: 600, color: 'var(--text)',
+  outline: 'none', fontFamily: 'inherit',
+};
+
 export default function ContactPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
     document.title = 'Contact Us — Twedot';
     return () => { document.title = 'Twedot'; };
   }, []);
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const canSubmit = name.trim() && email.trim() && message.trim();
+
+  // No backend/session exists on this static site to actually deliver a
+  // message — same honest pattern as the Hero's request form, which hands
+  // off to the app instead of pretending to submit somewhere. Here that
+  // means opening the visitor's own mail client with everything pre-filled.
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    const subject = encodeURIComponent(`Message from ${name} via twedot.com`);
+    const body = encodeURIComponent(`${message}\n\n—\n${name}\n${email}`);
+    window.location.href = `mailto:support@twedot.com?subject=${subject}&body=${body}`;
+  };
 
   return (
     <>
@@ -67,54 +102,124 @@ export default function ContactPage() {
             </p>
           </div>
 
-          {/* Contact info card */}
-          <div style={{
-            border: '1px solid var(--border)',
-            borderRadius: 20,
-            padding: 'clamp(32px, 5vw, 48px)',
-            background: 'var(--bg-card)',
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {CONTACTS.map((c, i) => (
-                <a
-                  key={c.label}
-                  href={c.href}
-                  {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 20,
-                    padding: '20px 0',
-                    borderTop: i > 0 ? '1px solid var(--border-sub)' : 'none',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <div style={{
-                    flexShrink: 0, width: 48, height: 48, borderRadius: 14,
-                    background: 'rgba(124,58,237,0.1)',
-                    border: '1px solid rgba(124,58,237,0.2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {c.icon}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-                      {c.label}
-                    </div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.2px' }}>
-                      {c.value}
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
+          <div className="contact-split" style={{ display: 'flex', gap: 32, alignItems: 'stretch' }}>
 
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', opacity: 0.7, marginTop: 32 }}>
-            For safety reports, use <a href="mailto:safety@twedot.com" style={{ color: 'var(--purple)' }}>safety@twedot.com</a> instead — those are reviewed within 24 hours.
-          </p>
+            {/* Contact info card */}
+            <div style={{
+              flex: '1 1 340px',
+              border: '1px solid var(--border)',
+              borderRadius: 20,
+              padding: 'clamp(28px, 4vw, 40px)',
+              background: 'var(--bg-card)',
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {CONTACTS.map((c, i) => (
+                  <a
+                    key={c.label}
+                    href={c.href}
+                    {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 20,
+                      padding: '20px 0',
+                      borderTop: i > 0 ? '1px solid var(--border-sub)' : 'none',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <div style={{
+                      flexShrink: 0, width: 48, height: 48, borderRadius: 14,
+                      background: 'rgba(124,58,237,0.1)',
+                      border: '1px solid rgba(124,58,237,0.2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {c.icon}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                        {c.label}
+                      </div>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.2px' }}>
+                        {c.value}
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+
+              <p style={{ fontSize: 13.5, color: 'var(--text-muted)', opacity: 0.7, marginTop: 24 }}>
+                For safety reports, use <a href="mailto:safety@twedot.com" style={{ color: 'var(--purple)' }}>safety@twedot.com</a> instead — those are reviewed within 24 hours.
+              </p>
+            </div>
+
+            {/* Quick contact form */}
+            <form
+              onSubmit={handleSubmit}
+              style={{
+                flex: '1 1 360px',
+                border: '1px solid var(--border)',
+                borderRadius: 20,
+                padding: 'clamp(28px, 4vw, 40px)',
+                display: 'flex', flexDirection: 'column', gap: 16,
+              }}
+            >
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.3px', marginBottom: 4 }}>
+                Send us a message
+              </div>
+
+              <Field label="Your name">
+                <input
+                  type="text" value={name} onChange={e => setName(e.target.value)}
+                  placeholder="Ada Lovelace" style={inputStyle} required
+                />
+              </Field>
+
+              <Field label="Your email">
+                <input
+                  type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="you@example.com" style={inputStyle} required
+                />
+              </Field>
+
+              <Field label="Message">
+                <textarea
+                  value={message} onChange={e => setMessage(e.target.value)}
+                  placeholder="How can we help?" rows={4} required
+                  style={{ ...inputStyle, resize: 'none' }}
+                />
+              </Field>
+
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                style={{
+                  marginTop: 4, border: 'none', borderRadius: 10, padding: '14px',
+                  fontWeight: 800, fontSize: 15, fontFamily: 'inherit',
+                  background: canSubmit ? 'var(--purple)' : 'var(--border)',
+                  color: canSubmit ? '#fff' : 'var(--text-muted)',
+                  cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => { if (canSubmit) e.currentTarget.style.background = '#6d28d9'; }}
+                onMouseLeave={e => { if (canSubmit) e.currentTarget.style.background = 'var(--purple)'; }}
+              >
+                Send message
+              </button>
+
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', opacity: 0.7, textAlign: 'center' }}>
+                Opens your email app with this pre-filled.
+              </p>
+            </form>
+
+          </div>
 
         </div>
       </main>
       <Footer />
+
+      <style>{`
+        @media (max-width: 720px) {
+          .contact-split { flex-direction: column !important; }
+        }
+      `}</style>
     </>
   );
 }
