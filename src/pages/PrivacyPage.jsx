@@ -73,8 +73,8 @@ const sections = [
     title: 'Contact Synchronisation',
     content: (
       <>
-        <p><strong>How It Works.</strong> When you grant the Contacts permission, the App reads phone numbers from your device address book, normalises them to international format, and sends them to our servers. We check which numbers correspond to registered Twedot users and return only those matches to your device. Phone numbers that do not match any Twedot account are <strong>not retained on our servers</strong> beyond the matching operation.</p>
-        <p><strong>What We Store.</strong> For numbers that match registered Twedot users, we store the association between your account and theirs to power your contacts list and private status delivery. We do not store the names or other personal details of your non-Twedot contacts.</p>
+        <p><strong>How It Works.</strong> When you grant the Contacts permission, the App reads phone numbers from your device address book, normalises them to international format, and sends them to our servers. We check which numbers correspond to registered Twedot users and return only those matches to your device.</p>
+        <p><strong>What We Store.</strong> <strong>Your contacts are not stored on our servers</strong> — matching happens transiently, and phone numbers are not retained by us afterward, whether or not they match a Twedot account. We do not store the names or any other personal details of your device contacts.</p>
         <p><strong>Frequency.</strong> Synchronisation runs automatically in the background no more than once every 24 hours. You may trigger a manual sync from Settings → Contacts.</p>
         <p><strong>Your Contacts' Privacy.</strong> By uploading phone numbers from your address book, you represent that you have a lawful basis to share this data. We process numbers solely for matching and do not contact your contacts independently.</p>
         <p><strong>Opt-Out.</strong> Disable Twedot contact sync at any time via Settings → Contacts, or revoke the Contacts permission in your device settings.</p>
@@ -87,7 +87,7 @@ const sections = [
       <>
         <p>The App requests the following permissions. You may grant or revoke them at any time via your device settings; revoking a permission disables only the corresponding feature and does not affect others.</p>
         <ul>
-          <li><strong>Location (Foreground)</strong> — Required for Nearby Discovery and public status proximity targeting. Exact coordinates are never shared with other users.</li>
+          <li><strong>Location (Foreground)</strong> — Required for Nearby Discovery and status proximity targeting. Exact coordinates are never shared with other users.</li>
           <li><strong>Microphone</strong> — Required for voice messaging and in-app video recording. Used only during active recording.</li>
           <li><strong>Camera</strong> — Required for taking photos and videos in chat and the status camera. Used only when the camera is actively open.</li>
           <li><strong>Photo Library</strong> — Required for selecting images and videos to send. Read-only access.</li>
@@ -105,7 +105,7 @@ const sections = [
         <ul>
           <li>Operate and deliver all platform services;</li>
           <li>Match you with contacts already on Twedot;</li>
-          <li>Power the Nearby Discovery and public status features;</li>
+          <li>Power the Nearby Discovery and status features;</li>
           <li>Send push and in-app notifications;</li>
           <li>Detect and prevent fraud, abuse, and illegal activity;</li>
           <li>Improve the platform through anonymised, aggregated analytics;</li>
@@ -242,7 +242,7 @@ export default function PrivacyPage() {
               Privacy<br /><span style={{ color: 'var(--purple)' }}>Policy</span>
             </h1>
             <p style={{ fontSize: 14, color: 'var(--text-muted)', opacity: 0.7 }}>
-              Effective Date: 1 June 2025 · Last Updated: 22 May 2025 · Version 2.0
+              Effective Date: 1 June 2025 · Last Updated: 5 August 2026 · Version 2.1
             </p>
           </div>
 

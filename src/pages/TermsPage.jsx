@@ -1,6 +1,44 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState, cloneElement, Fragment } from 'react';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
+
+// Flattens a section's JSX content down to plain text, for search matching
+// only (never rendered) — walks strings/arrays/elements recursively.
+function getText(node) {
+  if (node == null || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(getText).join(' ');
+  if (node.props && node.props.children != null) return getText(node.props.children);
+  return '';
+}
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Walks the same JSX tree and wraps every substring matching `query` in a
+// <mark> — recurses into arrays and element children so a match nested
+// inside <strong>/<ul>/<li>/<a> etc. still gets highlighted in place.
+function highlight(node, query) {
+  if (!query || node == null || typeof node === 'boolean') return node;
+  if (typeof node === 'number') return node;
+  if (typeof node === 'string') {
+    const parts = node.split(new RegExp(`(${escapeRegExp(query)})`, 'gi'));
+    if (parts.length === 1) return node;
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase()
+        ? <mark key={i} className="search-hl">{part}</mark>
+        : part
+    );
+  }
+  if (Array.isArray(node)) {
+    return node.map((child, i) => <Fragment key={i}>{highlight(child, query)}</Fragment>);
+  }
+  if (node.props) {
+    return cloneElement(node, { ...node.props, key: node.key }, highlight(node.props.children, query));
+  }
+  return node;
+}
 
 const sections = [
   {
@@ -45,7 +83,7 @@ const sections = [
         <ul>
           <li><strong>Encrypted Messaging</strong> — Real-time end-to-end encrypted text, image, video, audio, voice note, document, contact, location, and item-reference messages.</li>
           <li><strong>Message Protection</strong> — Senders can lock individual messages to prevent forwarding; protected messages also trigger screenshot prevention on recipient devices.</li>
-          <li><strong>Status / Stories</strong> — Ephemeral photo, video, and text updates — private (contacts only) or public (nearby users) — that expire after 24 hours.</li>
+          <li><strong>Status / Stories</strong> — Ephemeral photo, video, and text updates visible to nearby users — that expire after 24 hours.</li>
           <li><strong>Nearby Discovery</strong> — Location-based discovery of users, service providers, and marketplace listings in your vicinity.</li>
           <li><strong>Marketplace / Inventory</strong> — Creation and browsing of product and service listings on user profiles.</li>
           <li><strong>Professional Profile</strong> — Customisable profile with name, occupation, location, website, and inventory.</li>
@@ -112,8 +150,7 @@ const sections = [
     content: (
       <>
         <p><strong>Overview.</strong> Status updates are ephemeral content — text, photos, or videos — that expire and are permanently deleted <strong>24 hours</strong> after posting. You may have multiple active statuses simultaneously.</p>
-        <p><strong>Private Status.</strong> A private status is distributed exclusively to users in your contact list who have you saved on their device.</p>
-        <p><strong>Public Status.</strong> A public status is visible to any Twedot user in your geographic vicinity. Your city-level location is associated with the update for proximity matching. Your exact GPS coordinates are never displayed to other users.</p>
+        <p><strong>Visibility.</strong> A status is visible to any Twedot user in your geographic vicinity. Your city-level location is associated with the update for proximity matching. Your exact GPS coordinates are never displayed to other users.</p>
         <p><strong>View Tracking.</strong> When another user views your status, their name and profile photo are recorded and shown to you in a "Viewers" list. By viewing someone's status, you consent to your identity being disclosed to that person as a viewer.</p>
         <p><strong>Deleting a Status.</strong> You may delete any of your own statuses at any time before expiry. Deletion removes the status from our servers and from the local cache on all recipient devices.</p>
         <p><strong>No Guarantee of Immediate Purge.</strong> While we make all reasonable efforts to delete expired statuses, we cannot guarantee immediate purging from all CDN edge nodes or recipient device caches.</p>
@@ -176,6 +213,28 @@ const sections = [
     ),
   },
   {
+    title: 'Bookings & Service Offerings',
+    content: (
+      <>
+        <p><strong>Overview.</strong> Twedot allows Users to offer services and connect with other Users who wish to request or book those services. A User offering a service is referred to as a <strong>Service Offerer</strong>, while a User requesting or booking a service is referred to as a <strong>Customer</strong>. Unless otherwise stated, both are simply Users of the platform.</p>
+        <p><strong>Our Role.</strong> Twedot provides a platform that helps Users discover, connect, and communicate with one another. We do not provide, perform, supervise, or control the services offered by Users, and we are not a party to any agreement entered into between a Service Offerer and a Customer.</p>
+        <p><strong>Booking Requests.</strong> Submitting a booking request does not guarantee that it will be accepted. Likewise, accepting a booking request does not guarantee that the service will be completed. Service Offerers are free to accept, decline, cancel, or reschedule bookings, and Customers may also cancel booking requests, subject to any agreement reached between the parties.</p>
+        <p><strong>User Responsibilities.</strong> Service Offerers are solely responsible for the services they offer, including the accuracy of their descriptions, pricing, availability, communications, and compliance with any applicable laws or regulations.</p>
+        <p>Customers are responsible for providing accurate booking information, communicating clearly with the Service Offerer, and honouring any arrangements they agree to.</p>
+        <p>All Users are expected to interact respectfully, honestly, and in good faith when using the booking feature.</p>
+        <p><strong>Payments.</strong> Payments for services are currently arranged directly between the Service Offerer and the Customer. Twedot does not process, hold, or facilitate payments at this time and is not responsible for payment disputes, refunds, or financial arrangements between Users.</p>
+        <p><strong>Platform Fees.</strong> Twedot currently does <strong>not charge any commission or booking fee</strong> for services arranged through the platform.</p>
+        <p>As Twedot continues to grow, we may introduce commissions, booking fees, subscriptions, premium booking features, payment services, promotional placements, advertising, or other commercial features related to bookings. Where required, Users will be notified before such changes become effective.</p>
+        <p><strong>Booking Notifications.</strong> To help Users respond promptly, Twedot may send booking-related notifications, including booking requests, booking updates, cancellations, confirmations, and other activity related to bookings.</p>
+        <p><strong>Responsible Use.</strong> The booking feature must not be used for spam, fake bookings, harassment, fraud, or any other abusive or unlawful activity. Twedot may suspend or terminate accounts that misuse the booking feature or otherwise violate these Terms.</p>
+        <p><strong>Disputes.</strong> Any agreement for a service is made directly between the Service Offerer and the Customer. While Twedot may review reports submitted by Users and take appropriate action where these Terms have been violated, Twedot is generally not responsible for resolving disputes relating to pricing, service quality, cancellations, refunds, or the outcome of services arranged through the platform.</p>
+        <p><strong>Limitation of Responsibility.</strong> Twedot provides the technology that enables Users to connect with one another. We do not guarantee the quality, safety, legality, availability, or suitability of services offered by Users. Users are responsible for exercising their own judgment before requesting or providing any service through the platform.</p>
+        <p>To the fullest extent permitted by applicable law, Twedot shall not be liable for any loss, damage, injury, expense, or claim arising from or relating to services arranged through the platform or from agreements made between Users.</p>
+        <p><strong>Future Changes.</strong> As the booking feature evolves, we may introduce additional functionality, including payment processing, booking management tools, verification features, commissions, or other marketplace services. Any material changes affecting Users will be reflected in updated Terms of Service, and where required, Users will be notified before those changes take effect.</p>
+      </>
+    ),
+  },
+  {
     title: 'Media Uploads & Local Caching',
     content: (
       <>
@@ -201,7 +260,7 @@ const sections = [
     title: 'Contact Synchronisation',
     content: (
       <>
-        <p>When you grant the Contacts permission, the App identifies which of your device contacts are registered Twedot users and adds them to your in-app contacts list. Unmatched numbers are discarded immediately and never stored on our servers.</p>
+        <p>When you grant the Contacts permission, the App identifies which of your device contacts are registered Twedot users and adds them to your in-app contacts list. <strong>Your contacts are not stored on our servers</strong> — matching happens transiently, the results are returned to your device, and the phone numbers themselves (matched or unmatched) are not retained by us beyond that matching operation.</p>
         <p>You may disable contact sync at any time via Settings → Contacts. For full details on how contact data is handled, see our <a href="/privacy">Privacy Policy</a>.</p>
       </>
     ),
@@ -383,6 +442,9 @@ const sections = [
           <li><strong>Chain Deletion</strong> — Deletion of a message and all copies created through forwarding.</li>
           <li><strong>Nearby Discovery</strong> — Location-based feature for finding users and listings in geographic proximity.</li>
           <li><strong>Inventory / Marketplace</strong> — Product and service listing functionality on user profiles.</li>
+          <li><strong>Service Offerer</strong> — A User who lists or offers a service through Twedot.</li>
+          <li><strong>Customer</strong> — A User who books or requests a service through Twedot. Service Offerers and Customers are both simply Users of the platform.</li>
+          <li><strong>Booking</strong> — A request made by a Customer to a Service Offerer for a service, and the Service Offerer's response to that request.</li>
           <li><strong>OTP</strong> — One-Time Passcode delivered via SMS for account verification.</li>
           <li><strong>Contact Sync</strong> — Process of matching device contacts with registered Twedot users.</li>
           <li><strong>Relay Architecture</strong> — Server design in which message content is never stored permanently — only relayed to recipients.</li>
@@ -399,6 +461,26 @@ export default function TermsPage() {
     document.title = 'Terms & Conditions — Twedot';
     return () => { document.title = 'Twedot'; };
   }, []);
+
+  const [query, setQuery] = useState('');
+  const q = query.trim();
+
+  // Section numbers shown to the reader always reflect the FULL, unfiltered
+  // list — searching narrows which sections are visible, it doesn't
+  // renumber them, so "section 14" still means the same thing before and
+  // after a search.
+  const numbered = useMemo(() => sections.map((s, i) => ({ ...s, num: i + 1 })), []);
+
+  const filtered = useMemo(() => {
+    if (!q) return numbered;
+    const ql = q.toLowerCase();
+    return numbered.filter(s => {
+      const numStr = String(s.num);
+      if (q === numStr || q === numStr.padStart(2, '0')) return true;
+      const haystack = `${s.title} ${getText(s.content)}`.toLowerCase();
+      return haystack.includes(ql);
+    });
+  }, [numbered, q]);
 
   return (
     <>
@@ -420,15 +502,67 @@ export default function TermsPage() {
               Terms &<br /><span style={{ color: 'var(--purple)' }}>Conditions</span>
             </h1>
             <p style={{ fontSize: 14, color: 'var(--text-muted)', opacity: 0.7 }}>
-              Effective Date: 1 June 2025 · Last Updated: 22 May 2025 · Version 2.0
+              Effective Date: 1 June 2025 · Last Updated: 5 August 2026 · Version 2.1
             </p>
           </div>
 
+          {/* Search */}
+          <div style={{ position: 'relative', marginBottom: 48, maxWidth: 440 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round"
+              width="17" height="17" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+            >
+              <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search by title, text, or section number…"
+              style={{
+                width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)',
+                borderRadius: 10, padding: '12px 16px 12px 44px', fontSize: 14.5,
+                color: 'var(--text)', outline: 'none', fontFamily: 'inherit',
+              }}
+            />
+            {q && (
+              <button
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                style={{
+                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                  border: 'none', background: 'transparent', cursor: 'pointer',
+                  color: 'var(--text-muted)', display: 'flex', padding: 4,
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="15" height="15">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            {q && (
+              <div style={{ fontSize: 12.5, color: 'var(--text-muted)', opacity: 0.7, marginTop: 8 }}>
+                {filtered.length === 0 ? 'No matching sections' : `${filtered.length} matching section${filtered.length === 1 ? '' : 's'}`}
+              </div>
+            )}
+          </div>
+
+          <style>{`
+            .search-hl { background: #fde047; color: #1a1330; border-radius: 3px; padding: 0 2px; }
+            .legal-content p { margin-bottom: 12px; }
+            .legal-content p:last-child { margin-bottom: 0; }
+            .legal-content a { color: var(--purple); text-decoration: none; }
+            .legal-content a:hover { text-decoration: underline; }
+            .legal-content strong { color: var(--text); font-weight: 700; }
+            .legal-content ul { padding-left: 20px; margin-bottom: 12px; }
+            .legal-content li { margin-bottom: 6px; }
+            .legal-content code { background: var(--bg-card); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+          `}</style>
+
           {/* Sections */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {sections.map((s, i) => (
+            {filtered.map((s) => (
               <div
-                key={i}
+                key={s.num}
                 className="legal-section-row"
                 style={{
                   display: 'flex', gap: 56, alignItems: 'flex-start',
@@ -442,28 +576,18 @@ export default function TermsPage() {
                     color: 'var(--purple)', opacity: 0.55,
                     textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10,
                   }}>
-                    {String(i + 1).padStart(2, '0')}
+                    {String(s.num).padStart(2, '0')}
                   </span>
                   <h2 style={{
                     fontSize: 16, fontWeight: 800, color: 'var(--text)',
                     lineHeight: 1.3, letterSpacing: '-0.2px',
                   }}>
-                    {s.title}
+                    {highlight(s.title, q)}
                   </h2>
                 </div>
 
                 <div style={{ flex: 1, fontSize: 15, color: 'var(--text-muted)', lineHeight: 1.9 }}>
-                  <style>{`
-                    .legal-content p { margin-bottom: 12px; }
-                    .legal-content p:last-child { margin-bottom: 0; }
-                    .legal-content a { color: var(--purple); text-decoration: none; }
-                    .legal-content a:hover { text-decoration: underline; }
-                    .legal-content strong { color: var(--text); font-weight: 700; }
-                    .legal-content ul { padding-left: 20px; margin-bottom: 12px; }
-                    .legal-content li { margin-bottom: 6px; }
-                    .legal-content code { background: var(--bg-card); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
-                  `}</style>
-                  <div className="legal-content">{s.content}</div>
+                  <div className="legal-content">{highlight(s.content, q)}</div>
                 </div>
               </div>
             ))}
