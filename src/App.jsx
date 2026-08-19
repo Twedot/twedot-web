@@ -9,6 +9,7 @@ import ContactPage from './pages/ContactPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
 import ChildSafetyPage from './pages/ChildSafetyPage';
 import UserLinkPage from './pages/UserLinkPage';
+import RoomLinkPage from './pages/RoomLinkPage';
 import WithdrawEarningsPage from './pages/WithdrawEarningsPage';
 import StarField from './components/StarField';
 
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/child-safety" element={<ChildSafetyPage />} />
             <Route path="/withdraw-earnings" element={<WithdrawEarningsPage />} />
             <Route path="/u/:token" element={<UserLinkPage />} />
+            <Route path="/r/:code" element={<RoomLinkPage />} />
           </Routes>
         </div>
       </ThemeProvider>
