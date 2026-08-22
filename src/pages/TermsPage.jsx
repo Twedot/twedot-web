@@ -90,6 +90,7 @@ const sections = [
           <li><strong>Contact Sync</strong> — Identifies which of your device contacts are already Twedot users.</li>
           <li><strong>Reactions & Replies</strong> — Emoji reactions (auto-expire after 7 days) and quoted replies within conversations.</li>
           <li><strong>Pickup Requests</strong> — In-chat request flow for arranging collection or delivery of marketplace items.</li>
+          <li><strong>Chatrooms / Channels</strong> — Public, topic-based group chats that any user may create, join, or request to join, distinct from one-to-one messaging.</li>
         </ul>
         <p>We reserve the right to modify, suspend, or discontinue any service or feature at any time. We will give reasonable notice where practical, but we are not liable for changes to or removal of features.</p>
       </>
@@ -142,6 +143,22 @@ const sections = [
         <p><strong>Delete for Me.</strong> You may delete any message from your own device at any time. The recipient retains their copy.</p>
         <p><strong>Delete Everywhere.</strong> The original sender may delete a message from all devices — their own, the recipient's, and any forwarded copies across all chats. This action removes the message and all forwarded copies immediately from all recipient devices, cannot be undone, and applies only to the original sender's messages.</p>
         <p><strong>Limitations of Deletion.</strong> Delete Everywhere removes content from Twedot's delivery layer and all connected devices. However, if a recipient has already taken a screenshot, exported the chat, or copied the text, those external copies are beyond our control.</p>
+      </>
+    ),
+  },
+  {
+    title: 'Chatrooms & Channels (Group Messaging)',
+    content: (
+      <>
+        <p><strong>Overview.</strong> Chatrooms ("Rooms" or "Channels") are topic-based group chats, distinct from one-to-one messaging. Any User may create a room, name it, add a description and photo, tag it with one or more topic categories, and choose how others may join.</p>
+        <p><strong>Join Types.</strong> A room's creator sets one of three join types: <strong>Open</strong> — anyone may join instantly; <strong>Request to Join</strong> — a would-be member submits a request that a room admin must approve or decline; <strong>Additional Check</strong> — a would-be member must first answer a question set by the room before their request is reviewed.</p>
+        <p><strong>Discovery.</strong> Open rooms and rooms requiring approval are discoverable through in-app search and category browsing — a room's join type controls who may become a member, not whether the room can be found. <strong>Sub-rooms</strong> (rooms nested under a parent room) are the exception: they are not independently listed in search or category browsing and are reachable only through their parent room or a direct invite link, so a room a group creates for a smaller subset of its members is not surfaced to the wider public.</p>
+        <p><strong>Roles & Moderation.</strong> A room's creator is automatically its first admin. Admins may promote or demote other members, remove members, add members directly from their contacts, and accept or decline join requests. Room admins are responsible for moderating conduct and content within their own rooms and for enforcing these Terms among their members; Twedot reserves the right to remove content, remove members, demote or remove admins, or delete a room entirely at our sole discretion if it violates these Terms, applicable law, or poses a risk to user safety, independent of any action taken (or not taken) by the room's own admins.</p>
+        <p><strong>Encryption.</strong> Text messages sent in a room are end-to-end encrypted using a room-specific key shared among its current members, distributed and rotated as membership changes. As with one-to-one chat, media messages sent in rooms are not currently end-to-end encrypted at the message-content layer, though they are transmitted and stored securely.</p>
+        <p><strong>Read Receipts.</strong> Because a room can have many members, an individual message shows as "read" once a meaningful share of the room's membership has read it, rather than waiting for every single member — this threshold is designed to give a useful signal at any room size rather than an exact per-member receipt like one-to-one chat.</p>
+        <p><strong>Activity Ranking.</strong> Members may be shown a cosmetic rank or activity tier within a room, based on factors such as messages sent, reactions given or received, poll participation, and time spent active in the room. Ranking is for engagement and display purposes only, carries no monetary value, and may be disabled entirely for a given room by its admins.</p>
+        <p><strong>Notifications.</strong> Members receive push notifications and unread badges for new room activity by default, subject to the same notification controls described in the Notifications section, and may additionally mute notifications for any individual room without leaving it.</p>
+        <p><strong>Leaving & Deletion.</strong> Any member may leave a room at any time. A room's creator may delete the room entirely, which deactivates it for all members; Twedot may also deactivate a room that violates these Terms.</p>
       </>
     ),
   },
@@ -441,6 +458,8 @@ const sections = [
           <li><strong>Message Protection</strong> — A sender-controlled flag that prevents forwarding and activates screenshot prevention on the recipient's device.</li>
           <li><strong>Chain Deletion</strong> — Deletion of a message and all copies created through forwarding.</li>
           <li><strong>Nearby Discovery</strong> — Location-based feature for finding users and listings in geographic proximity.</li>
+          <li><strong>Room / Channel</strong> — A topic-based group chat that Users may create, join, or request to join, distinct from one-to-one messaging.</li>
+          <li><strong>Sub-room</strong> — A room nested under a parent room, reachable only through that parent room or a direct invite link rather than independent search/category listing.</li>
           <li><strong>Inventory / Marketplace</strong> — Product and service listing functionality on user profiles.</li>
           <li><strong>Service Offerer</strong> — A User who lists or offers a service through Twedot.</li>
           <li><strong>Customer</strong> — A User who books or requests a service through Twedot. Service Offerers and Customers are both simply Users of the platform.</li>
@@ -502,7 +521,7 @@ export default function TermsPage() {
               Terms &<br /><span style={{ color: 'var(--purple)' }}>Conditions</span>
             </h1>
             <p style={{ fontSize: 14, color: 'var(--text-muted)', opacity: 0.7 }}>
-              Effective Date: 1 June 2025 · Last Updated: 5 August 2026 · Version 2.1
+              Effective Date: 1 June 2025 · Last Updated: 22 August 2026 · Version 2.2
             </p>
           </div>
 
