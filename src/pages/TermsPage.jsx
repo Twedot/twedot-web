@@ -166,12 +166,13 @@ const sections = [
     title: 'Status & Stories',
     content: (
       <>
-        <p><strong>Overview.</strong> Status updates are ephemeral content — text, photos, or videos — that expire and are permanently deleted <strong>24 hours</strong> after posting. You may have multiple active statuses simultaneously.</p>
-        <p><strong>Visibility.</strong> A status is visible to any Twedot user in your geographic vicinity. Your city-level location is associated with the update for proximity matching. Your exact GPS coordinates are never displayed to other users.</p>
-        <p><strong>View Tracking.</strong> When another user views your status, their name and profile photo are recorded and shown to you in a "Viewers" list. By viewing someone's status, you consent to your identity being disclosed to that person as a viewer.</p>
-        <p><strong>Deleting a Status.</strong> You may delete any of your own statuses at any time before expiry. Deletion removes the status from our servers and from the local cache on all recipient devices.</p>
-        <p><strong>No Guarantee of Immediate Purge.</strong> While we make all reasonable efforts to delete expired statuses, we cannot guarantee immediate purging from all CDN edge nodes or recipient device caches.</p>
-        <p><strong>Forwarding.</strong> Status content is not forwarded by the platform. Recipients may only view — not re-share within the App — your status updates.</p>
+        <p><strong>Overview.</strong> Status updates — text, photos, or videos — are permanent content on your profile once posted, not time-limited stories. You may post any number of statuses, marked either public (visible to nearby users) or private (visible to your contacts).</p>
+        <p><strong>Captions, Hashtags & Mentions.</strong> A status may include a caption, hashtags (parsed from the caption for discovery in Search), an explicit tagged location, and mentions of specific contacts you select — mentions are never guessed or parsed from free text.</p>
+        <p><strong>Visibility.</strong> A public status is visible to any Twedot user, surfaced through the main feed and Search; a private status is visible only to your synced contacts. Your city-level location may be associated with a tagged post for discovery; your exact GPS coordinates are never displayed to other users.</p>
+        <p><strong>View Tracking.</strong> When another user views your status, this may be recorded and, for a private status, shown to you in a "Viewers" list. By viewing someone's status, you consent to your identity being disclosed to that person as a viewer where that feature applies.</p>
+        <p><strong>Deleting or Editing a Status.</strong> You may delete any of your own statuses at any time, or edit its caption, location, and comment settings after posting. Deletion removes the status from our servers and from the local cache on all recipient devices.</p>
+        <p><strong>Reposting.</strong> You may repost another user's public status to your own profile; the original creator is credited on the repost.</p>
+        <p><strong>No Guarantee of Immediate Purge.</strong> Where content is removed, we make all reasonable efforts to delete it, but cannot guarantee immediate purging from all CDN edge nodes or recipient device caches.</p>
       </>
     ),
   },
@@ -266,10 +267,24 @@ const sections = [
     title: 'Notifications',
     content: (
       <>
-        <p><strong>Push Notifications.</strong> Twedot sends push notifications to alert you of new messages, status updates, and other platform activity via Apple APNs (iOS) and Google FCM (Android).</p>
+        <p><strong>Push Notifications.</strong> Twedot sends push notifications to alert you of new messages, new content, likes, comments, mentions, profile views, rank changes, and other platform activity, via Apple APNs (iOS) and Google FCM (Android).</p>
+        <p><strong>In-App Notification Feed.</strong> A persisted, in-app record of activity on your content and account — likes, comments, mentions, profile views, and rank-tier changes — is kept in the Inbox tab so you can review it after the fact, in addition to the push alert.</p>
+        <p><strong>Profile Views.</strong> When another user views your profile, you may receive a notification identifying them, and a running count of profile views is shown on your own profile. To limit repeat notifications, the same viewer will not generate more than one profile-view notification about you within a rolling 30-day period; the view count itself is not affected by this limit.</p>
+        <p><strong>Platform Announcements.</strong> We may send occasional platform-wide announcements (e.g. new features) via push notification, in-app notification, and/or a message from the official Twedot account.</p>
         <p><strong>Notification Preferences.</strong> You can customise notification popup behaviour in Settings → Preferences: no popup; only when screen is on; only when screen is off; or always show popup.</p>
         <p><strong>Inline Replies.</strong> On supported devices, you may reply to a message notification directly from the notification shade without opening the App.</p>
         <p><strong>Opting Out.</strong> You may disable push notifications at any time via your device's notification settings. Disabling notifications does not affect message delivery — messages will still arrive when you open the App.</p>
+      </>
+    ),
+  },
+  {
+    title: 'Ranking, Activity Score & Earnings',
+    content: (
+      <>
+        <p><strong>Global Activity Score.</strong> Your account has a Rank, computed from your genuine activity on the platform (messaging, posting, commenting, liking, room/channel participation, completed service jobs, and time spent watching others' videos). Ranks move through named tiers as your score grows; you may hide your rank badge from other users at any time in Settings without affecting the score itself.</p>
+        <p><strong>Qualified Views & Earnings Eligibility.</strong> Once your account reaches the top rank tier, your videos begin accruing "qualified views" — a view only counts once a viewer has watched at least 60 continuous seconds of a video that is itself at least 60 seconds long. Qualified views (and, for top-tier accounts, a one-time welcome credit) are the basis for any future earnings program tied to your Rank.</p>
+        <p><strong>No Guaranteed Payout.</strong> Any balance, credit, or earnings figure shown in the App reflects your standing under the current ranking mechanism and does not constitute a guaranteed cash payout, a wage, or a contractual entitlement. We do not currently operate a general cash-withdrawal facility for these balances; where a payout program is run, it will be announced separately, may be limited in time or amount, and may be modified, paused, or discontinued at our discretion, consistent with the disclaimers in "Limitation of Liability" below.</p>
+        <p><strong>No Purchase Necessary.</strong> Nothing in the ranking or earnings mechanism requires you to pay Twedot; it is based solely on your own in-app activity.</p>
       </>
     ),
   },

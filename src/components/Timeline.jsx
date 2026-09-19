@@ -134,6 +134,24 @@ const MILESTONES = [
     highlight: 'Now on Google Play',
   },
   {
+    date: new Date('2026-09-19'),
+    year: '19 Sep 2026',
+    title: 'Rank, Discovery & Earning',
+    desc: (
+      <>
+        <p style={{ marginBottom: 12 }}>A big one: posts can now carry hashtags, mentions, and a tagged location, so they're actually discoverable through Search. Alongside that:</p>
+        <ul style={{ paddingLeft: 20, margin: '0 0 12px' }}>
+          <li>a real Rank system, built from genuine activity across the app</li>
+          <li>profile-view alerts, so you know when someone checks you out</li>
+          <li>the first path to earning money on Twedot, tied directly to your Rank</li>
+        </ul>
+        <p>Full breakdown on the <a href="/withdraw-earnings" style={{ color: '#7c3aed', fontWeight: 700 }}>Ranking & Earnings</a> page.</p>
+      </>
+    ),
+    color: '#7c3aed',
+    highlight: 'Rank is live',
+  },
+  {
     date: null, year: '2026 →', title: 'The Story Continues',
     desc: (
       <>
