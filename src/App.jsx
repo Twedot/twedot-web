@@ -12,6 +12,7 @@ import UserLinkPage from './pages/UserLinkPage';
 import RoomLinkPage from './pages/RoomLinkPage';
 import StatusLinkPage from './pages/StatusLinkPage';
 import WithdrawEarningsPage from './pages/WithdrawEarningsPage';
+import CreditsAdsPage from './pages/CreditsAdsPage';
 import StarField from './components/StarField';
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/delete-account" element={<DeleteAccountPage />} />
             <Route path="/child-safety" element={<ChildSafetyPage />} />
             <Route path="/withdraw-earnings" element={<WithdrawEarningsPage />} />
+            <Route path="/credits" element={<CreditsAdsPage />} />
             <Route path="/u/:token" element={<UserLinkPage />} />
             <Route path="/r/:code" element={<RoomLinkPage />} />
             <Route path="/status/:id" element={<StatusLinkPage />} />
