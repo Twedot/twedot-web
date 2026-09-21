@@ -10,7 +10,7 @@ const OVERVIEW = [
       </svg>
     ),
     title: 'What Are Twedot Credits',
-    body: 'Twedot Credits are the in-app currency used to boost your posts. 1 Twedot Credit = ₦1, and they only ever spend on boosting — nothing else on Twedot costs Credits.',
+    body: 'Twedot Credits are the in-app currency used to boost your posts. 1 Twedot Credit = ₦5, and they only ever spend on boosting — nothing else on Twedot costs Credits.',
   },
   {
     icon: (
