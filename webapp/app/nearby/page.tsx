@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IoChevronDownOutline, IoChevronUpOutline, IoBriefcaseOutline } from "react-icons/io5";
+import { IoBriefcaseOutline } from "react-icons/io5";
 import { apiGet } from "@/lib/api";
 import type { NearbyVendor, VendorSearchResponse } from "@/lib/vendors";
 import RankBadge from "@/components/RankBadge";
@@ -67,7 +67,7 @@ function VendorCard({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => 
   );
 }
 
-// ─── Genre accordion row ──────────────────────────────────────────────────────
+// ─── Genre section (always visible) ──────────────────────────────────────────
 function GenreRow({
   genre,
   accentColor,
@@ -79,32 +79,23 @@ function GenreRow({
   userLocation: { latitude: number; longitude: number };
   router: ReturnType<typeof useRouter>;
 }) {
-  const [open, setOpen] = useState(false);
   const [vendors, setVendors] = useState<NearbyVendor[]>([]);
-  const [loading, setLoading] = useState(false);
-  const loaded = useRef(false);
+  const [loading, setLoading] = useState(true);
 
-  function toggle() {
-    if (!open && !loaded.current) {
-      loaded.current = true;
-      setLoading(true);
-      apiGet<VendorSearchResponse>(
-        `/users/search?occupation=${encodeURIComponent(genre.name)}&latitude=${userLocation.latitude}&longitude=${userLocation.longitude}`
-      )
-        .then((r) => setVendors([...r.nearby, ...r.wider].slice(0, 20)))
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    }
-    setOpen((o) => !o);
-  }
+  useEffect(() => {
+    apiGet<VendorSearchResponse>(
+      `/users/search?occupation=${encodeURIComponent(genre.name)}&latitude=${userLocation.latitude}&longitude=${userLocation.longitude}`
+    )
+      .then((r) => setVendors([...r.nearby, ...r.wider].slice(0, 20)))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div className="border-b border-border">
-      {/* Row header */}
-      <button
-        onClick={toggle}
-        className="flex w-full items-center gap-3 px-4 py-3 hover:bg-feed-bg"
-      >
+    <div className="border-b border-border py-4">
+      {/* Section header */}
+      <div className="mb-3 flex items-center gap-3 px-4">
         {genre.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -121,40 +112,32 @@ function GenreRow({
             />
           </div>
         )}
-
-        <div className="min-w-0 flex-1 text-left">
-          <p className="truncate text-sm font-medium text-text">{genre.name}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-text">{genre.name}</p>
           {genre.description && (
             <p className="truncate text-[11px] text-light-text">{genre.description}</p>
           )}
         </div>
+      </div>
 
-        {open
-          ? <IoChevronUpOutline size={16} className="flex-shrink-0 text-light-text" />
-          : <IoChevronDownOutline size={16} className="flex-shrink-0 text-light-text" />
-        }
-      </button>
-
-      {/* Expanded vendor cards */}
-      {open && (
-        <div className="px-4 pb-4 pt-1">
-          {loading ? (
-            <div className="flex h-[160px] items-center justify-center">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : vendors.length === 0 ? (
-            <p className="py-6 text-center text-xs text-light-text">No vendors found for this category</p>
-          ) : (
-            <div className="no-scrollbar flex gap-3 overflow-x-auto">
-              {vendors.map((v) => (
-                <VendorCard
-                  key={v.id}
-                  vendor={v}
-                  onPress={() => router.push(`/profile/${v.id}`)}
-                />
-              ))}
-            </div>
-          )}
+      {/* Vendor cards */}
+      {loading ? (
+        <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="min-h-[160px] w-[150px] flex-shrink-0 animate-pulse rounded-xl bg-feed-bg" />
+          ))}
+        </div>
+      ) : vendors.length === 0 ? (
+        <p className="px-4 text-xs text-light-text">No vendors found for this category</p>
+      ) : (
+        <div className="no-scrollbar flex gap-3 overflow-x-auto px-4">
+          {vendors.map((v) => (
+            <VendorCard
+              key={v.id}
+              vendor={v}
+              onPress={() => router.push(`/profile/${v.id}`)}
+            />
+          ))}
         </div>
       )}
     </div>
