@@ -93,14 +93,14 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1">
-            <span className="text-xs font-medium text-text">{head.userName}</span>
+            <span className="text-[11px] font-medium text-text">{head.userName}</span>
             {head.userOccupation && (
               <>
-                <span className="text-xs text-light-text">·</span>
-                <span className="truncate text-xs text-light-text">{head.userOccupation}</span>
+                <span className="text-[11px] text-light-text">·</span>
+                <span className="truncate text-[11px] text-light-text">{head.userOccupation}</span>
               </>
             )}
-            <span className="text-xs text-light-text">· {timeAgo(head.createdAt)}</span>
+            <span className="text-[11px] text-light-text">· {timeAgo(head.createdAt)}</span>
           </div>
           <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible} className="mt-1" />
         </div>

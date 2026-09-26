@@ -33,7 +33,7 @@ import { useHasUnseenStories } from "@/lib/unseenStories";
 // same no-outline-asset limitation, but it's not part of this inline-icon fix.
 const mainItems = [
   { href: "/feed", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
-  { label: "Nearby", icon: MdOutlineEngineering, activeIcon: MdEngineering },
+  { href: "/nearby", label: "Nearby", icon: MdOutlineEngineering, activeIcon: MdEngineering },
   { label: "Chats", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
   { label: "Inbox", icon: IoNotificationsOutline, activeIcon: IoNotifications },
 ];
@@ -79,7 +79,7 @@ export default function SideNav() {
               onClick={() => (item.href ? router.push(item.href) : notify(`${item.label} is coming soon`))}
               title={item.label}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal ${
-                active ? "bg-feed-bg font-semibold text-text" : "text-text hover:bg-feed-bg"
+                active ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
               } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
             >
               <span className="relative flex-shrink-0">
