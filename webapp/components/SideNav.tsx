@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   IoLogOutOutline,
@@ -73,15 +74,11 @@ export default function SideNav() {
         {mainItems.map((item) => {
           const active = Boolean(item.href && pathname === item.href);
           const Icon = active ? item.activeIcon : item.icon;
-          return (
-            <button
-              key={item.label}
-              onClick={() => (item.href ? router.push(item.href) : notify(`${item.label} is coming soon`))}
-              title={item.label}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal ${
-                active ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
-              } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
-            >
+          const cls = `flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal ${
+            active ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
+          } ${sidebarCollapsed ? "justify-center px-0" : ""}`;
+          const inner = (
+            <>
               <span className="relative flex-shrink-0">
                 <Icon size={19} className={active ? "text-text" : "text-light-text"} />
                 {item.label === "Stories" && hasUnseenStories && !active && (
@@ -89,6 +86,20 @@ export default function SideNav() {
                 )}
               </span>
               {!sidebarCollapsed && item.label}
+            </>
+          );
+          return item.href ? (
+            <Link key={item.label} href={item.href} title={item.label} className={cls}>
+              {inner}
+            </Link>
+          ) : (
+            <button
+              key={item.label}
+              onClick={() => notify(`${item.label} is coming soon`)}
+              title={item.label}
+              className={cls}
+            >
+              {inner}
             </button>
           );
         })}
