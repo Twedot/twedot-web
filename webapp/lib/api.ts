@@ -53,3 +53,5 @@ export const apiPost = <T>(path: string, body?: unknown, opts?: { auth?: boolean
   request<T>("POST", path, body, opts);
 export const apiPatch = <T>(path: string, body?: unknown, opts?: { auth?: boolean }) =>
   request<T>("PATCH", path, body, opts);
+export const apiDelete = <T>(path: string, opts?: { auth?: boolean }) =>
+  request<T>("DELETE", path, undefined, opts);

@@ -35,7 +35,7 @@ const mainItems = [
   { href: "/feed", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
   { href: "/nearby", label: "Nearby", icon: MdOutlineEngineering, activeIcon: MdEngineering },
   { label: "Chats", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
-  { label: "Inbox", icon: IoNotificationsOutline, activeIcon: IoNotifications },
+  { href: "/inbox", label: "Inbox", icon: IoNotificationsOutline, activeIcon: IoNotifications },
 ];
 
 const games = [
