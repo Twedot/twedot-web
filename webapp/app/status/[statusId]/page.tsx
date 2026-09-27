@@ -211,6 +211,18 @@ export default function StatusDetailPage() {
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(statusId);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const savedScrollY = useRef(0);
+  const prevThreadId = useRef<string | null>(null);
+
+  // Restore scroll position when closing thread view
+  useEffect(() => {
+    if (prevThreadId.current !== null && threadCommentId === null) {
+      const y = savedScrollY.current;
+      const t = setTimeout(() => window.scrollTo({ top: y, behavior: "instant" }), 10);
+      prevThreadId.current = null;
+      return () => clearTimeout(t);
+    }
+    prevThreadId.current = threadCommentId;
+  }, [threadCommentId]);
 
   // Sync counts from post data
   useEffect(() => {
@@ -447,7 +459,6 @@ export default function StatusDetailPage() {
             if (threadCommentId) {
               setThreadCommentId(null);
               setReplyTo(null);
-              requestAnimationFrame(() => window.scrollTo(0, savedScrollY.current));
             } else {
               router.back();
             }
