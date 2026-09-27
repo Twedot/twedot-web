@@ -48,22 +48,26 @@ function FeedContent() {
   const [vendors, setVendors] = useState<NearbyVendor[]>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const restoredScroll = useRef(false);
-  const topObserverRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
   }, [isLoading, isAuthenticated, router]);
+
+  const HEADER_H = 112; // sticky nav + filter bar combined height
 
   // Restore scroll to the saved top post after cached posts render
   useEffect(() => {
     if (restoredScroll.current || !cached?.topPostId) return;
     restoredScroll.current = true;
     const id = cached.topPostId;
-    const t = setTimeout(() => {
+    const scrollTo = () => {
       const el = document.getElementById(`post-${id}`);
-      if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
-    }, 0);
-    return () => clearTimeout(t);
+      if (el) window.scrollTo({ top: Math.max(0, el.offsetTop - HEADER_H), behavior: "instant" });
+    };
+    const t1 = setTimeout(scrollTo, 0);
+    const t2 = setTimeout(scrollTo, 150);
+    const t3 = setTimeout(scrollTo, 400);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -138,27 +142,20 @@ function FeedContent() {
 
   const groupedPosts = useMemo(() => groupPosts(sortedPosts), [sortedPosts]);
 
-  // Track the first visible post so we can restore scroll by element, not pixel position
+  // Track which post is at the top of the viewport so we can restore scroll by element
   useEffect(() => {
-    if (groupedPosts.length === 0) return;
-    topObserverRef.current?.disconnect();
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            feedStateStore.saveTopPost(e.target.id.replace("post-", ""));
-            break;
-          }
+    const onScroll = () => {
+      for (const group of groupedPosts) {
+        const el = document.getElementById(`post-${group[0].id}`);
+        if (!el) continue;
+        if (el.getBoundingClientRect().bottom > HEADER_H) {
+          feedStateStore.saveTopPost(group[0].id);
+          break;
         }
-      },
-      { rootMargin: "0px 0px -80% 0px", threshold: 0 }
-    );
-    topObserverRef.current = obs;
-    for (const group of groupedPosts) {
-      const el = document.getElementById(`post-${group[0].id}`);
-      if (el) obs.observe(el);
-    }
-    return () => obs.disconnect();
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, [groupedPosts]);
 
   if (!isAuthenticated) return null;
