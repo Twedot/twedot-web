@@ -210,6 +210,7 @@ export default function StatusDetailPage() {
   const [threadCommentId, setThreadCommentId] = useState<string | null>(null);
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(statusId);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const savedScrollY = useRef(0);
 
   // Sync counts from post data
   useEffect(() => {
@@ -399,9 +400,10 @@ export default function StatusDetailPage() {
   }, [replyText, submitting, replyTo, threadCommentId, statusId, notify]);
 
   const startReply = useCallback((name: string, commentId: string) => {
-    // Open thread for the root comment when replying
+    savedScrollY.current = window.scrollY;
     setThreadCommentId(commentId);
     setReplyTo({ name, commentId });
+    window.scrollTo(0, 0);
     setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
 
@@ -445,6 +447,7 @@ export default function StatusDetailPage() {
             if (threadCommentId) {
               setThreadCommentId(null);
               setReplyTo(null);
+              requestAnimationFrame(() => window.scrollTo(0, savedScrollY.current));
             } else {
               router.back();
             }
