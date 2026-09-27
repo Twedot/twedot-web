@@ -19,7 +19,7 @@ export default function TopBar() {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-12 items-center border-b border-border bg-white px-4">
+    <header className="sticky top-0 z-20 flex h-14 items-center border-b border-border bg-white px-6">
       <div className="flex flex-shrink-0 items-center gap-1">
         <button
           onClick={() => router.push("/feed")}

@@ -255,7 +255,7 @@ export default function InboxPage() {
   return (
     <div className="flex flex-col">
       {/* Header — no border */}
-      <div className="sticky top-12 z-10 bg-white px-4 pt-4 pb-0">
+      <div className="sticky top-14 z-10 bg-white px-4 pt-4 pb-0">
         <h1 className="text-xl font-bold text-text">Inbox</h1>
 
         {/* Filter pills — box style, same as mobile */}

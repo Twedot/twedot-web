@@ -49,7 +49,7 @@ export default function TrendingPanel() {
   if (posts.length === 0) return null;
 
   return (
-    <aside className="sticky top-12 hidden h-fit w-[360px] flex-shrink-0 self-start py-4 pr-4 2xl:block">
+    <aside className="sticky top-14 hidden h-fit w-[360px] flex-shrink-0 self-start py-4 pr-4 2xl:block">
       <div className="rounded-2xl bg-feed-bg">
         <div className="flex items-center justify-between px-4 py-3">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-light-text">Recent Posts</h2>
