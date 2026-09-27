@@ -12,6 +12,11 @@ import {
   IoRocket,
   IoTrashOutline,
   IoNotificationsOutline,
+  IoGridOutline,
+  IoHeart,
+  IoChatbubbleEllipsesOutline,
+  IoEyeOutline,
+  IoTrophyOutline,
 } from "react-icons/io5";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 
@@ -54,6 +59,15 @@ const FILTER_LABELS: Record<FilterKey, string> = {
   mentions: "Mentions",
   views: "Views",
   rank: "Rank",
+};
+
+const FILTER_ICONS: Record<FilterKey, React.ReactNode> = {
+  all:      <IoGridOutline size={13} />,
+  likes:    <IoHeart size={13} />,
+  comments: <IoChatbubbleEllipsesOutline size={13} />,
+  mentions: <IoAt size={13} />,
+  views:    <IoEyeOutline size={13} />,
+  rank:     <IoTrophyOutline size={13} />,
 };
 
 const TYPE_LABEL: Record<NotificationFeedType, string> = {
@@ -238,12 +252,13 @@ export default function InboxPage() {
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`flex-shrink-0 rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+              className={`flex flex-shrink-0 items-center gap-1.5 rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
                 filter === key
                   ? "bg-primary text-white"
                   : "bg-feed-bg text-light-text hover:text-text"
               }`}
             >
+              {FILTER_ICONS[key]}
               {FILTER_LABELS[key]}
             </button>
           ))}
