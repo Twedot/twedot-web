@@ -25,6 +25,7 @@ async function request<T>(
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "x-device-id": getDeviceId(),
+    "x-platform": "web",
   };
 
   if (auth) {
