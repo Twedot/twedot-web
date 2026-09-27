@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IoBriefcaseOutline } from "react-icons/io5";
+import { IoBriefcaseOutline, IoPersonOutline } from "react-icons/io5";
 import { apiGet } from "@/lib/api";
 import type { NearbyVendor, VendorSearchResponse } from "@/lib/vendors";
 import RankBadge from "@/components/RankBadge";
@@ -24,13 +24,6 @@ const DEFAULT_LOC = { latitude: 6.5242, longitude: 3.3792 };
 
 // ─── Vendor card — same style as Suggested Vendors on the feed ────────────────
 function VendorCard({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => void }) {
-  const initials = (vendor.name ?? "?")
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   return (
     <div className="flex min-h-[160px] w-[150px] flex-shrink-0 flex-col items-center rounded-xl border border-border p-3 text-center">
       {vendor.profile_photo_url ? (
@@ -42,12 +35,12 @@ function VendorCard({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => 
         />
       ) : (
         <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-feed-bg">
-          <span className="text-xs font-bold text-text">{initials}</span>
+          <IoPersonOutline size={20} className="text-light-text" />
         </div>
       )}
 
-      <div className="w-full truncate text-xs font-medium text-text">{vendor.name}</div>
-      <div className="mt-0.5 line-clamp-1 w-full text-[11px] font-normal text-light-text">
+      <div className="w-full truncate text-[11px] font-semibold text-text">{vendor.name}</div>
+      <div className="mt-0.5 line-clamp-1 w-full text-[10px] font-normal text-light-text">
         {vendor.occupation}
       </div>
 
@@ -113,9 +106,9 @@ function GenreRow({
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-text">{genre.name}</p>
+          <p className="truncate text-[12px] font-semibold text-text">{genre.name}</p>
           {genre.description && (
-            <p className="truncate text-[11px] text-light-text">{genre.description}</p>
+            <p className="truncate text-[10px] text-light-text">{genre.description}</p>
           )}
         </div>
       </div>

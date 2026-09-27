@@ -1,20 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { IoPersonOutline } from "react-icons/io5";
 import RankBadge from "./RankBadge";
 import type { NearbyVendor } from "@/lib/vendors";
 
-// Matches the reference exactly: bold black title, bigger cards with a thin border
-// (no shadow/card-bg treatment), icon/avatar, bold black name, grey description, and
-// a colored CTA button — same shape as Reddit's own "Suggested communities" row.
 function VendorCard({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => void }) {
-  const initials = (vendor.name ?? "?")
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   return (
     <div className="flex w-[150px] flex-shrink-0 flex-col items-center rounded-xl border border-border p-3 text-center min-h-[160px]">
       {vendor.profile_photo_url ? (
@@ -26,12 +17,12 @@ function VendorCard({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => 
         />
       ) : (
         <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-feed-bg">
-          <span className="text-xs font-bold text-text">{initials}</span>
+          <IoPersonOutline size={20} className="text-light-text" />
         </div>
       )}
 
-      <div className="w-full truncate text-xs font-medium text-text">{vendor.name}</div>
-      <div className="mt-0.5 line-clamp-1 w-full text-[11px] font-normal text-light-text">{vendor.occupation}</div>
+      <div className="w-full truncate text-[11px] font-semibold text-text">{vendor.name}</div>
+      <div className="mt-0.5 line-clamp-1 w-full text-[10px] font-normal text-light-text">{vendor.occupation}</div>
       <RankBadge
         activityScore={vendor.global_activity_score ?? 0}
         rankVisible={vendor.rank_visible}

@@ -16,25 +16,14 @@ import {
   IoChatbubble,
   IoChatbubbleOutline,
 } from "react-icons/io5";
-import { MdEngineering, MdOutlineEngineering } from "react-icons/md";
+import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { useHasUnseenStories } from "@/lib/unseenStories";
 
-// Stories/Inbox use Ionicons on mobile too, which genuinely ships an outline glyph for
-// the inactive state (play-outline/notifications-outline) — so those switch shape, not
-// just color, matching app/(tabs)/_layout.tsx exactly.
-//
-// Nearby/Chats are custom art on mobile (worker.svg/chat.svg) with no outline variant
-// at all — can't do a real outline swap with the actual asset. Swapped to icon-library
-// equivalents that do have both states: Chats reuses the same IoChatbubble(Outline)
-// TopBar already uses for messages, Nearby uses Material's hard-hat "engineering" glyph
-// (closest available match to the Worker icon's meaning) since it ships outline/filled.
-// Profile (rendered separately below) keeps the real person.svg/person-active.svg —
-// same no-outline-asset limitation, but it's not part of this inline-icon fix.
 const mainItems = [
   { href: "/feed", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
-  { href: "/nearby", label: "Nearby", icon: MdOutlineEngineering, activeIcon: MdEngineering },
+  { href: "/nearby", label: "Nearby", icon: IoLocationOutline, activeIcon: IoLocation },
   { label: "Chats", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
   { href: "/inbox", label: "Inbox", icon: IoNotificationsOutline, activeIcon: IoNotifications },
 ];

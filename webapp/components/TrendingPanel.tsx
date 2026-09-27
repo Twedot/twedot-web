@@ -88,7 +88,7 @@ export default function TrendingPanel() {
         </ul>
       </div>
 
-      <nav className="flex flex-wrap gap-x-3 gap-y-2 px-2 pt-4 text-xs text-light-text">
+      <nav className="flex flex-wrap gap-x-3 gap-y-2 px-2 pt-4 text-[9px] text-light-text">
         {FOOTER_LINKS.map((link) =>
           link.href ? (
             <a

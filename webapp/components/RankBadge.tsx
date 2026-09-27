@@ -7,16 +7,30 @@ import { GLOBAL_RANK_COLORS, GLOBAL_RANK_ICON, GLOBAL_RANK_LABELS, getGlobalRank
 export default function RankBadge({
   activityScore,
   rankVisible = true,
+  plain = true,
   className = "",
 }: {
   activityScore: number;
   rankVisible?: boolean;
+  plain?: boolean;
   className?: string;
 }) {
   if (!rankVisible) return null;
   const tier = getGlobalRankTier(activityScore);
   const color = GLOBAL_RANK_COLORS[tier];
   const Icon = GLOBAL_RANK_ICON[tier] === "diamond" ? IoDiamond : IoStar;
+
+  if (plain) {
+    return (
+      <span
+        className={`flex w-fit flex-shrink-0 items-center gap-0.5 text-[9px] font-semibold ${className}`}
+        style={{ color }}
+      >
+        <Icon size={8} />
+        {GLOBAL_RANK_LABELS[tier]}
+      </span>
+    );
+  }
 
   return (
     <span
