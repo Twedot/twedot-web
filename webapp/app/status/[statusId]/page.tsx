@@ -85,12 +85,14 @@ function CommentItem({
   socket,
   onReply,
   onReactionUpdate,
+  replyCount = 0,
 }: {
   comment: Comment;
   statusId: string;
   socket: ReturnType<typeof useJobSocket>["socket"];
   onReply: (name: string, id: string) => void;
   onReactionUpdate: (commentId: string, agreeCount: number, disagreeCount: number, myReaction: "agree" | "disagree" | null) => void;
+  replyCount?: number;
 }) {
   function react(type: "agree" | "disagree") {
     if (!socket) return;
@@ -173,6 +175,14 @@ function CommentItem({
             <IoArrowUndoOutline size={12} />
             Reply
           </button>
+          {replyCount > 0 && (
+            <button
+              onClick={() => onReply(comment.userName, comment.id)}
+              className="text-[11px] font-semibold text-light-text hover:text-text"
+            >
+              {replyCount} {replyCount === 1 ? "reply" : "replies"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -450,11 +460,64 @@ export default function StatusDetailPage() {
 
       <div className="px-4 pt-4">
 
+        {/* ── Shared composer ── */}
+        {(() => {
+          const placeholder = threadComment
+            ? `Reply to ${threadComment.userName}…`
+            : "Write a comment…";
+          return (
+            <div className="flex items-start gap-2.5 border-b border-border pb-3">
+              {user?.profile_photo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200">
+                  <IoPersonOutline size={16} className="text-zinc-500" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                {replyTo && (
+                  <div className="mb-1 flex items-center gap-1 text-[11px] text-light-text">
+                    <IoArrowUndoOutline size={11} />
+                    <span>Replying to <strong className="text-text">@{replyTo.name}</strong></span>
+                    <button onClick={() => setReplyTo(null)} className="ml-auto text-light-text hover:text-text">✕</button>
+                  </div>
+                )}
+                <textarea
+                  ref={inputRef}
+                  value={replyText}
+                  onChange={(e) => {
+                    setReplyText(e.target.value);
+                    autoGrow(e.target);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                  placeholder={placeholder}
+                  rows={1}
+                  className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
+                  style={{ minHeight: 28 }}
+                />
+              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={!replyText.trim() || submitting}
+                className="flex h-7 flex-shrink-0 items-center self-end rounded-full bg-zinc-800 px-3.5 text-[12px] font-bold text-white disabled:opacity-40"
+              >
+                {submitting ? "…" : "Reply"}
+              </button>
+            </div>
+          );
+        })()}
+
         {/* ── Thread view ── */}
         {threadComment ? (
           <>
             {/* Root comment shown at top of thread */}
-            <div className="mb-1 rounded-2xl bg-feed-bg px-3">
+            <div className="rounded-2xl bg-feed-bg px-3">
               <CommentItem
                 comment={threadComment}
                 statusId={statusId}
@@ -464,6 +527,7 @@ export default function StatusDetailPage() {
                   setTimeout(() => inputRef.current?.focus(), 50);
                 }}
                 onReactionUpdate={handleCommentReaction}
+                replyCount={threadReplies.length}
               />
             </div>
 
@@ -491,7 +555,7 @@ export default function StatusDetailPage() {
         ) : (
           <>
             {/* ── Author header ── */}
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 pt-3">
               <button onClick={() => router.push(`/profile/${post.userId}`)} className="flex-shrink-0">
                 {post.userPhoto ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -599,16 +663,20 @@ export default function StatusDetailPage() {
             {/* ── Top-level comments (flat, no nesting) ── */}
             {topLevelComments.length > 0 ? (
               <div className="divide-y divide-border/40">
-                {topLevelComments.map((comment) => (
-                  <CommentItem
-                    key={comment.id}
-                    comment={comment}
-                    statusId={statusId}
-                    socket={socket}
-                    onReply={(name, id) => startReply(name, id)}
-                    onReactionUpdate={handleCommentReaction}
-                  />
-                ))}
+                {topLevelComments.map((comment) => {
+                  const count = comments.filter((c) => c.parentCommentId === comment.id).length;
+                  return (
+                    <CommentItem
+                      key={comment.id}
+                      comment={comment}
+                      statusId={statusId}
+                      socket={socket}
+                      onReply={(name, id) => startReply(name, id)}
+                      onReactionUpdate={handleCommentReaction}
+                      replyCount={count}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
@@ -618,52 +686,6 @@ export default function StatusDetailPage() {
             )}
           </>
         )}
-
-        {/* ── Reply composer — always at bottom ── */}
-        <div className="mt-4 flex items-start gap-2.5 border-t border-border pt-3">
-          {user?.profile_photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
-          ) : (
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200">
-              <IoPersonOutline size={16} className="text-zinc-500" />
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            {replyTo && (
-              <div className="mb-1 flex items-center gap-1 text-[11px] text-light-text">
-                <IoArrowUndoOutline size={11} />
-                <span>Replying to <strong className="text-text">@{replyTo.name}</strong></span>
-                <button onClick={() => setReplyTo(null)} className="ml-auto text-light-text hover:text-text">✕</button>
-              </div>
-            )}
-            <textarea
-              ref={inputRef}
-              value={replyText}
-              onChange={(e) => {
-                setReplyText(e.target.value);
-                autoGrow(e.target);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-              placeholder="Write a comment…"
-              rows={1}
-              className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
-              style={{ minHeight: 28 }}
-            />
-          </div>
-          <button
-            onClick={handleSubmit}
-            disabled={!replyText.trim() || submitting}
-            className="flex h-7 flex-shrink-0 items-center self-end rounded-full bg-zinc-800 px-3.5 text-[12px] font-bold text-white disabled:opacity-40"
-          >
-            {submitting ? "…" : "Reply"}
-          </button>
-        </div>
 
       </div>
     </div>
