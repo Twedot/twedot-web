@@ -6,14 +6,17 @@ import {
   IoArrowBack,
   IoHeartOutline,
   IoHeart,
-  IoChatbubbleOutline,
+  IoChatbubbleEllipsesOutline,
   IoShareOutline,
   IoBookmarkOutline,
   IoBookmark,
-  IoSendOutline,
   IoPersonOutline,
   IoEyeOutline,
   IoArrowUndoOutline,
+  IoThumbsUpOutline,
+  IoThumbsUp,
+  IoThumbsDownOutline,
+  IoThumbsDown,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useAuth } from "@/lib/AuthContext";
@@ -51,10 +54,10 @@ function timeAgo(iso: string) {
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
 }
 
 function formatDate(iso: string) {
@@ -67,15 +70,63 @@ function formatDate(iso: string) {
   });
 }
 
-function CommentItem({ comment, onReply }: { comment: Comment; onReply: (name: string, id: string) => void }) {
+function autoGrow(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
+
+// ── Comment item with agree/disagree ──
+function CommentItem({
+  comment,
+  statusId,
+  socket,
+  onReply,
+  onReactionUpdate,
+}: {
+  comment: Comment;
+  statusId: string;
+  socket: ReturnType<typeof useJobSocket>["socket"];
+  onReply: (name: string, id: string) => void;
+  onReactionUpdate: (commentId: string, agreeCount: number, disagreeCount: number, myReaction: "agree" | "disagree" | null) => void;
+}) {
+  function react(type: "agree" | "disagree") {
+    if (!socket) return;
+    // Optimistic toggle
+    let nextReaction: "agree" | "disagree" | null;
+    let agreeDelta = 0;
+    let disagreeDelta = 0;
+
+    if (comment.myReaction === type) {
+      // removing same reaction
+      nextReaction = null;
+      if (type === "agree") agreeDelta = -1;
+      else disagreeDelta = -1;
+    } else {
+      // switching or adding
+      if (comment.myReaction === "agree") agreeDelta = -1;
+      if (comment.myReaction === "disagree") disagreeDelta = -1;
+      nextReaction = type;
+      if (type === "agree") agreeDelta += 1;
+      else disagreeDelta += 1;
+    }
+
+    onReactionUpdate(
+      comment.id,
+      comment.agreeCount + agreeDelta,
+      comment.disagreeCount + disagreeDelta,
+      nextReaction,
+    );
+    socket.emit("react_comment", { statusId, commentId: comment.id, type });
+  }
+
   return (
-    <div className="flex gap-3 py-3">
+    <div className="flex gap-2.5 py-3">
       {comment.userPhoto ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={comment.userPhoto} alt={comment.userName} className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+        <img src={comment.userPhoto} alt={comment.userName} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
       ) : (
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-          <IoPersonOutline size={18} className="text-primary" />
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <IoPersonOutline size={16} className="text-primary" />
         </div>
       )}
       <div className="min-w-0 flex-1">
@@ -84,23 +135,42 @@ function CommentItem({ comment, onReply }: { comment: Comment; onReply: (name: s
           <span className="text-[11px] text-light-text">{timeAgo(comment.createdAt)}</span>
         </div>
         <p className="mt-0.5 text-[13px] leading-[19px] text-text">{comment.content}</p>
-        <div className="mt-1.5 flex items-center gap-4">
+        <div className="mt-2 flex items-center gap-3">
+          {/* Agree */}
+          <button
+            onClick={() => react("agree")}
+            className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
+              comment.myReaction === "agree" ? "text-primary" : "text-light-text hover:text-text"
+            }`}
+          >
+            {comment.myReaction === "agree" ? <IoThumbsUp size={13} /> : <IoThumbsUpOutline size={13} />}
+            {comment.agreeCount > 0 && <span>{fmt(comment.agreeCount)}</span>}
+          </button>
+          {/* Disagree */}
+          <button
+            onClick={() => react("disagree")}
+            className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
+              comment.myReaction === "disagree" ? "text-red-500" : "text-light-text hover:text-text"
+            }`}
+          >
+            {comment.myReaction === "disagree" ? <IoThumbsDown size={13} /> : <IoThumbsDownOutline size={13} />}
+            {comment.disagreeCount > 0 && <span>{fmt(comment.disagreeCount)}</span>}
+          </button>
+          {/* Reply */}
           <button
             onClick={() => onReply(comment.userName, comment.id)}
-            className="flex items-center gap-1 text-[11px] text-light-text hover:text-primary"
+            className="flex items-center gap-1 text-[11px] font-medium text-light-text hover:text-primary"
           >
             <IoArrowUndoOutline size={12} />
             Reply
           </button>
-          {comment.agreeCount > 0 && (
-            <span className="text-[11px] text-light-text">{fmt(comment.agreeCount)} agree</span>
-          )}
         </div>
       </div>
     </div>
   );
 }
 
+// ── Main page ──
 export default function StatusDetailPage() {
   const { statusId } = useParams<{ statusId: string }>();
   const router = useRouter();
@@ -133,17 +203,16 @@ export default function StatusDetailPage() {
   useEffect(() => {
     if (!isAuthenticated || !statusId) return;
     if (post) return;
-    // Try preview to get ownerId, then fetch from public feed to get full stats
-    apiGet<{ id: string; type: string; caption: string | null; thumbnailUrl: string | null; ownerId: string; ownerName: string; ownerPhoto: string | null }>(`/status/${statusId}/preview`)
+    apiGet<{ id: string; type: string; caption: string | null; thumbnailUrl: string | null; ownerId: string; ownerName: string; ownerPhoto: string | null }>(
+      `/status/${statusId}/preview`
+    )
       .then(async (preview) => {
-        // Fetch full post with stats from public feed
         const feed = await apiGet<StatusPost[]>(`/status/public?authorId=${preview.ownerId}&page=1&limit=50`);
         const found = Array.isArray(feed) ? feed.find((p) => p.id === statusId) : null;
         if (found) {
           setPost(found);
           postDetailStore.set(found);
         } else {
-          // Fallback: construct a partial post from preview
           setPost({
             id: preview.id,
             userId: preview.ownerId,
@@ -176,7 +245,7 @@ export default function StatusDetailPage() {
       .catch(() => {});
   }, [statusId]);
 
-  // Socket: join room, wire live events
+  // Socket: join room, live events
   useEffect(() => {
     if (!socket || !statusId) return;
     socket.emit("join_status_room", { statusId });
@@ -225,35 +294,74 @@ export default function StatusDetailPage() {
       });
     };
 
+    const onCommentReacted = (data: {
+      commentId: string;
+      agreeCount: number;
+      disagreeCount: number;
+    }) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === data.commentId
+            ? { ...c, agreeCount: data.agreeCount, disagreeCount: data.disagreeCount }
+            : c
+        )
+      );
+    };
+
+    const onReactAck = (data: {
+      commentId: string;
+      agreeCount: number;
+      disagreeCount: number;
+      myReaction: "agree" | "disagree" | null;
+    }) => {
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === data.commentId
+            ? { ...c, agreeCount: data.agreeCount, disagreeCount: data.disagreeCount, myReaction: data.myReaction }
+            : c
+        )
+      );
+    };
+
     socket.on("like_status_ack", onLikeAck);
     socket.on("status_like_update", onLikeUpdate);
     socket.on("status_commented", onCommented);
+    socket.on("comment_reacted", onCommentReacted);
+    socket.on("react_comment_ack", onReactAck);
 
     return () => {
       socket.emit("leave_status_room", { statusId });
       socket.off("like_status_ack", onLikeAck);
       socket.off("status_like_update", onLikeUpdate);
       socket.off("status_commented", onCommented);
+      socket.off("comment_reacted", onCommentReacted);
+      socket.off("react_comment_ack", onReactAck);
     };
   }, [socket, statusId]);
 
   const handleLike = useCallback(() => {
     if (!socket || !post) return;
-    // Optimistic
     const nowLiked = !isLiked;
     setIsLiked(nowLiked);
     setLikeCount((c) => c + (nowLiked ? 1 : -1));
     socket.emit("like_status", { statusId, statusOwnerId: post.userId });
   }, [socket, post, isLiked, statusId]);
 
-  const handleReply = useCallback(async () => {
+  const handleCommentReaction = useCallback(
+    (commentId: string, agreeCount: number, disagreeCount: number, myReaction: "agree" | "disagree" | null) => {
+      setComments((prev) =>
+        prev.map((c) => c.id === commentId ? { ...c, agreeCount, disagreeCount, myReaction } : c)
+      );
+    },
+    []
+  );
+
+  const handleSubmit = useCallback(async () => {
     if (!replyText.trim() || submitting) return;
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = { content: replyText.trim() };
-      if (replyTo) {
-        body.parentCommentId = replyTo.commentId;
-      }
+      if (replyTo) body.parentCommentId = replyTo.commentId;
       const newComment = await apiPost<Comment>(`/status/${statusId}/comments`, body);
       if (newComment) {
         setComments((prev) => [...prev, newComment]);
@@ -261,9 +369,11 @@ export default function StatusDetailPage() {
       }
       setReplyText("");
       setReplyTo(null);
+      if (inputRef.current) {
+        inputRef.current.style.height = "auto";
+      }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      notify(msg || "Couldn't post your reply");
+      notify(err instanceof Error ? err.message : "Couldn't post your reply");
     } finally {
       setSubmitting(false);
     }
@@ -313,12 +423,9 @@ export default function StatusDetailPage() {
       </div>
 
       <div className="px-4 pt-4">
-        {/* ── Post author header ── */}
+        {/* ── Author header ── */}
         <div className="flex items-start gap-3">
-          <button
-            onClick={() => router.push(`/profile/${post.userId}`)}
-            className="flex-shrink-0"
-          >
+          <button onClick={() => router.push(`/profile/${post.userId}`)} className="flex-shrink-0">
             {post.userPhoto ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={post.userPhoto} alt={post.userName} className="h-11 w-11 rounded-full object-cover" />
@@ -329,30 +436,22 @@ export default function StatusDetailPage() {
             )}
           </button>
           <div className="min-w-0 flex-1">
-            <button
-              onClick={() => router.push(`/profile/${post.userId}`)}
-              className="text-left"
-            >
-              <p className="text-[15px] font-bold text-text leading-tight">{post.userName}</p>
+            <button onClick={() => router.push(`/profile/${post.userId}`)} className="text-left">
+              <p className="text-[15px] font-bold leading-tight text-text">{post.userName}</p>
               {post.userOccupation && (
                 <p className="text-[12px] text-light-text">{post.userOccupation}</p>
               )}
             </button>
-            <RankBadge
-              activityScore={post.userGlobalActivityScore ?? 0}
-              rankVisible={post.userRankVisible !== false}
-              plain
-              className="mt-0.5"
-            />
+            <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="mt-0.5" />
           </div>
         </div>
 
         {/* ── Post content ── */}
         <div className="mt-3">
           {isText && (
-            <div className="text-[16px] leading-[24px] text-text">
+            <p className="text-[16px] leading-[24px] text-text">
               <LinkText text={post.content || post.caption || ""} />
-            </div>
+            </p>
           )}
           {(isImage || isVideo) && post.caption && (
             <p className="mb-3 text-[16px] leading-[24px] text-text">
@@ -375,159 +474,146 @@ export default function StatusDetailPage() {
           )}
         </div>
 
-        {/* ── Timestamp · Views ── */}
-        <div className="mt-4 flex items-center gap-3 border-b border-border pb-3 text-[13px] text-light-text">
+        {/* ── PostCard-style action row (story design) ── */}
+        <footer className="mt-3 flex items-center gap-2 border-b border-border pb-2.5 pt-1">
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${
+              isLiked ? "text-red-500" : "text-text"
+            }`}
+          >
+            {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
+            {likeCount}
+          </button>
+
+          <button
+            onClick={() => inputRef.current?.focus()}
+            className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
+          >
+            <IoChatbubbleEllipsesOutline size={18} />
+            {commentCount}
+          </button>
+
+          <button
+            onClick={toggleBookmark}
+            className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${
+              isBookmarked ? "text-[#D4A400]" : "text-text"
+            }`}
+          >
+            {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
+          </button>
+
+          <button
+            onClick={() => notify("Repost is coming soon")}
+            className="flex items-center justify-center rounded-full bg-feed-bg p-1.5 text-text hover:bg-border/50"
+          >
+            <FaRetweet size={17} />
+          </button>
+
+          <button
+            onClick={() => notify("Share is coming soon")}
+            className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
+          >
+            <IoShareOutline size={18} />
+            Share
+          </button>
+        </footer>
+
+        {/* ── Date · Views ── */}
+        <div className="flex items-center gap-2 py-2.5 text-[12px] text-light-text">
           <span>{formatDate(post.createdAt)}</span>
           <span>·</span>
           <span className="flex items-center gap-1">
-            <IoEyeOutline size={14} />
+            <IoEyeOutline size={13} />
             {fmt(post.viewCount)} views
           </span>
         </div>
 
-        {/* ── Count row ── */}
-        <div className="flex items-center gap-5 border-b border-border py-3 text-[13px]">
-          <span>
-            <strong className="text-text">{fmt(commentCount)}</strong>{" "}
-            <span className="text-light-text">Comments</span>
-          </span>
-          <span>
-            <strong className="text-text">0</strong>{" "}
-            <span className="text-light-text">Reposts</span>
-          </span>
-          <span>
-            <strong className="text-text">{fmt(likeCount)}</strong>{" "}
-            <span className="text-light-text">Likes</span>
-          </span>
-          <span>
-            <strong className="text-text">0</strong>{" "}
-            <span className="text-light-text">Bookmarks</span>
-          </span>
-        </div>
-
-        {/* ── Action row ── */}
-        <div className="flex items-center justify-around border-b border-border py-1">
-          <ActionBtn
-            icon={isLiked ? <IoHeart size={22} className="text-red-500" /> : <IoHeartOutline size={22} className="text-light-text" />}
-            label={isLiked ? "Liked" : "Like"}
-            active={isLiked}
-            onClick={handleLike}
-          />
-          <ActionBtn
-            icon={<IoChatbubbleOutline size={22} className="text-light-text" />}
-            label="Comment"
-            onClick={() => inputRef.current?.focus()}
-          />
-          <ActionBtn
-            icon={<FaRetweet size={20} className="text-light-text" />}
-            label="Repost"
-            onClick={() => notify("Repost is coming soon")}
-          />
-          <ActionBtn
-            icon={isBookmarked ? <IoBookmark size={22} className="text-primary" /> : <IoBookmarkOutline size={22} className="text-light-text" />}
-            label={isBookmarked ? "Saved" : "Save"}
-            active={isBookmarked}
-            onClick={toggleBookmark}
-          />
-          <ActionBtn
-            icon={<IoShareOutline size={22} className="text-light-text" />}
-            label="Share"
-            onClick={() => notify("Share is coming soon")}
-          />
-        </div>
-
         {/* ── Reply composer ── */}
-        <div className="flex gap-3 py-3">
+        <div className="flex gap-2.5 border-t border-border py-3">
           {user?.profile_photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+            <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
           ) : (
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <IoPersonOutline size={18} className="text-primary" />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <IoPersonOutline size={16} className="text-primary" />
             </div>
           )}
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             {replyTo && (
-              <div className="flex items-center gap-1 text-[12px] text-primary">
-                <IoArrowUndoOutline size={12} />
+              <div className="flex items-center gap-1 text-[11px] text-primary">
+                <IoArrowUndoOutline size={11} />
                 <span>Replying to <strong>@{replyTo.name}</strong></span>
-                <button
-                  onClick={() => setReplyTo(null)}
-                  className="ml-auto text-light-text hover:text-text"
-                >
-                  ✕
-                </button>
+                <button onClick={() => setReplyTo(null)} className="ml-auto text-light-text hover:text-text">✕</button>
               </div>
             )}
             <textarea
               ref={inputRef}
               value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(); } }}
-              placeholder="Post your reply"
+              onChange={(e) => {
+                setReplyText(e.target.value);
+                autoGrow(e.target);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              placeholder="Write a comment…"
               rows={1}
-              className="w-full resize-none bg-transparent text-[14px] text-text placeholder-light-text outline-none"
-              style={{ minHeight: 36 }}
+              className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
+              style={{ minHeight: 28 }}
             />
           </div>
           <button
-            onClick={handleReply}
+            onClick={handleSubmit}
             disabled={!replyText.trim() || submitting}
-            className="flex h-8 items-center gap-1 self-end rounded-full bg-primary px-4 text-[13px] font-bold text-white disabled:opacity-40"
+            className="flex h-7 items-center self-end rounded-full bg-primary px-3.5 text-[12px] font-bold text-white disabled:opacity-40"
           >
-            <IoSendOutline size={14} />
-            Reply
+            {submitting ? "…" : "Reply"}
           </button>
         </div>
 
         {/* ── Comments ── */}
         {comments.length > 0 && (
           <div className="divide-y divide-border/40">
-            {comments.filter((c) => !c.parentCommentId).map((comment) => (
-              <div key={comment.id}>
-                <CommentItem comment={comment} onReply={startReply} />
-                {/* Replies */}
-                {comments.filter((r) => r.parentCommentId === comment.id).map((reply) => (
-                  <div key={reply.id} className="pl-12">
-                    <CommentItem comment={reply} onReply={startReply} />
-                  </div>
-                ))}
-              </div>
-            ))}
+            {comments
+              .filter((c) => !c.parentCommentId)
+              .map((comment) => (
+                <div key={comment.id}>
+                  <CommentItem
+                    comment={comment}
+                    statusId={statusId}
+                    socket={socket}
+                    onReply={startReply}
+                    onReactionUpdate={handleCommentReaction}
+                  />
+                  {comments
+                    .filter((r) => r.parentCommentId === comment.id)
+                    .map((reply) => (
+                      <div key={reply.id} className="pl-11">
+                        <CommentItem
+                          comment={reply}
+                          statusId={statusId}
+                          socket={socket}
+                          onReply={startReply}
+                          onReactionUpdate={handleCommentReaction}
+                        />
+                      </div>
+                    ))}
+                </div>
+              ))}
           </div>
         )}
 
         {comments.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-10 text-center">
-            <IoChatbubbleOutline size={32} className="text-light-text" />
-            <p className="text-[14px] text-light-text">No replies yet. Be the first!</p>
+            <IoChatbubbleEllipsesOutline size={30} className="text-light-text" />
+            <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
           </div>
         )}
       </div>
     </div>
-  );
-}
-
-function ActionBtn({
-  icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex flex-col items-center gap-0.5 px-3 py-2 text-[11px] font-medium transition-colors ${
-        active ? "text-primary" : "text-light-text hover:text-text"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
   );
 }
