@@ -41,7 +41,7 @@ function VendorRow({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => v
       {/* Follow button */}
       <button
         onClick={(e) => { e.stopPropagation(); }}
-        className="flex-shrink-0 rounded-full bg-primary/15 px-4 py-1.5 text-[12px] font-bold text-primary hover:bg-primary/25"
+        className="flex-shrink-0 rounded-full bg-primary/60 px-4 py-1.5 text-[12px] font-bold text-white hover:bg-primary/75"
       >
         Follow
       </button>

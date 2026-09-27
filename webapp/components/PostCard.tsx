@@ -107,7 +107,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         {!isOwnPost && (
           <button
             onClick={(e) => e.stopPropagation()}
-            className="flex-shrink-0 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-bold text-primary hover:bg-primary/25"
+            className="flex-shrink-0 rounded-full bg-primary/60 px-3 py-1 text-[11px] font-bold text-white hover:bg-primary/75"
           >
             Follow
           </button>
