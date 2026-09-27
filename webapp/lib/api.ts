@@ -41,6 +41,11 @@ async function request<T>(
   const json = (await res.json().catch(() => null)) as Envelope<T> | null;
 
   if (!res.ok || !json || !json.success) {
+    // Server-side session invalidation — clear local auth and redirect to login
+    if (res.status === 401 && typeof window !== "undefined") {
+      AuthStorage.clear();
+      window.location.href = "/login";
+    }
     throw new ApiError(json?.message ?? `Request failed (${res.status})`, res.status);
   }
 
