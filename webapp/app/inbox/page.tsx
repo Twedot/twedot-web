@@ -155,19 +155,19 @@ function NotifRow({
 }) {
   return (
     <div
-      className={`group flex items-center gap-3 px-4 py-2.5 ${
+      className={`group flex items-center gap-3 px-4 py-3.5 ${
         isNew ? "bg-[#6B4EFF1A]" : "hover:bg-feed-bg"
       }`}
     >
       <Avatar url={item.actor_photo_url} name={item.actor_name} type={item.type} />
 
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3px] text-light-text">
+        <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-light-text">
           {TYPE_LABEL[item.type]}
+          <span className="ml-1.5 normal-case">· {timeAgo(item.created_at)}</span>
         </p>
-        <p className={`mt-0.5 line-clamp-2 text-[14px] leading-[19px] text-text ${isNew ? "font-extrabold" : "font-semibold"}`}>
+        <p className={`mt-1 line-clamp-2 text-[13px] leading-[18px] text-text ${isNew ? "font-medium" : "font-normal"}`}>
           {item.body}
-          <span className="ml-2 text-[12px] font-normal text-light-text">· {timeAgo(item.created_at)}</span>
         </p>
       </div>
 
