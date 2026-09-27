@@ -460,13 +460,26 @@ export default function StatusDetailPage() {
 
       <div className="px-4 pt-4">
 
-        {/* ── Shared composer ── */}
-        {(() => {
-          const placeholder = threadComment
-            ? `Reply to ${threadComment.userName}…`
-            : "Write a comment…";
-          return (
-            <div className="flex items-start gap-2.5 border-b border-border pb-3">
+        {/* ── Thread view ── */}
+        {threadComment ? (
+          <>
+            {/* Root comment shown at top of thread */}
+            <div className="rounded-2xl bg-feed-bg px-3">
+              <CommentItem
+                comment={threadComment}
+                statusId={statusId}
+                socket={socket}
+                onReply={() => {
+                  setReplyTo({ name: threadComment.userName, commentId: threadComment.id });
+                  setTimeout(() => inputRef.current?.focus(), 50);
+                }}
+                onReactionUpdate={handleCommentReaction}
+                replyCount={threadReplies.length}
+              />
+            </div>
+
+            {/* Composer for replies */}
+            <div className="mt-3 flex items-start gap-2.5 border-b border-border pb-3">
               {user?.profile_photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
@@ -486,17 +499,9 @@ export default function StatusDetailPage() {
                 <textarea
                   ref={inputRef}
                   value={replyText}
-                  onChange={(e) => {
-                    setReplyText(e.target.value);
-                    autoGrow(e.target);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit();
-                    }
-                  }}
-                  placeholder={placeholder}
+                  onChange={(e) => { setReplyText(e.target.value); autoGrow(e.target); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+                  placeholder={`Reply to ${threadComment.userName}…`}
                   rows={1}
                   className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
                   style={{ minHeight: 28 }}
@@ -509,26 +514,6 @@ export default function StatusDetailPage() {
               >
                 {submitting ? "…" : "Reply"}
               </button>
-            </div>
-          );
-        })()}
-
-        {/* ── Thread view ── */}
-        {threadComment ? (
-          <>
-            {/* Root comment shown at top of thread */}
-            <div className="rounded-2xl bg-feed-bg px-3">
-              <CommentItem
-                comment={threadComment}
-                statusId={statusId}
-                socket={socket}
-                onReply={() => {
-                  setReplyTo({ name: threadComment.userName, commentId: threadComment.id });
-                  setTimeout(() => inputRef.current?.focus(), 50);
-                }}
-                onReactionUpdate={handleCommentReaction}
-                replyCount={threadReplies.length}
-              />
             </div>
 
             {/* Replies (flat) */}
@@ -555,7 +540,7 @@ export default function StatusDetailPage() {
         ) : (
           <>
             {/* ── Author header ── */}
-            <div className="flex items-start gap-3 pt-3">
+            <div className="flex items-start gap-3">
               <button onClick={() => router.push(`/profile/${post.userId}`)} className="flex-shrink-0">
                 {post.userPhoto ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -658,6 +643,37 @@ export default function StatusDetailPage() {
                 <IoEyeOutline size={13} />
                 {fmt(post.viewCount)} views
               </span>
+            </div>
+
+            {/* ── Composer: below post, above comments ── */}
+            <div className="flex items-start gap-2.5 border-b border-t border-border py-3">
+              {user?.profile_photo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200">
+                  <IoPersonOutline size={16} className="text-zinc-500" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <textarea
+                  ref={inputRef}
+                  value={replyText}
+                  onChange={(e) => { setReplyText(e.target.value); autoGrow(e.target); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+                  placeholder="Write a comment…"
+                  rows={1}
+                  className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
+                  style={{ minHeight: 28 }}
+                />
+              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={!replyText.trim() || submitting}
+                className="flex h-7 flex-shrink-0 items-center self-end rounded-full bg-zinc-800 px-3.5 text-[12px] font-bold text-white disabled:opacity-40"
+              >
+                {submitting ? "…" : "Reply"}
+              </button>
             </div>
 
             {/* ── Top-level comments (flat, no nesting) ── */}
