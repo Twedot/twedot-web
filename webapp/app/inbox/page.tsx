@@ -123,15 +123,14 @@ function timeAgo(iso: string) {
 }
 
 function Avatar({ url, name, type }: { url: string | null; name: string | null; type: NotificationFeedType }) {
-  const initials = (name ?? "?").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
     <div className="relative flex-shrink-0">
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt={name ?? ""} className="h-[52px] w-[52px] rounded-full object-cover" />
       ) : (
-        <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-feed-bg text-sm font-bold text-text">
-          {name ? initials : <IoPersonOutline size={24} className="text-light-text" />}
+        <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-feed-bg">
+          <IoPersonOutline size={26} className="text-light-text" />
         </div>
       )}
       <div
