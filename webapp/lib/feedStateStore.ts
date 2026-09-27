@@ -7,7 +7,7 @@ interface FeedState {
   page: number;
   sort: SortOption;
   hasMore: boolean;
-  scrollY: number;
+  topPostId: string | null;
   query: string;
 }
 
@@ -16,13 +16,13 @@ const _state: FeedState = {
   page: 1,
   sort: "best",
   hasMore: true,
-  scrollY: 0,
+  topPostId: null,
   query: "",
 };
 
 export const feedStateStore = {
   save: (partial: Partial<FeedState>) => Object.assign(_state, partial),
   get: (): FeedState => ({ ..._state }),
-  saveScroll: () => { _state.scrollY = window.scrollY; },
+  saveTopPost: (id: string) => { _state.topPostId = id; },
   hasCache: (query: string) => _state.posts.length > 0 && _state.query === query,
 };

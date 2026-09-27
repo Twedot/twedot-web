@@ -48,26 +48,23 @@ function FeedContent() {
   const [vendors, setVendors] = useState<NearbyVendor[]>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const restoredScroll = useRef(false);
+  const topObserverRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
   }, [isLoading, isAuthenticated, router]);
 
-  // Restore scroll position once after cached posts are rendered
+  // Restore scroll to the saved top post after cached posts render
   useEffect(() => {
-    if (restoredScroll.current || !cached || cached.scrollY === 0) return;
+    if (restoredScroll.current || !cached?.topPostId) return;
     restoredScroll.current = true;
-    const y = cached.scrollY;
-    const t = setTimeout(() => window.scrollTo({ top: y, behavior: "instant" }), 50);
+    const id = cached.topPostId;
+    const t = setTimeout(() => {
+      const el = document.getElementById(`post-${id}`);
+      if (el) el.scrollIntoView({ behavior: "instant", block: "start" });
+    }, 0);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Save scroll as user scrolls
-  useEffect(() => {
-    const onScroll = () => feedStateStore.saveScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const loadPage = useCallback(
@@ -116,6 +113,29 @@ function FeedContent() {
   useEffect(() => {
     feedStateStore.save({ sort });
   }, [sort]);
+
+  // Track the first visible post so we can restore scroll by element, not pixel position
+  useEffect(() => {
+    if (groupedPosts.length === 0) return;
+    topObserverRef.current?.disconnect();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            feedStateStore.saveTopPost(e.target.id.replace("post-", ""));
+            break;
+          }
+        }
+      },
+      { rootMargin: "0px 0px -80% 0px", threshold: 0 }
+    );
+    topObserverRef.current = obs;
+    for (const group of groupedPosts) {
+      const el = document.getElementById(`post-${group[0].id}`);
+      if (el) obs.observe(el);
+    }
+    return () => obs.disconnect();
+  }, [groupedPosts]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -200,7 +220,7 @@ function FeedContent() {
 
       <div className="flex flex-col">
         {groupedPosts.map((group, i) => (
-          <div key={group[0].id}>
+          <div key={group[0].id} id={`post-${group[0].id}`}>
             <PostCard items={group} compact={compact} />
             {vendors.length > 0 && i === VENDOR_ROW_POSITION - 1 && (
               <NearbyVendorsRow vendors={vendors} />
