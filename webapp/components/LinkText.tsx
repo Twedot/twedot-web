@@ -31,6 +31,7 @@ export default function LinkText({ text }: { text: string }) {
               key={i}
               href={`/feed?q=${encodeURIComponent(part.slice(1))}`}
               className="text-blue-500 hover:underline"
+              onClick={(e) => e.stopPropagation()}
             >
               {part}
             </Link>
