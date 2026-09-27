@@ -17,6 +17,10 @@ export interface UserProfile {
   rating_count?: number;
   global_activity_score?: number;
   rank_visible?: boolean;
+  profile_view_count?: number;
+  opening_time?: string | null;
+  closing_time?: string | null;
+  working_days?: string | null;
   [key: string]: unknown;
 }
 

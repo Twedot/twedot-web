@@ -31,14 +31,26 @@ function timeAgo(iso: string) {
   return `${Math.floor(hours / 24)}d`;
 }
 
+function deduplicateByGroup(items: StatusPost[]): StatusPost[] {
+  const seen = new Set<string>();
+  return items.filter((p) => {
+    if (p.groupId) {
+      if (seen.has(p.groupId)) return false;
+      seen.add(p.groupId);
+    }
+    return true;
+  });
+}
+
 export default function TrendingPanel() {
   const router = useRouter();
   const { notify } = useUi();
   const [posts, setPosts] = useState<StatusPost[]>([]);
 
   const load = useCallback(() => {
-    apiGet<StatusPost[]>("/status/public?page=1&limit=5")
-      .then(setPosts)
+    // Fetch more than 5 so dedup still gives us 5 visible entries
+    apiGet<StatusPost[]>("/status/public?page=1&limit=15")
+      .then((data) => setPosts(deduplicateByGroup(data).slice(0, 5)))
       .catch(() => {});
   }, []);
 
@@ -76,7 +88,7 @@ export default function TrendingPanel() {
                     {post.userName} · {timeAgo(post.createdAt)}
                   </div>
                   <div className="line-clamp-2 text-xs font-medium leading-4 text-text">
-                    {post.caption || (post.type === "video" ? "Video post" : "Photo post")}
+                    {post.caption || post.content || (post.type === "video" ? "Video post" : post.type === "image" ? "Photo post" : "")}
                   </div>
                   <div className="mt-0.5 text-[10px] font-normal leading-4 text-light-text">
                     {post.likeCount} likes · {post.commentCount} comments
