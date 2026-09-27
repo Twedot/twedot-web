@@ -114,29 +114,6 @@ function FeedContent() {
     feedStateStore.save({ sort });
   }, [sort]);
 
-  // Track the first visible post so we can restore scroll by element, not pixel position
-  useEffect(() => {
-    if (groupedPosts.length === 0) return;
-    topObserverRef.current?.disconnect();
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            feedStateStore.saveTopPost(e.target.id.replace("post-", ""));
-            break;
-          }
-        }
-      },
-      { rootMargin: "0px 0px -80% 0px", threshold: 0 }
-    );
-    topObserverRef.current = obs;
-    for (const group of groupedPosts) {
-      const el = document.getElementById(`post-${group[0].id}`);
-      if (el) obs.observe(el);
-    }
-    return () => obs.disconnect();
-  }, [groupedPosts]);
-
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -160,6 +137,29 @@ function FeedContent() {
   }, [posts, sort]);
 
   const groupedPosts = useMemo(() => groupPosts(sortedPosts), [sortedPosts]);
+
+  // Track the first visible post so we can restore scroll by element, not pixel position
+  useEffect(() => {
+    if (groupedPosts.length === 0) return;
+    topObserverRef.current?.disconnect();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            feedStateStore.saveTopPost(e.target.id.replace("post-", ""));
+            break;
+          }
+        }
+      },
+      { rootMargin: "0px 0px -80% 0px", threshold: 0 }
+    );
+    topObserverRef.current = obs;
+    for (const group of groupedPosts) {
+      const el = document.getElementById(`post-${group[0].id}`);
+      if (el) obs.observe(el);
+    }
+    return () => obs.disconnect();
+  }, [groupedPosts]);
 
   if (!isAuthenticated) return null;
 
