@@ -84,7 +84,7 @@ export default function OtherUserProfilePage() {
     apiGet<UserProfile>(`/users/getby_id/${userId}`)
       .then(setProfile)
       .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load this profile."));
-    apiGet<StatusPost[]>(`/status/public?authorId=${userId}&page=1&limit=50`)
+    apiGet<StatusPost[]>(`/status/public?authorId=${userId}`)
       .then((res) => { if (Array.isArray(res)) setPosts(res); })
       .catch(() => {});
   }, [isAuthenticated, userId]);

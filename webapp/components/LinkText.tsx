@@ -1,3 +1,7 @@
+"use client";
+
+import Link from "next/link";
+
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 const HASHTAG_REGEX = /(#[a-zA-Z0-9_]+)/g;
 const SPLIT_REGEX = /(https?:\/\/[^\s]+|#[a-zA-Z0-9_]+)/g;
@@ -15,7 +19,7 @@ export default function LinkText({ text }: { text: string }) {
               href={part}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline"
+              className="text-blue-500 hover:underline"
             >
               {part}
             </a>
@@ -23,13 +27,13 @@ export default function LinkText({ text }: { text: string }) {
         }
         if (part.match(HASHTAG_REGEX)) {
           return (
-            <a
+            <Link
               key={i}
-              href={`/feed?q=${encodeURIComponent(part)}`}
-              className="text-primary hover:underline"
+              href={`/feed?q=${encodeURIComponent(part.slice(1))}`}
+              className="text-blue-500 hover:underline"
             >
               {part}
-            </a>
+            </Link>
           );
         }
         return <span key={i}>{part}</span>;

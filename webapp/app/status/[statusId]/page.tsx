@@ -241,7 +241,7 @@ export default function StatusDetailPage() {
       `/status/${statusId}/preview`
     )
       .then(async (preview) => {
-        const feed = await apiGet<StatusPost[]>(`/status/public?authorId=${preview.ownerId}&page=1&limit=50`);
+        const feed = await apiGet<StatusPost[]>(`/status/public?authorId=${preview.ownerId}`);
         const found = Array.isArray(feed) ? feed.find((p) => p.id === statusId) : null;
         if (found) {
           setPost(found);

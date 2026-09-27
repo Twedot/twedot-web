@@ -220,7 +220,7 @@ function FeedContent() {
 
       <div className="flex flex-col">
         {groupedPosts.map((group, i) => (
-          <div key={group[0].id} id={`post-${group[0].id}`}>
+          <div key={group[0].id} id={`post-${group[0].id}`} style={{ scrollMarginTop: 60 }}>
             <PostCard items={group} compact={compact} />
             {vendors.length > 0 && i === VENDOR_ROW_POSITION - 1 && (
               <NearbyVendorsRow vendors={vendors} />
