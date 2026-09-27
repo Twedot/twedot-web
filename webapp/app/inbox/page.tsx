@@ -200,12 +200,14 @@ export default function InboxPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [items, setItems] = useState<NotificationFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   // Capture which IDs were unread at load time — don't change tint as markAllRead fires
   const [unreadAtLoad, setUnreadAtLoad] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const r = await apiGet<{ items: NotificationFeedItem[]; total: number }>(
         "/notifications?page=1&limit=50"
@@ -219,8 +221,8 @@ export default function InboxPage() {
       } else {
         setItems(fetched);
       }
-    } catch {
-      // leave items as empty — no silent swallow so we can debug later
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load notifications");
     } finally {
       setLoading(false);
     }
@@ -277,7 +279,18 @@ export default function InboxPage() {
       </div>
 
       {/* List */}
-      {loading ? (
+      {error ? (
+        <div className="flex flex-col items-center justify-center gap-3 pt-20 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+            <IoNotificationsOutline size={28} className="text-red-400" />
+          </div>
+          <p className="text-sm font-medium text-text">Couldn't load notifications</p>
+          <p className="px-8 text-xs text-red-400">{error}</p>
+          <button onClick={load} className="mt-1 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-white">
+            Retry
+          </button>
+        </div>
+      ) : loading ? (
         <div className="flex flex-col px-4 pt-2">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 py-2.5">
