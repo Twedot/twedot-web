@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Twedot — The Open Network for Businesses",
-  description: "Twedot — The Open Network for Businesses",
+  title: "Twedot — The Open Network",
+  description: "Twedot — The Open Network",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
