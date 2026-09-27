@@ -21,6 +21,11 @@
   --color-border: var(--border);
   --color-feed-bg: var(--feed-bg);
   --font-sans: var(--font-inter);
+  /* Shift weight scale one step lighter — Inter renders heavier on Windows */
+  --font-weight-medium: 400;
+  --font-weight-semibold: 500;
+  --font-weight-bold: 600;
+  --font-weight-extrabold: 700;
 }
 
 body {
