@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   IoHeart,
@@ -14,18 +14,17 @@ import {
   IoChevronForward,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 import LinkText from "./LinkText";
 import VideoPlayer from "./VideoPlayer";
 import RankBadge from "./RankBadge";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
+import { useJobSocket } from "@/lib/jobSocket";
 import { useBookmark } from "@/lib/bookmarks";
+import { postDetailStore } from "@/lib/postDetailStore";
 import type { StatusPost } from "@/lib/types";
 
-// Narrow (portrait) videos/images don't fill the card width, leaving bare white space
-// on either side — this fills that space with a blurred, darkened copy of the media
-// itself (thumbnail for video, the image for image posts) instead of plain background,
-// the same "blurred backdrop" pattern most apps use for letterboxed media.
 function MediaBackdrop({ bgSrc, children }: { bgSrc?: string | null; children: ReactNode }) {
   return (
     <div className="relative overflow-hidden rounded-md bg-zinc-900">
@@ -53,20 +52,73 @@ function timeAgo(iso: string) {
   return `${Math.floor(hours / 24)}d`;
 }
 
-// `items` holds every StatusPost sharing the same groupId (one deliberate multi-select
-// upload) — the mobile app's FullScreenStatusFeed treats these as a single swipeable
-// post rather than N separate feed entries, so the web feed groups them the same way
-// (see groupPosts in app/feed/page.tsx) and this renders them as one card with a
-// horizontally-swipeable media strip instead of duplicating the header/footer per item.
 export default function PostCard({ items, compact = false }: { items: StatusPost[]; compact?: boolean }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const head = items[0];
   const active = items[activeIndex] ?? head;
+
   const { user } = useAuth();
   const { notify } = useUi();
+  const router = useRouter();
+  const { socket } = useJobSocket();
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(active.id);
   const isOwnPost = user?.id === head.userId;
+
+  // Local like state so the button responds instantly without a feed refetch
+  const [isLiked, setIsLiked] = useState(active.isLiked ?? false);
+  const [likeCount, setLikeCount] = useState(active.likeCount ?? 0);
+
+  // Sync from prop when the active item changes (swiping multi-post groups)
+  useEffect(() => {
+    setIsLiked(active.isLiked ?? false);
+    setLikeCount(active.likeCount ?? 0);
+  }, [active.id, active.isLiked, active.likeCount]);
+
+  // Live like updates from others viewing the same post
+  useEffect(() => {
+    if (!socket) return;
+    const onUpdate = (data: { statusId: string; likeCount: number }) => {
+      if (data.statusId === active.id) setLikeCount(data.likeCount);
+    };
+    const onAck = (data: { statusId: string; liked: boolean; likeCount: number }) => {
+      if (data.statusId === active.id) {
+        setIsLiked(data.liked);
+        setLikeCount(data.likeCount);
+      }
+    };
+    socket.on("status_like_update", onUpdate);
+    socket.on("like_status_ack", onAck);
+    return () => {
+      socket.off("status_like_update", onUpdate);
+      socket.off("like_status_ack", onAck);
+    };
+  }, [socket, active.id]);
+
+  function handleLike(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!socket) return;
+    // Optimistic
+    const nowLiked = !isLiked;
+    setIsLiked(nowLiked);
+    setLikeCount((c) => c + (nowLiked ? 1 : -1));
+    socket.emit("like_status", { statusId: active.id, statusOwnerId: active.userId });
+  }
+
+  function openDetail(e?: React.MouseEvent) {
+    e?.stopPropagation();
+    postDetailStore.set(active);
+    router.push(`/status/${active.id}`);
+  }
+
+  function openProfile(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (user?.id === head.userId) {
+      router.push("/profile");
+    } else {
+      router.push(`/profile/${head.userId}`);
+    }
+  }
 
   function handleScroll() {
     const el = scrollRef.current;
@@ -83,48 +135,63 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
   }
 
   return (
-    <article className={`border-b border-border bg-white px-4 hover:bg-feed-bg ${compact ? "py-2.5" : "py-3.5"}`}>
+    <article className={`border-b border-border bg-white px-4 hover:bg-feed-bg/50 ${compact ? "py-2.5" : "py-3.5"}`}>
+      {/* ── Header: avatar + name → profile; rest is card actions ── */}
       <header className="mb-2 flex items-start gap-2">
-        {head.userPhoto ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={head.userPhoto} alt={head.userName} className="h-7 w-7 rounded-full object-cover" />
-        ) : (
-          <div className="h-7 w-7 rounded-full bg-zinc-300" />
-        )}
+        <button onClick={openProfile} className="flex-shrink-0">
+          {head.userPhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={head.userPhoto} alt={head.userName} className="h-8 w-8 rounded-full object-cover" />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-zinc-300" />
+          )}
+        </button>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="text-[11px] font-medium text-text">{head.userName}</span>
-            {head.userOccupation && (
-              <>
-                <span className="text-[11px] text-light-text">·</span>
-                <span className="truncate text-[11px] text-light-text">{head.userOccupation}</span>
-              </>
-            )}
-            <span className="text-[11px] text-light-text">· {timeAgo(head.createdAt)}</span>
-          </div>
-          <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible} className="mt-1" />
+          <button onClick={openProfile} className="text-left">
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[12px] font-semibold text-text">{head.userName}</span>
+              {head.userOccupation && (
+                <>
+                  <span className="text-[11px] text-light-text">·</span>
+                  <span className="truncate text-[11px] text-light-text">{head.userOccupation}</span>
+                </>
+              )}
+              <span className="text-[11px] text-light-text">· {timeAgo(head.createdAt)}</span>
+            </div>
+            <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible} className="mt-0.5" />
+          </button>
         </div>
         {!isOwnPost && (
           <button
-            onClick={(e) => e.stopPropagation()}
-            className="flex-shrink-0 rounded-full bg-primary/60 px-3 py-1 text-[11px] font-bold text-white hover:bg-primary/75"
+            onClick={(e) => { e.stopPropagation(); notify("Follow is coming soon"); }}
+            className="flex-shrink-0 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-bold text-primary hover:bg-primary/25"
           >
             Follow
           </button>
         )}
-        <button className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-light-text hover:bg-feed-bg">
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
+        >
           <IoEllipsisHorizontal size={18} />
         </button>
       </header>
 
+      {/* ── Caption / text body → clicking opens post detail ── */}
       {(active.caption || active.type === "text") && (
-        <p className="mb-2.5 ml-9 whitespace-pre-wrap text-[13px] font-medium leading-[18px] text-text">
-          <LinkText text={active.caption ?? active.content} />
-        </p>
+        <button
+          onClick={() => openDetail()}
+          className="mb-2.5 ml-10 block w-full text-left"
+        >
+          <p className="whitespace-pre-wrap text-[13px] font-medium leading-[18px] text-text">
+            <LinkText text={active.caption ?? active.content} />
+          </p>
+        </button>
       )}
 
+      {/* ── Single media item ── */}
       {!compact && items.length === 1 && (active.type === "image" || active.type === "video") && (
-        <div className="mb-2">
+        <button onClick={() => openDetail()} className="mb-2 block w-full">
           <MediaBackdrop bgSrc={active.type === "image" ? active.content : active.thumbnailUrl}>
             {active.type === "image" ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -133,9 +200,10 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
               <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} />
             )}
           </MediaBackdrop>
-        </div>
+        </button>
       )}
 
+      {/* ── Multi-media carousel ── */}
       {!compact && items.length > 1 && (
         <div className="relative mb-2">
           <div
@@ -159,7 +227,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
 
           {activeIndex > 0 && (
             <button
-              onClick={() => scrollToIndex(activeIndex - 1)}
+              onClick={(e) => { e.stopPropagation(); scrollToIndex(activeIndex - 1); }}
               className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
             >
               <IoChevronBack size={18} />
@@ -167,7 +235,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
           )}
           {activeIndex < items.length - 1 && (
             <button
-              onClick={() => scrollToIndex(activeIndex + 1)}
+              onClick={(e) => { e.stopPropagation(); scrollToIndex(activeIndex + 1); }}
               className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
             >
               <IoChevronForward size={18} />
@@ -185,23 +253,31 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         </div>
       )}
 
+      {/* ── Action row ── */}
       <footer className="flex items-center gap-2 pt-0.5">
+        {/* Like */}
         <button
-          className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 ${
-            active.isLiked ? "text-primary" : "text-text"
+          onClick={handleLike}
+          className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${
+            isLiked ? "text-red-500" : "text-text"
           }`}
         >
-          {active.isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
-          {active.likeCount}
+          {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
+          {likeCount}
         </button>
 
-        <button className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50">
+        {/* Comment → opens post detail */}
+        <button
+          onClick={() => openDetail()}
+          className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
+        >
           <IoChatbubbleEllipsesOutline size={18} />
           {active.commentCount}
         </button>
 
+        {/* Bookmark */}
         <button
-          onClick={toggleBookmark}
+          onClick={(e) => { e.stopPropagation(); toggleBookmark(); }}
           className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${
             isBookmarked ? "text-[#D4A400]" : "text-text"
           }`}
@@ -209,16 +285,21 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
           {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
         </button>
 
+        {/* Repost */}
         {!isOwnPost && (
           <button
-            onClick={() => notify("Repost is coming soon")}
+            onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }}
             className="flex items-center justify-center rounded-full bg-feed-bg p-1.5 text-text hover:bg-border/50"
           >
             <FaRetweet size={17} />
           </button>
         )}
 
-        <button className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50">
+        {/* Share */}
+        <button
+          onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }}
+          className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
+        >
           <IoShareOutline size={18} />
           Share
         </button>

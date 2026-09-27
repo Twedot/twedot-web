@@ -18,6 +18,7 @@ import {
 import { apiGet } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
 import RankBadge from "@/components/RankBadge";
+import { postDetailStore } from "@/lib/postDetailStore";
 
 interface UserResult {
   id: string;
@@ -200,7 +201,7 @@ function SearchPage() {
           {posts.length > 0 && (
             <Section label="Posts" onMore={() => switchTab("posts")}>
               <div className="grid grid-cols-3 gap-1.5">
-                {posts.slice(0, 6).map((p) => <StoryCard key={p.id} post={p} />)}
+                {posts.slice(0, 6).map((p) => <StoryCard key={p.id} post={p} onClick={() => { postDetailStore.set(p); router.push(`/status/${p.id}`); }} />)}
               </div>
             </Section>
           )}
@@ -209,7 +210,7 @@ function SearchPage() {
           {users.length > 0 && (
             <Section label="Profiles" onMore={() => switchTab("users")}>
               {users.slice(0, 4).map((u) => (
-                <UserRow key={u.id} user={u} onClick={() => router.push(`/profile?id=${u.id}`)} />
+                <UserRow key={u.id} user={u} onClick={() => router.push(`/profile/${u.id}`)} />
               ))}
             </Section>
           )}
@@ -261,7 +262,7 @@ function SearchPage() {
           {loadingPosts && posts.length === 0 && <Skeleton />}
           {!loadingPosts && posts.length === 0 && <EmptyState q={q} />}
           <div className="grid grid-cols-3 gap-1.5">
-            {posts.map((p) => <StoryCard key={p.id} post={p} />)}
+            {posts.map((p) => <StoryCard key={p.id} post={p} onClick={() => { postDetailStore.set(p); router.push(`/status/${p.id}`); }} />)}
           </div>
           {hasMorePosts && posts.length > 0 && (
             <button onClick={() => { const next = postPage + 1; setPostPage(next); fetchPosts(next); }}
@@ -280,7 +281,7 @@ function SearchPage() {
           {loadingUsers && users.length === 0 && <Skeleton />}
           {!loadingUsers && users.length === 0 && <EmptyState q={q} label="No users found" />}
           <div className="divide-y divide-border/40">
-            {users.map((u) => <UserRow key={u.id} user={u} large onClick={() => router.push(`/profile?id=${u.id}`)} />)}
+            {users.map((u) => <UserRow key={u.id} user={u} large onClick={() => router.push(`/profile/${u.id}`)} />)}
           </div>
           {!loadingUsers && users.length > 0 && <EndOfResults />}
         </>
@@ -328,27 +329,46 @@ function Section({ label, onMore, children }: { label: string; onMore: () => voi
   );
 }
 
-/* ─── Story card (mobile-style) ─── */
-function StoryCard({ post }: { post: StatusPost }) {
-  const hasMedia = !!post.thumbnailUrl;
+/* ─── Text-only post row — spans full grid width, no card ─── */
+function TextPostRow({ post, onClick }: { post: StatusPost; onClick?: () => void }) {
   return (
-    <div className="flex flex-col">
-      {/* Thumbnail / text card */}
+    <button onClick={onClick} className="col-span-full flex w-full items-start gap-3 border-b border-border/40 py-2.5 text-left last:border-0 hover:bg-feed-bg/50">
+      {post.userPhoto ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={post.userPhoto} alt="" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
+      ) : (
+        <div className="h-7 w-7 flex-shrink-0 rounded-full bg-feed-bg" />
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[11px] font-semibold text-text">{post.userName}</p>
+        <p className="truncate text-[12px] text-light-text">{post.content || post.caption}</p>
+        <div className="mt-0.5 flex items-center gap-2 text-[9px] text-light-text">
+          <span className="flex items-center gap-0.5"><IoHeartOutline size={9} />{fmt(post.likeCount)}</span>
+          <span className="flex items-center gap-0.5"><IoChatbubbleOutline size={9} />{fmt(post.commentCount)}</span>
+          <span className="flex items-center gap-0.5"><IoEyeOutline size={9} />{fmt(post.viewCount)}</span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/* ─── Story card (media posts only) ─── */
+function StoryCard({ post, onClick }: { post: StatusPost; onClick?: () => void }) {
+  // Text-only posts render as a flat row spanning the full grid width
+  if (post.type === "text" && !post.thumbnailUrl) {
+    return <TextPostRow post={post} onClick={onClick} />;
+  }
+
+  return (
+    <button onClick={onClick} className="flex flex-col w-full text-left">
       <div className="relative overflow-hidden rounded-xl bg-feed-bg" style={{ aspectRatio: "1/1" }}>
-        {hasMedia ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.thumbnailUrl!} alt={post.caption ?? ""} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 p-3">
-            <p className="line-clamp-6 text-center text-[12px] leading-[17px] text-text">{post.caption}</p>
-          </div>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={post.thumbnailUrl!} alt={post.caption ?? ""} className="h-full w-full object-cover" />
         {post.type === "video" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <IoPlayCircle size={26} className="text-white/90 drop-shadow-lg" />
           </div>
         )}
-        {/* User avatar pinned to top-left */}
         <div className="absolute top-2 left-2 flex items-center gap-1.5">
           {post.userPhoto ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -360,8 +380,6 @@ function StoryCard({ post }: { post: StatusPost }) {
           )}
         </div>
       </div>
-
-      {/* Caption + stats BELOW the card */}
       <div className="mt-1 px-0.5">
         <p className="truncate text-[10px] font-medium text-text">{post.userName}</p>
         {post.caption && (
@@ -373,7 +391,7 @@ function StoryCard({ post }: { post: StatusPost }) {
           <span className="flex items-center gap-0.5"><IoEyeOutline size={9} />{fmt(post.viewCount)}</span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 

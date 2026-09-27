@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
 import { useUi } from "@/lib/UiContext";
+import { postDetailStore } from "@/lib/postDetailStore";
 
 // Only "Privacy Policy & Terms of Service" links to a real page (the same URL the
 // login screen already links to) — Twedot doesn't have standalone pages for the rest
@@ -74,7 +75,7 @@ export default function TrendingPanel() {
           {posts.map((post) => (
             <li key={post.id}>
               <button
-                onClick={() => router.push("/feed")}
+                onClick={() => { postDetailStore.set(post); router.push(`/status/${post.id}`); }}
                 className="flex w-full items-start gap-2.5 px-4 py-3 text-left hover:bg-white"
               >
                 {post.userPhoto ? (
