@@ -104,18 +104,26 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
           </div>
           <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible} className="mt-1" />
         </div>
+        {!isOwnPost && (
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="flex-shrink-0 rounded-full border border-primary/40 px-3 py-1 text-[11px] font-bold text-primary hover:bg-primary/10"
+          >
+            Follow
+          </button>
+        )}
         <button className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-light-text hover:bg-feed-bg">
           <IoEllipsisHorizontal size={18} />
         </button>
       </header>
 
-      {active.caption && (
+      {(active.caption || active.type === "text") && (
         <p className="mb-2.5 ml-9 whitespace-pre-wrap text-[13px] font-medium leading-[18px] text-text">
-          <LinkText text={active.caption} />
+          <LinkText text={active.caption ?? active.content} />
         </p>
       )}
 
-      {!compact && items.length === 1 && (
+      {!compact && items.length === 1 && (active.type === "image" || active.type === "video") && (
         <div className="mb-2">
           <MediaBackdrop bgSrc={active.type === "image" ? active.content : active.thumbnailUrl}>
             {active.type === "image" ? (
@@ -135,7 +143,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
             onScroll={handleScroll}
             className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
           >
-            {items.map((it) => (
+            {items.filter((it) => it.type === "image" || it.type === "video").map((it) => (
               <div key={it.id} className="w-full flex-shrink-0 snap-center">
                 <MediaBackdrop bgSrc={it.type === "image" ? it.content : it.thumbnailUrl}>
                   {it.type === "image" ? (
