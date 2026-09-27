@@ -10,19 +10,14 @@ import type { NearbyVendor } from "@/lib/vendors";
 import PostCard from "@/components/PostCard";
 import NearbyVendorsRow from "@/components/NearbyVendorsRow";
 import { markFeedSeen } from "@/lib/unseenStories";
+import { feedStateStore } from "@/lib/feedStateStore";
 
 const PAGE_SIZE = 20;
-// Shown once per feed load, not repeated every N posts — "hardly seen," matching how
-// sparingly Reddit's own in-feed suggestion card appears.
 const VENDOR_ROW_POSITION = 3;
 
 type SortOption = "best" | "new" | "top";
 const SORT_LABELS: Record<SortOption, string> = { best: "Best", new: "New", top: "Top" };
 
-// Mirrors the mobile app's groupIntoPosts (FullScreenStatusFeed.tsx): items sharing a
-// groupId (one deliberate multi-select upload) collapse into a single swipeable post
-// instead of showing as separate feed entries. Grouping works regardless of the items'
-// positions in the list, so it stays correct even after client-side sorting.
 function groupPosts(items: StatusPost[]): StatusPost[][] {
   const groups = new Map<string, StatusPost[]>();
   for (const item of items) {
@@ -40,20 +35,40 @@ function FeedContent() {
   const router = useRouter();
   const query = useSearchParams().get("q") ?? "";
 
-  const [posts, setPosts] = useState<StatusPost[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const cached = feedStateStore.hasCache(query) ? feedStateStore.get() : null;
+
+  const [posts, setPosts] = useState<StatusPost[]>(cached?.posts ?? []);
+  const [page, setPage] = useState(cached?.page ?? 1);
+  const [hasMore, setHasMore] = useState(cached?.hasMore ?? true);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sort, setSort] = useState<SortOption>("best");
+  const [sort, setSort] = useState<SortOption>(cached?.sort ?? "best");
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [compact, setCompact] = useState(false);
   const [vendors, setVendors] = useState<NearbyVendor[]>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const restoredScroll = useRef(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
   }, [isLoading, isAuthenticated, router]);
+
+  // Restore scroll position once after cached posts are rendered
+  useEffect(() => {
+    if (restoredScroll.current || !cached || cached.scrollY === 0) return;
+    restoredScroll.current = true;
+    const y = cached.scrollY;
+    const t = setTimeout(() => window.scrollTo({ top: y, behavior: "instant" }), 50);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save scroll as user scrolls
+  useEffect(() => {
+    const onScroll = () => feedStateStore.saveScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const loadPage = useCallback(
     async (pageToLoad: number) => {
@@ -64,7 +79,11 @@ function FeedContent() {
           ? `/status/search?q=${encodeURIComponent(query)}&page=${pageToLoad}&limit=${PAGE_SIZE}`
           : `/status/public?page=${pageToLoad}&limit=${PAGE_SIZE}`;
         const data = await apiGet<StatusPost[]>(path);
-        setPosts((prev) => (pageToLoad === 1 ? data : [...prev, ...data]));
+        setPosts((prev) => {
+          const next = pageToLoad === 1 ? data : [...prev, ...data];
+          feedStateStore.save({ posts: next, page: pageToLoad, hasMore: data.length === PAGE_SIZE, query });
+          return next;
+        });
         setHasMore(data.length === PAGE_SIZE);
         setPage(pageToLoad);
       } catch (err) {
@@ -77,8 +96,8 @@ function FeedContent() {
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isAuthenticated) loadPage(1);
+    // Skip initial fetch if we have a valid cache for this query
+    if (isAuthenticated && !feedStateStore.hasCache(query)) loadPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, query]);
 
@@ -92,6 +111,11 @@ function FeedContent() {
       .then((result) => setVendors(result.slice(0, 12)))
       .catch(() => {});
   }, [isAuthenticated]);
+
+  // Save sort to store when it changes
+  useEffect(() => {
+    feedStateStore.save({ sort });
+  }, [sort]);
 
   useEffect(() => {
     const el = sentinelRef.current;
