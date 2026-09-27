@@ -36,6 +36,9 @@ interface Comment {
   userId: string;
   userName: string;
   userPhoto: string | null;
+  userOccupation?: string | null;
+  userGlobalActivityScore?: number;
+  userRankVisible?: boolean;
   content: string;
   parentCommentId: string | null;
   createdAt: string;
@@ -75,7 +78,7 @@ function autoGrow(el: HTMLTextAreaElement) {
   el.style.height = el.scrollHeight + "px";
 }
 
-// ── Comment item with agree/disagree ──
+// ── Comment item ──
 function CommentItem({
   comment,
   statusId,
@@ -91,18 +94,15 @@ function CommentItem({
 }) {
   function react(type: "agree" | "disagree") {
     if (!socket) return;
-    // Optimistic toggle
     let nextReaction: "agree" | "disagree" | null;
     let agreeDelta = 0;
     let disagreeDelta = 0;
 
     if (comment.myReaction === type) {
-      // removing same reaction
       nextReaction = null;
       if (type === "agree") agreeDelta = -1;
       else disagreeDelta = -1;
     } else {
-      // switching or adding
       if (comment.myReaction === "agree") agreeDelta = -1;
       if (comment.myReaction === "disagree") disagreeDelta = -1;
       nextReaction = type;
@@ -125,28 +125,37 @@ function CommentItem({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={comment.userPhoto} alt={comment.userName} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
       ) : (
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-          <IoPersonOutline size={16} className="text-primary" />
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200">
+          <IoPersonOutline size={16} className="text-zinc-500" />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
+        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
           <span className="text-[13px] font-semibold text-text">{comment.userName}</span>
+          {comment.userOccupation && (
+            <span className="text-[11px] text-light-text">{comment.userOccupation}</span>
+          )}
           <span className="text-[11px] text-light-text">{timeAgo(comment.createdAt)}</span>
         </div>
+        <RankBadge
+          activityScore={comment.userGlobalActivityScore ?? 0}
+          rankVisible={comment.userRankVisible !== false}
+          plain
+          className="mb-0.5"
+        />
         <p className="mt-0.5 text-[13px] leading-[19px] text-text">{comment.content}</p>
         <div className="mt-2 flex items-center gap-3">
-          {/* Agree */}
+          {/* Agree — green */}
           <button
             onClick={() => react("agree")}
             className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
-              comment.myReaction === "agree" ? "text-primary" : "text-light-text hover:text-text"
+              comment.myReaction === "agree" ? "text-green-500" : "text-light-text hover:text-text"
             }`}
           >
             {comment.myReaction === "agree" ? <IoThumbsUp size={13} /> : <IoThumbsUpOutline size={13} />}
             {comment.agreeCount > 0 && <span>{fmt(comment.agreeCount)}</span>}
           </button>
-          {/* Disagree */}
+          {/* Disagree — red */}
           <button
             onClick={() => react("disagree")}
             className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
@@ -159,7 +168,7 @@ function CommentItem({
           {/* Reply */}
           <button
             onClick={() => onReply(comment.userName, comment.id)}
-            className="flex items-center gap-1 text-[11px] font-medium text-light-text hover:text-primary"
+            className="flex items-center gap-1 text-[11px] font-medium text-light-text hover:text-text"
           >
             <IoArrowUndoOutline size={12} />
             Reply
@@ -187,6 +196,8 @@ export default function StatusDetailPage() {
   const [replyTo, setReplyTo] = useState<{ name: string; commentId: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [loadingPost, setLoadingPost] = useState(!post);
+  // Thread view: when set, shows single comment + its replies
+  const [threadCommentId, setThreadCommentId] = useState<string | null>(null);
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(statusId);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -294,11 +305,7 @@ export default function StatusDetailPage() {
       });
     };
 
-    const onCommentReacted = (data: {
-      commentId: string;
-      agreeCount: number;
-      disagreeCount: number;
-    }) => {
+    const onCommentReacted = (data: { commentId: string; agreeCount: number; disagreeCount: number }) => {
       setComments((prev) =>
         prev.map((c) =>
           c.id === data.commentId
@@ -361,7 +368,9 @@ export default function StatusDetailPage() {
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = { content: replyText.trim() };
-      if (replyTo) body.parentCommentId = replyTo.commentId;
+      // When in thread view, replies go under that comment; otherwise top-level
+      const parentId = replyTo?.commentId ?? (threadCommentId ?? undefined);
+      if (parentId) body.parentCommentId = parentId;
       const newComment = await apiPost<Comment>(`/status/${statusId}/comments`, body);
       if (newComment) {
         setComments((prev) => [...prev, newComment]);
@@ -377,11 +386,13 @@ export default function StatusDetailPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [replyText, submitting, replyTo, statusId, notify]);
+  }, [replyText, submitting, replyTo, threadCommentId, statusId, notify]);
 
   const startReply = useCallback((name: string, commentId: string) => {
+    // Open thread for the root comment when replying
+    setThreadCommentId(commentId);
     setReplyTo({ name, commentId });
-    inputRef.current?.focus();
+    setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
 
   useEffect(() => {
@@ -392,7 +403,7 @@ export default function StatusDetailPage() {
   if (loadingPost && !post) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
       </div>
     );
   }
@@ -408,142 +419,221 @@ export default function StatusDetailPage() {
   const isImage = post.type === "image";
   const isText = post.type === "text";
 
+  // In thread view: the root comment + all its replies (flat)
+  const threadComment = threadCommentId ? comments.find((c) => c.id === threadCommentId) ?? null : null;
+  const threadReplies = threadCommentId ? comments.filter((c) => c.parentCommentId === threadCommentId) : [];
+  // In main view: only top-level comments
+  const topLevelComments = comments.filter((c) => !c.parentCommentId);
+
   return (
     <div className="mx-auto max-w-2xl pb-20">
 
       {/* ── Back bar ── */}
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-white/90 px-4 py-3 backdrop-blur">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            if (threadCommentId) {
+              setThreadCommentId(null);
+              setReplyTo(null);
+            } else {
+              router.back();
+            }
+          }}
           className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-feed-bg"
         >
           <IoArrowBack size={20} className="text-text" />
         </button>
-        <span className="text-[15px] font-bold text-text">Post</span>
+        <span className="text-[15px] font-bold text-text">
+          {threadCommentId ? "Replies" : "Post"}
+        </span>
       </div>
 
       <div className="px-4 pt-4">
-        {/* ── Author header ── */}
-        <div className="flex items-start gap-3">
-          <button onClick={() => router.push(`/profile/${post.userId}`)} className="flex-shrink-0">
-            {post.userPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.userPhoto} alt={post.userName} className="h-11 w-11 rounded-full object-cover" />
+
+        {/* ── Thread view ── */}
+        {threadComment ? (
+          <>
+            {/* Root comment shown at top of thread */}
+            <div className="mb-1 rounded-2xl bg-feed-bg px-3">
+              <CommentItem
+                comment={threadComment}
+                statusId={statusId}
+                socket={socket}
+                onReply={() => {
+                  setReplyTo({ name: threadComment.userName, commentId: threadComment.id });
+                  setTimeout(() => inputRef.current?.focus(), 50);
+                }}
+                onReactionUpdate={handleCommentReaction}
+              />
+            </div>
+
+            {/* Replies (flat) */}
+            {threadReplies.length > 0 ? (
+              <div className="divide-y divide-border/40">
+                {threadReplies.map((reply) => (
+                  <CommentItem
+                    key={reply.id}
+                    comment={reply}
+                    statusId={statusId}
+                    socket={socket}
+                    onReply={(name) => {
+                      setReplyTo({ name, commentId: threadComment.id });
+                      setTimeout(() => inputRef.current?.focus(), 50);
+                    }}
+                    onReactionUpdate={handleCommentReaction}
+                  />
+                ))}
+              </div>
             ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
-                <IoPersonOutline size={22} className="text-primary" />
+              <p className="py-6 text-center text-[13px] text-light-text">No replies yet.</p>
+            )}
+          </>
+        ) : (
+          <>
+            {/* ── Author header ── */}
+            <div className="flex items-start gap-3">
+              <button onClick={() => router.push(`/profile/${post.userId}`)} className="flex-shrink-0">
+                {post.userPhoto ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={post.userPhoto} alt={post.userName} className="h-11 w-11 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-200">
+                    <IoPersonOutline size={22} className="text-zinc-500" />
+                  </div>
+                )}
+              </button>
+              <div className="min-w-0 flex-1">
+                <button onClick={() => router.push(`/profile/${post.userId}`)} className="text-left">
+                  <p className="text-[15px] font-bold leading-tight text-text">{post.userName}</p>
+                  {post.userOccupation && (
+                    <p className="text-[12px] text-light-text">{post.userOccupation}</p>
+                  )}
+                </button>
+                <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="mt-0.5" />
+              </div>
+            </div>
+
+            {/* ── Post content ── */}
+            <div className="mt-3">
+              {isText && (
+                <p className="text-[16px] leading-[24px] text-text">
+                  <LinkText text={post.content || post.caption || ""} />
+                </p>
+              )}
+              {(isImage || isVideo) && post.caption && (
+                <p className="mb-3 text-[16px] leading-[24px] text-text">
+                  <LinkText text={post.caption} />
+                </p>
+              )}
+              {isImage && (post.content || post.thumbnailUrl) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={post.content || post.thumbnailUrl!}
+                  alt={post.caption ?? ""}
+                  className="w-full rounded-2xl object-cover"
+                  style={{ maxHeight: 500 }}
+                />
+              )}
+              {isVideo && post.content && (
+                <div className="overflow-hidden rounded-2xl">
+                  <VideoPlayer src={post.content} poster={post.thumbnailUrl ?? undefined} />
+                </div>
+              )}
+            </div>
+
+            {/* ── PostCard-style action row ── */}
+            <footer className="mt-3 flex items-center gap-2 border-b border-border pb-2.5 pt-1">
+              <button
+                onClick={handleLike}
+                className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${
+                  isLiked ? "text-red-500" : "text-text"
+                }`}
+              >
+                {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
+                {likeCount}
+              </button>
+
+              <button
+                onClick={() => inputRef.current?.focus()}
+                className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
+              >
+                <IoChatbubbleEllipsesOutline size={18} />
+                {commentCount}
+              </button>
+
+              <button
+                onClick={toggleBookmark}
+                className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${
+                  isBookmarked ? "text-[#D4A400]" : "text-text"
+                }`}
+              >
+                {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
+              </button>
+
+              <button
+                onClick={() => notify("Repost is coming soon")}
+                className="flex items-center justify-center rounded-full bg-feed-bg p-1.5 text-text hover:bg-border/50"
+              >
+                <FaRetweet size={17} />
+              </button>
+
+              <button
+                onClick={() => notify("Share is coming soon")}
+                className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
+              >
+                <IoShareOutline size={18} />
+                Share
+              </button>
+            </footer>
+
+            {/* ── Date · Views ── */}
+            <div className="flex items-center gap-2 py-2.5 text-[12px] text-light-text">
+              <span>{formatDate(post.createdAt)}</span>
+              <span>·</span>
+              <span className="flex items-center gap-1">
+                <IoEyeOutline size={13} />
+                {fmt(post.viewCount)} views
+              </span>
+            </div>
+
+            {/* ── Top-level comments (flat, no nesting) ── */}
+            {topLevelComments.length > 0 ? (
+              <div className="divide-y divide-border/40">
+                {topLevelComments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    statusId={statusId}
+                    socket={socket}
+                    onReply={(name, id) => startReply(name, id)}
+                    onReactionUpdate={handleCommentReaction}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <IoChatbubbleEllipsesOutline size={30} className="text-light-text" />
+                <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
               </div>
             )}
-          </button>
-          <div className="min-w-0 flex-1">
-            <button onClick={() => router.push(`/profile/${post.userId}`)} className="text-left">
-              <p className="text-[15px] font-bold leading-tight text-text">{post.userName}</p>
-              {post.userOccupation && (
-                <p className="text-[12px] text-light-text">{post.userOccupation}</p>
-              )}
-            </button>
-            <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="mt-0.5" />
-          </div>
-        </div>
+          </>
+        )}
 
-        {/* ── Post content ── */}
-        <div className="mt-3">
-          {isText && (
-            <p className="text-[16px] leading-[24px] text-text">
-              <LinkText text={post.content || post.caption || ""} />
-            </p>
-          )}
-          {(isImage || isVideo) && post.caption && (
-            <p className="mb-3 text-[16px] leading-[24px] text-text">
-              <LinkText text={post.caption} />
-            </p>
-          )}
-          {isImage && (post.content || post.thumbnailUrl) && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={post.content || post.thumbnailUrl!}
-              alt={post.caption ?? ""}
-              className="w-full rounded-2xl object-cover"
-              style={{ maxHeight: 500 }}
-            />
-          )}
-          {isVideo && post.content && (
-            <div className="overflow-hidden rounded-2xl">
-              <VideoPlayer src={post.content} poster={post.thumbnailUrl ?? undefined} />
-            </div>
-          )}
-        </div>
-
-        {/* ── PostCard-style action row (story design) ── */}
-        <footer className="mt-3 flex items-center gap-2 border-b border-border pb-2.5 pt-1">
-          <button
-            onClick={handleLike}
-            className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${
-              isLiked ? "text-red-500" : "text-text"
-            }`}
-          >
-            {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
-            {likeCount}
-          </button>
-
-          <button
-            onClick={() => inputRef.current?.focus()}
-            className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
-          >
-            <IoChatbubbleEllipsesOutline size={18} />
-            {commentCount}
-          </button>
-
-          <button
-            onClick={toggleBookmark}
-            className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${
-              isBookmarked ? "text-[#D4A400]" : "text-text"
-            }`}
-          >
-            {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
-          </button>
-
-          <button
-            onClick={() => notify("Repost is coming soon")}
-            className="flex items-center justify-center rounded-full bg-feed-bg p-1.5 text-text hover:bg-border/50"
-          >
-            <FaRetweet size={17} />
-          </button>
-
-          <button
-            onClick={() => notify("Share is coming soon")}
-            className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
-          >
-            <IoShareOutline size={18} />
-            Share
-          </button>
-        </footer>
-
-        {/* ── Date · Views ── */}
-        <div className="flex items-center gap-2 py-2.5 text-[12px] text-light-text">
-          <span>{formatDate(post.createdAt)}</span>
-          <span>·</span>
-          <span className="flex items-center gap-1">
-            <IoEyeOutline size={13} />
-            {fmt(post.viewCount)} views
-          </span>
-        </div>
-
-        {/* ── Reply composer ── */}
-        <div className="flex gap-2.5 border-t border-border py-3">
+        {/* ── Reply composer — always at bottom ── */}
+        <div className="mt-4 flex items-start gap-2.5 border-t border-border pt-3">
           {user?.profile_photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
           ) : (
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <IoPersonOutline size={16} className="text-primary" />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200">
+              <IoPersonOutline size={16} className="text-zinc-500" />
             </div>
           )}
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="min-w-0 flex-1">
             {replyTo && (
-              <div className="flex items-center gap-1 text-[11px] text-primary">
+              <div className="mb-1 flex items-center gap-1 text-[11px] text-light-text">
                 <IoArrowUndoOutline size={11} />
-                <span>Replying to <strong>@{replyTo.name}</strong></span>
+                <span>Replying to <strong className="text-text">@{replyTo.name}</strong></span>
                 <button onClick={() => setReplyTo(null)} className="ml-auto text-light-text hover:text-text">✕</button>
               </div>
             )}
@@ -569,50 +659,12 @@ export default function StatusDetailPage() {
           <button
             onClick={handleSubmit}
             disabled={!replyText.trim() || submitting}
-            className="flex h-7 items-center self-end rounded-full bg-primary px-3.5 text-[12px] font-bold text-white disabled:opacity-40"
+            className="flex h-7 flex-shrink-0 items-center self-end rounded-full bg-zinc-800 px-3.5 text-[12px] font-bold text-white disabled:opacity-40"
           >
             {submitting ? "…" : "Reply"}
           </button>
         </div>
 
-        {/* ── Comments ── */}
-        {comments.length > 0 && (
-          <div className="divide-y divide-border/40">
-            {comments
-              .filter((c) => !c.parentCommentId)
-              .map((comment) => (
-                <div key={comment.id}>
-                  <CommentItem
-                    comment={comment}
-                    statusId={statusId}
-                    socket={socket}
-                    onReply={startReply}
-                    onReactionUpdate={handleCommentReaction}
-                  />
-                  {comments
-                    .filter((r) => r.parentCommentId === comment.id)
-                    .map((reply) => (
-                      <div key={reply.id} className="pl-11">
-                        <CommentItem
-                          comment={reply}
-                          statusId={statusId}
-                          socket={socket}
-                          onReply={startReply}
-                          onReactionUpdate={handleCommentReaction}
-                        />
-                      </div>
-                    ))}
-                </div>
-              ))}
-          </div>
-        )}
-
-        {comments.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-10 text-center">
-            <IoChatbubbleEllipsesOutline size={30} className="text-light-text" />
-            <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
-          </div>
-        )}
       </div>
     </div>
   );
