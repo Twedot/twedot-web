@@ -19,6 +19,7 @@ import {
   IoTrophyOutline,
 } from "react-icons/io5";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
 
 export type NotificationFeedType =
   | "status_liked"
@@ -196,29 +197,39 @@ function NotifRow({
 }
 
 export default function InboxPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [items, setItems] = useState<NotificationFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>("all");
   // Capture which IDs were unread at load time — don't change tint as markAllRead fires
   const [unreadAtLoad, setUnreadAtLoad] = useState<Set<string>>(new Set());
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true);
-    apiGet<{ items: NotificationFeedItem[]; total: number }>("/notifications?page=1&limit=50")
-      .then((r) => {
-        setItems(r.items);
-        setUnreadAtLoad(new Set(r.items.filter((i) => !i.is_read).map((i) => i.id)));
-        // Mark all read silently after loading
-        if (r.items.some((i) => !i.is_read)) {
-          apiPost("/notifications/read-all").catch(() => {});
-          setItems(r.items.map((i) => ({ ...i, is_read: true })));
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    try {
+      const r = await apiGet<{ items: NotificationFeedItem[]; total: number }>(
+        "/notifications?page=1&limit=50"
+      );
+      const fetched: NotificationFeedItem[] = Array.isArray(r?.items) ? r.items : [];
+      const unreadIds = new Set(fetched.filter((i) => !i.is_read).map((i) => i.id));
+      setUnreadAtLoad(unreadIds);
+      if (unreadIds.size > 0) {
+        apiPost("/notifications/read-all").catch(() => {});
+        setItems(fetched.map((i) => ({ ...i, is_read: true })));
+      } else {
+        setItems(fetched);
+      }
+    } catch {
+      // leave items as empty — no silent swallow so we can debug later
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) load();
+    else if (!authLoading && !isAuthenticated) setLoading(false);
+  }, [authLoading, isAuthenticated, load]);
 
   const handleDelete = (id: string) => {
     setItems((prev) => prev.filter((n) => n.id !== id));
