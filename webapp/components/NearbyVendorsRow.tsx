@@ -56,7 +56,7 @@ function VendorRow({
         onClick={onToggleFollow}
         className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
           isFollowing
-            ? "border border-border text-text hover:bg-feed-bg"
+            ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
             : "bg-primary/15 text-primary hover:bg-primary/25"
         }`}
       >
@@ -76,16 +76,28 @@ export default function NearbyVendorsRow({ vendors }: { vendors: NearbyVendor[] 
     e.stopPropagation();
     if (loadingFollowRef.current.has(vendorId)) return;
     loadingFollowRef.current.add(vendorId);
-    const following = followingIds.has(vendorId);
+    const wasFollowing = followingIds.has(vendorId);
+
+    // Optimistic update
+    setFollowingIds((s) => {
+      const n = new Set(s);
+      wasFollowing ? n.delete(vendorId) : n.add(vendorId);
+      return n;
+    });
+
     try {
-      if (following) {
+      if (wasFollowing) {
         await apiDelete(`/users/follow/${vendorId}`);
-        setFollowingIds((s) => { const n = new Set(s); n.delete(vendorId); return n; });
       } else {
         await apiPost(`/users/follow/${vendorId}`, {});
-        setFollowingIds((s) => new Set(s).add(vendorId));
       }
     } catch {
+      // Revert
+      setFollowingIds((s) => {
+        const n = new Set(s);
+        wasFollowing ? n.add(vendorId) : n.delete(vendorId);
+        return n;
+      });
       notify("Something went wrong. Please try again.");
     } finally {
       loadingFollowRef.current.delete(vendorId);

@@ -130,15 +130,19 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
     e.stopPropagation();
     if (followLoadingRef.current) return;
     followLoadingRef.current = true;
+
+    // Optimistic update
+    const wasFollowing = isFollowing;
+    setIsFollowing(!wasFollowing);
+
     try {
-      if (isFollowing) {
+      if (wasFollowing) {
         await apiDelete(`/users/follow/${head.userId}`);
-        setIsFollowing(false);
       } else {
         await apiPost(`/users/follow/${head.userId}`, {});
-        setIsFollowing(true);
       }
     } catch {
+      setIsFollowing(wasFollowing); // Revert
       notify("Something went wrong. Please try again.");
     } finally {
       followLoadingRef.current = false;
@@ -208,7 +212,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
             onClick={handleToggleFollow}
             className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
               isFollowing
-                ? "border border-border text-text hover:bg-feed-bg"
+                ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
                 : "bg-primary/15 text-primary hover:bg-primary/25"
             }`}
           >

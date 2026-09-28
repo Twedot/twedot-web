@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   IoLocationOutline,
@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { apiGet, apiPost, apiDelete, ApiError } from "@/lib/api";
+import { useJobSocket } from "@/lib/jobSocket";
 import RankBadge from "@/components/RankBadge";
 import type { UserProfile, StatusPost } from "@/lib/types";
 import { postDetailStore } from "@/lib/postDetailStore";
@@ -70,12 +71,13 @@ export default function OtherUserProfilePage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const { notify } = useUi();
+  const { socket } = useJobSocket();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<StatusPost[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
+  const followLoadingRef = useRef(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -91,25 +93,52 @@ export default function OtherUserProfilePage() {
       .catch(() => {});
   }, [isAuthenticated, userId]);
 
+  // Real-time follower count from socket
+  useEffect(() => {
+    if (!socket || !userId) return;
+    const handler = (data: { userId: string; follower_count: number }) => {
+      if (data.userId === userId) {
+        setProfile((p) => p ? { ...p, follower_count: data.follower_count } : p);
+      }
+    };
+    socket.on("follow_count_update", handler);
+    return () => { socket.off("follow_count_update", handler); };
+  }, [socket, userId]);
+
   const handleToggleFollow = useCallback(async () => {
-    if (followLoading) return;
-    setFollowLoading(true);
+    if (followLoadingRef.current) return;
+    followLoadingRef.current = true;
+
+    // Optimistic update
+    const wasFollowing = isFollowing;
+    setIsFollowing(!wasFollowing);
+    setProfile((p) => p ? {
+      ...p,
+      follower_count: wasFollowing
+        ? Math.max(0, (p.follower_count ?? 1) - 1)
+        : (p.follower_count ?? 0) + 1,
+    } : p);
+
     try {
-      if (isFollowing) {
+      if (wasFollowing) {
         await apiDelete(`/users/follow/${userId}`);
-        setIsFollowing(false);
-        setProfile((p) => p ? { ...p, follower_count: Math.max(0, (p.follower_count ?? 1) - 1) } : p);
       } else {
         await apiPost(`/users/follow/${userId}`, {});
-        setIsFollowing(true);
-        setProfile((p) => p ? { ...p, follower_count: (p.follower_count ?? 0) + 1 } : p);
       }
     } catch {
+      // Revert on error
+      setIsFollowing(wasFollowing);
+      setProfile((p) => p ? {
+        ...p,
+        follower_count: wasFollowing
+          ? (p.follower_count ?? 0) + 1
+          : Math.max(0, (p.follower_count ?? 1) - 1),
+      } : p);
       notify("Something went wrong. Please try again.");
     } finally {
-      setFollowLoading(false);
+      followLoadingRef.current = false;
     }
-  }, [followLoading, isFollowing, userId, notify]);
+  }, [isFollowing, userId, notify]);
 
   const handleShareProfile = useCallback(async () => {
     const url = `https://twedot.com/u/${userId}`;
@@ -223,9 +252,9 @@ export default function OtherUserProfilePage() {
         <button
           onClick={handleToggleFollow}
           disabled={followLoading}
-          className={`flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors disabled:opacity-60 ${
+          className={`flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
             isFollowing
-              ? "border border-border text-text hover:bg-feed-bg"
+              ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
               : "bg-primary text-white hover:bg-primary/90"
           }`}
         >

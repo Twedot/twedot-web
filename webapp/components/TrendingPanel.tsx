@@ -74,16 +74,28 @@ export default function TrendingPanel() {
   async function toggleFollow(userId: string) {
     if (loadingFollowRef.current.has(userId)) return;
     loadingFollowRef.current.add(userId);
-    const following = followingIds.has(userId);
+    const wasFollowing = followingIds.has(userId);
+
+    // Optimistic update
+    setFollowingIds((s) => {
+      const n = new Set(s);
+      wasFollowing ? n.delete(userId) : n.add(userId);
+      return n;
+    });
+
     try {
-      if (following) {
+      if (wasFollowing) {
         await apiDelete(`/users/follow/${userId}`);
-        setFollowingIds((s) => { const n = new Set(s); n.delete(userId); return n; });
       } else {
         await apiPost(`/users/follow/${userId}`, {});
-        setFollowingIds((s) => new Set(s).add(userId));
       }
     } catch {
+      // Revert
+      setFollowingIds((s) => {
+        const n = new Set(s);
+        wasFollowing ? n.add(userId) : n.delete(userId);
+        return n;
+      });
       notify("Something went wrong. Please try again.");
     } finally {
       loadingFollowRef.current.delete(userId);
@@ -170,7 +182,7 @@ export default function TrendingPanel() {
                     onClick={() => toggleFollow(u.id)}
                     className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
                       followingIds.has(u.id)
-                        ? "border border-border text-text hover:bg-feed-bg"
+                        ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
                         : "bg-primary/15 text-primary hover:bg-primary/25"
                     }`}
                   >
