@@ -27,6 +27,7 @@ interface SuggestedUser {
   occupation: string | null;
   global_activity_score: number;
   rank_visible: boolean;
+  is_following?: boolean;
 }
 
 function timeAgo(iso: string) {
@@ -63,7 +64,13 @@ export default function TrendingPanel() {
       .then((data) => setPosts(deduplicateByGroup(data).slice(0, 5)))
       .catch(() => {});
     apiGet<SuggestedUser[]>("/users/suggested")
-      .then((data) => { if (Array.isArray(data)) setUsers(data.slice(4, 8)); })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const slice = data.slice(4, 8);
+          setUsers(slice);
+          setFollowingIds(new Set(slice.filter((u) => u.is_following).map((u) => u.id)));
+        }
+      })
       .catch(() => {});
   }, []);
 

@@ -69,7 +69,9 @@ function VendorRow({
 export default function NearbyVendorsRow({ vendors }: { vendors: NearbyVendor[] }) {
   const router = useRouter();
   const { notify } = useUi();
-  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [followingIds, setFollowingIds] = useState<Set<string>>(
+    () => new Set(vendors.filter((v) => v.is_following).map((v) => v.id))
+  );
   const loadingFollowRef = useRef<Set<string>>(new Set());
 
   async function toggleFollow(e: React.MouseEvent, vendorId: string) {

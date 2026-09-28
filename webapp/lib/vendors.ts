@@ -9,6 +9,7 @@ export interface NearbyVendor {
   average_rating?: number | null;
   global_activity_score?: number;
   rank_visible?: boolean;
+  is_following?: boolean;
 }
 
 export interface VendorSearchResponse {

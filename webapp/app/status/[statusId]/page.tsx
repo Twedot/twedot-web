@@ -17,12 +17,14 @@ import {
   IoThumbsUp,
   IoThumbsDownOutline,
   IoThumbsDown,
+  IoChevronBack,
+  IoChevronForward,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { useJobSocket } from "@/lib/jobSocket";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { useBookmark } from "@/lib/bookmarks";
 import { postDetailStore } from "@/lib/postDetailStore";
 import RankBadge from "@/components/RankBadge";
@@ -94,6 +96,11 @@ function CommentItem({
   onReactionUpdate: (commentId: string, agreeCount: number, disagreeCount: number, myReaction: "agree" | "disagree" | null) => void;
   replyCount?: number;
 }) {
+  const commentRouter = useRouter();
+  const { user: authUser } = useAuth();
+  function goToProfile() {
+    commentRouter.push(comment.userId === authUser?.id ? "/profile" : `/profile/${comment.userId}`);
+  }
   function react(type: "agree" | "disagree") {
     if (!socket) return;
     let nextReaction: "agree" | "disagree" | null;
@@ -123,17 +130,19 @@ function CommentItem({
 
   return (
     <div className="flex gap-2.5 py-3">
-      {comment.userPhoto ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={comment.userPhoto} alt={comment.userName} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
-      ) : (
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200">
-          <IoPersonOutline size={16} className="text-zinc-500" />
-        </div>
-      )}
+      <button onClick={goToProfile} className="flex-shrink-0">
+        {comment.userPhoto ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={comment.userPhoto} alt={comment.userName} className="h-8 w-8 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-border/40">
+            <IoPersonOutline size={16} className="text-light-text" />
+          </div>
+        )}
+      </button>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
-          <span className="text-[13px] font-semibold text-text">{comment.userName}</span>
+          <button onClick={goToProfile} className="text-[13px] font-semibold text-text hover:underline">{comment.userName}</button>
           {comment.userOccupation && (
             <span className="text-[11px] text-light-text">{comment.userOccupation}</span>
           )}
@@ -198,6 +207,9 @@ export default function StatusDetailPage() {
   const { socket } = useJobSocket();
 
   const [post, setPost] = useState<StatusPost | null>(() => postDetailStore.get(statusId));
+  const [activeGroupIdx, setActiveGroupIdx] = useState(0);
+  const [isFollowingAuthor, setIsFollowingAuthor] = useState(() => postDetailStore.get(statusId)?.isFollowingAuthor ?? false);
+  const followLoadingRef = useRef(false);
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -377,6 +389,25 @@ export default function StatusDetailPage() {
     socket.emit("like_status", { statusId, statusOwnerId: post.userId });
   }, [socket, post, isLiked, statusId]);
 
+  const handleToggleFollow = useCallback(async () => {
+    if (!post || followLoadingRef.current) return;
+    followLoadingRef.current = true;
+    const was = isFollowingAuthor;
+    setIsFollowingAuthor(!was);
+    try {
+      if (was) {
+        await apiDelete(`/users/follow/${post.userId}`);
+      } else {
+        await apiPost(`/users/follow/${post.userId}`, {});
+      }
+    } catch {
+      setIsFollowingAuthor(was);
+      notify("Something went wrong. Please try again.");
+    } finally {
+      followLoadingRef.current = false;
+    }
+  }, [post, isFollowingAuthor, notify]);
+
   const handleCommentReaction = useCallback(
     (commentId: string, agreeCount: number, disagreeCount: number, myReaction: "agree" | "disagree" | null) => {
       setComments((prev) =>
@@ -439,8 +470,10 @@ export default function StatusDetailPage() {
     );
   }
 
-  const isVideo = post.type === "video";
-  const isImage = post.type === "image";
+  const groupItems = (post.groupId ? postDetailStore.getGroup(post.groupId) : null) ?? [post];
+  const activeItem = groupItems[activeGroupIdx] ?? post;
+  const isVideo = activeItem.type === "video";
+  const isImage = activeItem.type === "image";
   const isText = post.type === "text";
 
   // In thread view: the root comment + all its replies (flat)
@@ -453,7 +486,7 @@ export default function StatusDetailPage() {
     <div className="mx-auto max-w-2xl pb-20">
 
       {/* ── Back bar ── */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-white/90 px-4 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
         <button
           onClick={() => {
             if (threadCommentId) {
@@ -493,16 +526,17 @@ export default function StatusDetailPage() {
             </div>
 
             {/* Composer for replies */}
-            <div className="mt-3 flex items-start gap-2.5 border-b border-border pb-3">
+            <div className="mt-3 flex gap-2.5 border-b border-border pb-3">
               {user?.profile_photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
               ) : (
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200">
-                  <IoPersonOutline size={16} className="text-zinc-500" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
+                  <IoPersonOutline size={18} className="text-light-text" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
+                <p className="mb-0.5 text-[12px] font-semibold text-text">{user?.name ?? "You"}</p>
                 {replyTo && (
                   <div className="mb-1 flex items-center gap-1 text-[11px] text-light-text">
                     <IoArrowUndoOutline size={11} />
@@ -518,16 +552,18 @@ export default function StatusDetailPage() {
                   placeholder={`Reply to ${threadComment.userName}…`}
                   rows={1}
                   className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
-                  style={{ minHeight: 28 }}
+                  style={{ minHeight: 24 }}
                 />
+                <div className="mt-2 flex justify-end">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!replyText.trim() || submitting}
+                    className="flex h-7 items-center rounded-full bg-zinc-800 px-4 text-[12px] font-bold text-white disabled:opacity-40"
+                  >
+                    {submitting ? "…" : "Reply"}
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={handleSubmit}
-                disabled={!replyText.trim() || submitting}
-                className="flex h-7 flex-shrink-0 items-center self-end rounded-full bg-zinc-800 px-3.5 text-[12px] font-bold text-white disabled:opacity-40"
-              >
-                {submitting ? "…" : "Reply"}
-              </button>
             </div>
 
             {/* Replies (flat) */}
@@ -553,53 +589,105 @@ export default function StatusDetailPage() {
           </>
         ) : (
           <>
-            {/* ── Author header ── */}
-            <div className="flex items-start gap-3">
+            {/* ── Author header — matches PostCard layout ── */}
+            <div className="mb-2 flex items-start gap-2">
               <button onClick={() => router.push(`/profile/${post.userId}`)} className="flex-shrink-0">
                 {post.userPhoto ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={post.userPhoto} alt={post.userName} className="h-11 w-11 rounded-full object-cover" />
+                  <img src={post.userPhoto} alt={post.userName} className="h-8 w-8 rounded-full object-cover" />
                 ) : (
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-200">
-                    <IoPersonOutline size={22} className="text-zinc-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-border/40">
+                    <IoPersonOutline size={16} className="text-light-text" />
                   </div>
                 )}
               </button>
               <div className="min-w-0 flex-1">
                 <button onClick={() => router.push(`/profile/${post.userId}`)} className="text-left">
-                  <p className="text-[15px] font-bold leading-tight text-text">{post.userName}</p>
-                  {post.userOccupation && (
-                    <p className="text-[12px] text-light-text">{post.userOccupation}</p>
-                  )}
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="text-[13px] font-semibold text-text">{post.userName}</span>
+                    {post.userOccupation && (
+                      <>
+                        <span className="text-[11px] text-light-text">·</span>
+                        <span className="truncate text-[11px] text-light-text">{post.userOccupation}</span>
+                      </>
+                    )}
+                    <span className="text-[11px] text-light-text">· {timeAgo(post.createdAt)}</span>
+                  </div>
                 </button>
                 <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="mt-0.5" />
               </div>
+              {user?.id !== post.userId && (
+                <button
+                  onClick={handleToggleFollow}
+                  className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
+                    isFollowingAuthor
+                      ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
+                      : "bg-primary/15 text-primary hover:bg-primary/25"
+                  }`}
+                >
+                  {isFollowingAuthor ? "Following" : "Follow"}
+                </button>
+              )}
             </div>
 
-            {/* ── Post content ── */}
-            <div className="mt-3">
+            {/* ── Post content — caption indented like PostCard ── */}
+            <div>
               {isText && (
-                <p className="text-[16px] leading-[24px] text-text">
+                <p className="ml-10 whitespace-pre-wrap text-[14px] leading-[20px] text-text">
                   <LinkText text={post.content || post.caption || ""} />
                 </p>
               )}
-              {(isImage || isVideo) && post.caption && (
-                <p className="mb-3 text-[16px] leading-[24px] text-text">
+              {!isText && post.caption && (
+                <p className="mb-2.5 ml-10 whitespace-pre-wrap text-[13px] font-medium leading-[18px] text-text">
                   <LinkText text={post.caption} />
                 </p>
               )}
-              {isImage && (post.content || post.thumbnailUrl) && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={post.content || post.thumbnailUrl!}
-                  alt={post.caption ?? ""}
-                  className="w-full rounded-2xl object-cover"
-                  style={{ maxHeight: 500 }}
-                />
-              )}
-              {isVideo && post.content && (
-                <div className="overflow-hidden rounded-2xl">
-                  <VideoPlayer src={post.content} poster={post.thumbnailUrl ?? undefined} />
+              {!isText && (
+                <div className="relative overflow-hidden rounded-2xl bg-zinc-900">
+                  {/* Media */}
+                  {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={activeItem.content || activeItem.thumbnailUrl!}
+                      alt={post.caption ?? ""}
+                      className="w-full object-cover"
+                      style={{ maxHeight: 500 }}
+                    />
+                  )}
+                  {isVideo && activeItem.content && (
+                    <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                  )}
+                  {/* Chevron navigation — only for group posts */}
+                  {groupItems.length > 1 && (
+                    <>
+                      {activeGroupIdx > 0 && (
+                        <button
+                          onClick={() => setActiveGroupIdx((i) => i - 1)}
+                          className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                        >
+                          <IoChevronBack size={20} />
+                        </button>
+                      )}
+                      {activeGroupIdx < groupItems.length - 1 && (
+                        <button
+                          onClick={() => setActiveGroupIdx((i) => i + 1)}
+                          className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                        >
+                          <IoChevronForward size={20} />
+                        </button>
+                      )}
+                      {/* Dot indicators */}
+                      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5">
+                        {groupItems.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setActiveGroupIdx(i)}
+                            className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeGroupIdx ? "bg-white" : "bg-white/40"}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -650,26 +738,27 @@ export default function StatusDetailPage() {
             </footer>
 
             {/* ── Date · Views ── */}
-            <div className="flex items-center gap-2 py-2.5 text-[12px] text-light-text">
+            <div className="flex items-center gap-2 py-2 text-[11px] text-light-text">
               <span>{formatDate(post.createdAt)}</span>
               <span>·</span>
               <span className="flex items-center gap-1">
-                <IoEyeOutline size={13} />
+                <IoEyeOutline size={12} />
                 {fmt(post.viewCount)} views
               </span>
             </div>
 
-            {/* ── Composer: below post, above comments ── */}
-            <div className="flex items-start gap-2.5 border-b border-t border-border py-3">
+            {/* ── Composer: avatar + name + textarea (matches create-post style) ── */}
+            <div className="flex gap-2.5 border-b border-t border-border py-3">
               {user?.profile_photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
               ) : (
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-200">
-                  <IoPersonOutline size={16} className="text-zinc-500" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
+                  <IoPersonOutline size={18} className="text-light-text" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
+                <p className="mb-0.5 text-[12px] font-semibold text-text">{user?.name ?? "You"}</p>
                 <textarea
                   ref={inputRef}
                   value={replyText}
@@ -678,16 +767,18 @@ export default function StatusDetailPage() {
                   placeholder="Write a comment…"
                   rows={1}
                   className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
-                  style={{ minHeight: 28 }}
+                  style={{ minHeight: 24 }}
                 />
+                <div className="mt-2 flex justify-end">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!replyText.trim() || submitting}
+                    className="flex h-7 items-center rounded-full bg-zinc-800 px-4 text-[12px] font-bold text-white disabled:opacity-40"
+                  >
+                    {submitting ? "…" : "Post"}
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={handleSubmit}
-                disabled={!replyText.trim() || submitting}
-                className="flex h-7 flex-shrink-0 items-center self-end rounded-full bg-zinc-800 px-3.5 text-[12px] font-bold text-white disabled:opacity-40"
-              >
-                {submitting ? "…" : "Reply"}
-              </button>
             </div>
 
             {/* ── Top-level comments (flat, no nesting) ── */}

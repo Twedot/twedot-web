@@ -66,8 +66,9 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(active.id);
   const isOwnPost = user?.id === head.userId;
 
-  // Follow state for the post's author
-  const [isFollowing, setIsFollowing] = useState(false);
+  // Follow state for the post's author — seeded from the feed response so it
+  // survives a page refresh without showing "Follow" for accounts we already follow.
+  const [isFollowing, setIsFollowing] = useState(head.isFollowingAuthor ?? false);
   const followLoadingRef = useRef(false);
 
   // Local like state so the button responds instantly without a feed refetch

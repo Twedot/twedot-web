@@ -66,4 +66,5 @@ export interface StatusPost {
   // Added to the backend response alongside this (status.service.ts's formatStatus) —
   // not live until that change is deployed, so this will read undefined until then.
   userOccupation?: string | null;
+  isFollowingAuthor?: boolean;
 }
