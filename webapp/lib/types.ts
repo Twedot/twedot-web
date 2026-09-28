@@ -21,6 +21,9 @@ export interface UserProfile {
   opening_time?: string | null;
   closing_time?: string | null;
   working_days?: string | null;
+  follower_count?: number;
+  following_count?: number;
+  is_following?: boolean;
   [key: string]: unknown;
 }
 

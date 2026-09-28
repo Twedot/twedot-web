@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import {
   IoHeart,
@@ -21,6 +21,7 @@ import RankBadge from "./RankBadge";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { useJobSocket } from "@/lib/jobSocket";
+import { apiPost, apiDelete } from "@/lib/api";
 import { useBookmark } from "@/lib/bookmarks";
 import { postDetailStore } from "@/lib/postDetailStore";
 import type { StatusPost } from "@/lib/types";
@@ -65,6 +66,10 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(active.id);
   const isOwnPost = user?.id === head.userId;
 
+  // Follow state for the post's author
+  const [isFollowing, setIsFollowing] = useState(false);
+  const followLoadingRef = useRef(false);
+
   // Local like state so the button responds instantly without a feed refetch
   const [isLiked, setIsLiked] = useState(active.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(active.likeCount ?? 0);
@@ -107,8 +112,9 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
 
   function openDetail(e?: React.MouseEvent) {
     e?.stopPropagation();
+    if (items.length > 1) postDetailStore.setGroup(items);
     postDetailStore.set(active);
-    router.push(`/status/${active.id}`);
+    router.push(`/status/${items[0].id}`);
   }
 
   function openProfile(e: React.MouseEvent) {
@@ -119,6 +125,25 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
       router.push(`/profile/${head.userId}`);
     }
   }
+
+  const handleToggleFollow = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (followLoadingRef.current) return;
+    followLoadingRef.current = true;
+    try {
+      if (isFollowing) {
+        await apiDelete(`/users/follow/${head.userId}`);
+        setIsFollowing(false);
+      } else {
+        await apiPost(`/users/follow/${head.userId}`, {});
+        setIsFollowing(true);
+      }
+    } catch {
+      notify("Something went wrong. Please try again.");
+    } finally {
+      followLoadingRef.current = false;
+    }
+  }, [isFollowing, head.userId, notify]);
 
   function handleScroll() {
     const el = scrollRef.current;
@@ -134,8 +159,25 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
     setActiveIndex(idx);
   }
 
+  // Tap vs swipe detection for carousel items
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  function onCarouselPointerDown(e: React.PointerEvent) {
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+  }
+  function onCarouselPointerUp(e: React.PointerEvent, it: StatusPost) {
+    if (!pointerStart.current) return;
+    const dx = Math.abs(e.clientX - pointerStart.current.x);
+    const dy = Math.abs(e.clientY - pointerStart.current.y);
+    pointerStart.current = null;
+    if (dx < 8 && dy < 8) {
+      postDetailStore.setGroup(items);
+      postDetailStore.set(it);
+      router.push(`/status/${items[0].id}`);
+    }
+  }
+
   return (
-    <article className={`border-b border-border bg-white px-4 hover:bg-feed-bg/50 ${compact ? "py-2.5" : "py-3.5"}`}>
+    <article className={`border-b border-border bg-background px-4 hover:bg-feed-bg/50 ${compact ? "py-2.5" : "py-3.5"}`}>
       {/* ── Header: avatar + name → profile; rest is card actions ── */}
       <header className="mb-2 flex items-start gap-2">
         <button onClick={openProfile} className="flex-shrink-0">
@@ -163,10 +205,14 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         </div>
         {!isOwnPost && (
           <button
-            onClick={(e) => { e.stopPropagation(); notify("Follow is coming soon"); }}
-            className="flex-shrink-0 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-bold text-primary hover:bg-primary/25"
+            onClick={handleToggleFollow}
+            className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
+              isFollowing
+                ? "border border-border text-text hover:bg-feed-bg"
+                : "bg-primary/15 text-primary hover:bg-primary/25"
+            }`}
           >
-            Follow
+            {isFollowing ? "Following" : "Follow"}
           </button>
         )}
         <button
@@ -212,7 +258,12 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
             className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
           >
             {items.filter((it) => it.type === "image" || it.type === "video").map((it) => (
-              <div key={it.id} className="w-full flex-shrink-0 snap-center">
+              <div
+                key={it.id}
+                className="w-full flex-shrink-0 snap-center"
+                onPointerDown={onCarouselPointerDown}
+                onPointerUp={(e) => onCarouselPointerUp(e, it)}
+              >
                 <MediaBackdrop bgSrc={it.type === "image" ? it.content : it.thumbnailUrl}>
                   {it.type === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element

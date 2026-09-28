@@ -1,11 +1,24 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IoPersonOutline } from "react-icons/io5";
 import RankBadge from "./RankBadge";
+import { apiPost, apiDelete } from "@/lib/api";
+import { useUi } from "@/lib/UiContext";
 import type { NearbyVendor } from "@/lib/vendors";
 
-function VendorRow({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => void }) {
+function VendorRow({
+  vendor,
+  onPress,
+  isFollowing,
+  onToggleFollow,
+}: {
+  vendor: NearbyVendor;
+  onPress: () => void;
+  isFollowing: boolean;
+  onToggleFollow: (e: React.MouseEvent) => void;
+}) {
   return (
     <div className="flex items-center gap-3 py-3">
       {/* Avatar */}
@@ -40,10 +53,14 @@ function VendorRow({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => v
 
       {/* Follow button */}
       <button
-        onClick={(e) => { e.stopPropagation(); }}
-        className="flex-shrink-0 rounded-full bg-primary/60 px-4 py-1.5 text-[12px] font-bold text-white hover:bg-primary/75"
+        onClick={onToggleFollow}
+        className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
+          isFollowing
+            ? "border border-border text-text hover:bg-feed-bg"
+            : "bg-primary/15 text-primary hover:bg-primary/25"
+        }`}
       >
-        Follow
+        {isFollowing ? "Following" : "Follow"}
       </button>
     </div>
   );
@@ -51,18 +68,43 @@ function VendorRow({ vendor, onPress }: { vendor: NearbyVendor; onPress: () => v
 
 export default function NearbyVendorsRow({ vendors }: { vendors: NearbyVendor[] }) {
   const router = useRouter();
+  const { notify } = useUi();
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const loadingFollowRef = useRef<Set<string>>(new Set());
+
+  async function toggleFollow(e: React.MouseEvent, vendorId: string) {
+    e.stopPropagation();
+    if (loadingFollowRef.current.has(vendorId)) return;
+    loadingFollowRef.current.add(vendorId);
+    const following = followingIds.has(vendorId);
+    try {
+      if (following) {
+        await apiDelete(`/users/follow/${vendorId}`);
+        setFollowingIds((s) => { const n = new Set(s); n.delete(vendorId); return n; });
+      } else {
+        await apiPost(`/users/follow/${vendorId}`, {});
+        setFollowingIds((s) => new Set(s).add(vendorId));
+      }
+    } catch {
+      notify("Something went wrong. Please try again.");
+    } finally {
+      loadingFollowRef.current.delete(vendorId);
+    }
+  }
 
   if (vendors.length === 0) return null;
 
   return (
-    <div className="border-b border-border px-4 py-2">
+    <div className="px-4 py-2">
       <h3 className="pb-1 pt-2 text-[17px] font-extrabold text-text">Who to follow</h3>
-      <div className="flex flex-col divide-y divide-border/40">
+      <div className="flex flex-col">
         {vendors.slice(0, 4).map((v) => (
           <VendorRow
             key={v.id}
             vendor={v}
             onPress={() => router.push(`/profile/${v.id}`)}
+            isFollowing={followingIds.has(v.id)}
+            onToggleFollow={(e) => toggleFollow(e, v.id)}
           />
         ))}
       </div>

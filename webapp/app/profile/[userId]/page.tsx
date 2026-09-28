@@ -18,7 +18,7 @@ import {
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
-import { apiGet, ApiError } from "@/lib/api";
+import { apiGet, apiPost, apiDelete, ApiError } from "@/lib/api";
 import RankBadge from "@/components/RankBadge";
 import type { UserProfile, StatusPost } from "@/lib/types";
 import { postDetailStore } from "@/lib/postDetailStore";
@@ -74,6 +74,8 @@ export default function OtherUserProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<StatusPost[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -82,12 +84,32 @@ export default function OtherUserProfilePage() {
   useEffect(() => {
     if (!isAuthenticated || !userId) return;
     apiGet<UserProfile>(`/users/getby_id/${userId}`)
-      .then(setProfile)
+      .then((p) => { setProfile(p); setIsFollowing(p.is_following ?? false); })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load this profile."));
     apiGet<StatusPost[]>(`/status/public?authorId=${userId}`)
       .then((res) => { if (Array.isArray(res)) setPosts(res); })
       .catch(() => {});
   }, [isAuthenticated, userId]);
+
+  const handleToggleFollow = useCallback(async () => {
+    if (followLoading) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await apiDelete(`/users/follow/${userId}`);
+        setIsFollowing(false);
+        setProfile((p) => p ? { ...p, follower_count: Math.max(0, (p.follower_count ?? 1) - 1) } : p);
+      } else {
+        await apiPost(`/users/follow/${userId}`, {});
+        setIsFollowing(true);
+        setProfile((p) => p ? { ...p, follower_count: (p.follower_count ?? 0) + 1 } : p);
+      }
+    } catch {
+      notify("Something went wrong. Please try again.");
+    } finally {
+      setFollowLoading(false);
+    }
+  }, [followLoading, isFollowing, userId, notify]);
 
   const handleShareProfile = useCallback(async () => {
     const url = `https://twedot.com/u/${userId}`;
@@ -129,28 +151,24 @@ export default function OtherUserProfilePage() {
             <img
               src={profile.profile_photo_url}
               alt={profile.name ?? ""}
-              className="h-[100px] w-[100px] rounded-full object-cover ring-2 ring-border"
+              className="h-[68px] w-[68px] rounded-full object-cover ring-2 ring-border"
             />
           ) : (
-            <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-primary/10 ring-2 ring-border">
-              <IoPersonOutline size={44} className="text-primary" />
+            <div className="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-primary/10 ring-2 ring-border">
+              <IoPersonOutline size={30} className="text-primary" />
             </div>
           )}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-[20px] font-bold leading-tight text-text">
+            <h2 className="text-[15px] font-bold leading-tight text-text">
               {profile.name ?? "Unnamed"}
             </h2>
-            <span className="ml-auto flex items-center gap-1 text-[12px] font-semibold text-light-text">
-              <IoEyeOutline size={14} />
-              {fmt(profile.profile_view_count ?? 0)}
-            </span>
           </div>
 
           {profile.occupation && (
-            <p className="text-[14px] text-light-text">{profile.occupation}</p>
+            <p className="text-[12px] text-light-text">{profile.occupation}</p>
           )}
 
           <RankBadge
@@ -190,8 +208,8 @@ export default function OtherUserProfilePage() {
 
       {/* ── Stats row ── */}
       <div className="mx-6 flex">
-        <StatCell value="0" label="Followers" />
-        <StatCell value="0" label="Following" />
+        <StatCell value={fmt(profile.follower_count ?? 0)} label="Followers" />
+        <StatCell value={fmt(profile.following_count ?? 0)} label="Following" />
         <StatCell value={fmt(likesCount)} label="Likes" />
       </div>
 
@@ -203,23 +221,28 @@ export default function OtherUserProfilePage() {
       {/* ── Action buttons ── */}
       <div className="mx-6 mt-4 flex gap-2">
         <button
-          onClick={() => notify("Follow is coming soon")}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-[13px] font-bold text-white hover:bg-primary/90"
+          onClick={handleToggleFollow}
+          disabled={followLoading}
+          className={`flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors disabled:opacity-60 ${
+            isFollowing
+              ? "border border-border text-text hover:bg-feed-bg"
+              : "bg-primary text-white hover:bg-primary/90"
+          }`}
         >
-          <IoPersonAddOutline size={15} />
-          Follow
+          <IoPersonAddOutline size={13} />
+          {isFollowing ? "Following" : "Follow"}
         </button>
         <button
           onClick={() => router.push(`/inbox?userId=${userId}`)}
-          className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2.5 text-[13px] font-semibold text-text hover:bg-feed-bg"
+          className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
         >
           Message
         </button>
         <button
           onClick={handleShareProfile}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-border text-text hover:bg-feed-bg"
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border text-text hover:bg-feed-bg"
         >
-          <IoShareSocialOutline size={17} />
+          <IoShareSocialOutline size={14} />
         </button>
       </div>
 
@@ -260,8 +283,8 @@ export default function OtherUserProfilePage() {
 function StatCell({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-0.5 py-1">
-      <span className="text-[22px] font-bold leading-tight text-text">{value}</span>
-      <span className="text-[11px] text-light-text">{label}</span>
+      <span className="text-[16px] font-bold leading-tight text-text">{value}</span>
+      <span className="text-[10px] text-light-text">{label}</span>
     </div>
   );
 }

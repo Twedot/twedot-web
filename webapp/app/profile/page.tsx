@@ -177,25 +177,25 @@ export default function ProfilePage() {
             <img
               src={user.profile_photo_url}
               alt={user.name ?? ""}
-              className="h-[100px] w-[100px] rounded-full object-cover ring-2 ring-border"
+              className="h-[68px] w-[68px] rounded-full object-cover ring-2 ring-border"
             />
           ) : (
-            <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-primary/10 ring-2 ring-border">
-              <IoPersonOutline size={44} className="text-primary" />
+            <div className="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-primary/10 ring-2 ring-border">
+              <IoPersonOutline size={30} className="text-primary" />
             </div>
           )}
           <button
             onClick={() => notify("Update your profile in the Twedot app")}
-            className="absolute bottom-0.5 right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-primary shadow"
+            className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-primary shadow"
           >
-            <IoPencilOutline size={12} className="text-white" />
+            <IoPencilOutline size={9} className="text-white" />
           </button>
         </div>
 
         {/* Info column */}
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-[20px] font-bold leading-tight text-text">
+            <h2 className="text-[15px] font-bold leading-tight text-text">
               {user.name ?? "No name set"}
             </h2>
             {/* eye + views */}
@@ -206,7 +206,7 @@ export default function ProfilePage() {
           </div>
 
           {user.occupation && (
-            <p className="text-[14px] text-light-text">{user.occupation}</p>
+            <p className="text-[12px] text-light-text">{user.occupation}</p>
           )}
 
           <RankBadge
@@ -247,8 +247,8 @@ export default function ProfilePage() {
 
       {/* ── Stats row ── */}
       <div className="mx-6 flex">
-        <StatCell value="0" label="Followers" />
-        <StatCell value="0" label="Following" />
+        <StatCell value={fmt((user as any)?.follower_count ?? 0)} label="Followers" />
+        <StatCell value={fmt((user as any)?.following_count ?? 0)} label="Following" />
         <StatCell value={fmt(likesCount)} label="Likes" />
       </div>
 
@@ -261,23 +261,23 @@ export default function ProfilePage() {
       <div className="mx-6 mt-4 flex gap-2">
         <button
           onClick={() => router.push("/settings/profile")}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-[13px] font-bold text-white hover:bg-primary/90"
+          className="flex items-center gap-1 rounded-full bg-primary px-3.5 py-1.5 text-[12px] font-semibold text-white hover:bg-primary/90"
         >
-          <IoCreateOutline size={15} />
+          <IoCreateOutline size={13} />
           Edit profile
         </button>
         <button
           onClick={handleShareProfile}
-          className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2.5 text-[13px] font-semibold text-text hover:bg-feed-bg"
+          className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
         >
-          <IoShareSocialOutline size={15} />
+          <IoShareSocialOutline size={13} />
           Share
         </button>
         <button
           onClick={() => notify("Invite a friend is coming soon")}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-border text-text hover:bg-feed-bg"
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border text-text hover:bg-feed-bg"
         >
-          <IoPersonAddOutline size={17} />
+          <IoPersonAddOutline size={14} />
         </button>
       </div>
 
@@ -410,8 +410,8 @@ export default function ProfilePage() {
 function StatCell({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-0.5 py-1">
-      <span className="text-[22px] font-bold leading-tight text-text">{value}</span>
-      <span className="text-[11px] text-light-text">{label}</span>
+      <span className="text-[16px] font-bold leading-tight text-text">{value}</span>
+      <span className="text-[10px] text-light-text">{label}</span>
     </div>
   );
 }

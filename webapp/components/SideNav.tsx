@@ -15,22 +15,37 @@ import {
   IoNotificationsOutline,
   IoChatbubble,
   IoChatbubbleOutline,
+  IoWalletOutline,
+  IoStatsChartOutline,
+  IoPersonAddOutline,
+  IoHelpCircleOutline,
+  IoStarOutline,
+  IoTimeOutline,
+  IoMegaphoneOutline,
+  IoSettings,
+  IoSettingsOutline,
+  IoAddOutline,
+  IoCartOutline,
+  IoBriefcaseOutline,
+  IoHardwareChipOutline,
 } from "react-icons/io5";
 import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { useHasUnseenStories } from "@/lib/unseenStories";
+import { useJobSocket } from "@/lib/jobSocket";
 
 const mainItems = [
   { href: "/feed", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
   { href: "/nearby", label: "Nearby", icon: IoLocationOutline, activeIcon: IoLocation },
   { label: "Chats", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
-  { href: "/inbox", label: "Inbox", icon: IoNotificationsOutline, activeIcon: IoNotifications },
+  { href: "/job-request", label: "Job Request", icon: IoNotificationsOutline, activeIcon: IoNotifications },
 ];
 
-const games = [
-  { label: "Auto Forge", color: "bg-orange-400" },
-  { label: "Guess Moby's Game", color: "bg-sky-400" },
+const PLUGIN_ITEMS = [
+  { type: "ecommerce", label: "E-commerce Plugin", icon: IoCartOutline, color: "bg-emerald-500", desc: "Connect your online store" },
+  { type: "service", label: "Service Plugin", icon: IoBriefcaseOutline, color: "bg-blue-500", desc: "Connect your services" },
+  { type: "ai_agent", label: "AI Agent Plugin", icon: IoHardwareChipOutline, color: "bg-purple-500", desc: "Connect your AI agent" },
 ];
 
 const activeChannels = [
@@ -47,15 +62,17 @@ export default function SideNav() {
   const { logout } = useAuth();
   const { sidebarCollapsed, toggleSidebar, notify } = useUi();
   const hasUnseenStories = useHasUnseenStories();
+  const { badgeCount: jobBadge } = useJobSocket();
   const [gamesOpen, setGamesOpen] = useState(true);
   const [feedsOpen, setFeedsOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(true);
 
   const width = sidebarCollapsed ? "w-[68px]" : "w-[280px]";
 
   return (
     <div className="sticky top-14 hidden flex-shrink-0 lg:block">
       <nav
-        className={`no-scrollbar sticky top-14 h-[calc(100vh-3.5rem)] ${width} flex flex-col gap-0 overflow-y-auto border-r border-border bg-white p-0 transition-[width] duration-150`}
+        className={`no-scrollbar sticky top-14 h-[calc(100vh-3.5rem)] ${width} flex flex-col gap-0 overflow-y-auto border-r border-border bg-background p-0 transition-[width] duration-150`}
       >
         {/* centered wrapper — equal left/right margin so items sit in the middle of the column */}
         <div className={`mx-auto flex flex-1 flex-col gap-0 pb-3 pt-4 ${sidebarCollapsed ? "w-full px-1" : "w-[85%]"}`}>
@@ -72,6 +89,14 @@ export default function SideNav() {
                 <Icon size={19} className={active ? "text-text" : "text-light-text"} />
                 {item.label === "Stories" && hasUnseenStories && !active && (
                   <span className="absolute -right-0.5 -top-0.5 h-[10px] w-[10px] rounded-full border-2 border-white bg-[#FF3B30]" />
+                )}
+                {item.label === "Job Request" && jobBadge === 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 h-[11px] w-[11px] rounded-full border-2 border-white bg-[#FF3B30]" />
+                )}
+                {item.label === "Job Request" && jobBadge > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full border-2 border-white bg-[#FF3B30] px-[3px] text-[9px] font-bold leading-none text-white">
+                    {jobBadge > 99 ? "99+" : jobBadge}
+                  </span>
                 )}
               </span>
               {!sidebarCollapsed && item.label}
@@ -102,9 +127,7 @@ export default function SideNav() {
         >
           {/* No /channels route exists yet, so this can never register as "active" —
               same grey-by-default, purple-only-when-active rule as every other icon. */}
-          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-feed-bg text-[13px] font-bold text-light-text">
-            #
-          </span>
+          <IoAddOutline size={19} className="flex-shrink-0 text-light-text" />
           {!sidebarCollapsed && "Create Channel"}
         </button>
 
@@ -119,13 +142,13 @@ export default function SideNav() {
             >
               <span className="text-lg font-bold text-light-text">#</span>
             </button>
-            <button
-              onClick={() => notify("Plugins are coming soon")}
+            <Link
+              href="/plugins"
               title="Twedot Plugins"
-              className="flex items-center justify-center rounded-lg px-0 py-2.5 text-text hover:bg-feed-bg"
+              className={`flex items-center justify-center rounded-lg px-0 py-2.5 hover:bg-feed-bg ${pathname.startsWith("/plugins") ? "text-primary" : "text-text"}`}
             >
               <IoGameControllerOutline size={22} />
-            </button>
+            </Link>
           </>
         ) : (
           <>
@@ -138,7 +161,7 @@ export default function SideNav() {
             </button>
 
             {feedsOpen &&
-              activeChannels.map((channel) => (
+              activeChannels.filter((c) => c.roomCount > 0).map((channel) => (
                 <button
                   key={channel.label}
                   onClick={() => notify(`${channel.label} is coming soon`)}
@@ -174,46 +197,113 @@ export default function SideNav() {
 
             {gamesOpen && (
               <>
-                <button
-                  onClick={() => notify("Marble Mazes is coming soon")}
-                  className="relative flex items-center gap-3 rounded-lg bg-gradient-to-r from-primary to-[#8b6bff] px-2 py-2.5 text-left"
-                >
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-black/70">
-                    <IoGameControllerOutline size={16} className="text-white" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-bold text-white">Marble Mazes</div>
-                    <div className="truncate text-xs text-white/80">Roll to the goal!</div>
-                  </span>
-                  <span className="absolute right-2 top-1.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    NEW
-                  </span>
-                </button>
+                {PLUGIN_ITEMS.map((p) => {
+                  const PluginIcon = p.icon;
+                  return (
+                    <Link
+                      key={p.type}
+                      href={`/plugins?type=${p.type}`}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                    >
+                      <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${p.color}`}>
+                        <PluginIcon size={14} className="text-white" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <div className="truncate text-[13px] font-medium">{p.label}</div>
+                        <div className="truncate text-[11px] text-light-text">{p.desc}</div>
+                      </span>
+                    </Link>
+                  );
+                })}
 
-                {games.map((g) => (
-                  <button
-                    key={g.label}
-                    onClick={() => notify(`${g.label} is coming soon`)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
-                  >
-                    <span className={`h-7 w-7 flex-shrink-0 rounded-full ${g.color}`} />
-                    <span className="min-w-0 flex-1 truncate">{g.label}</span>
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => notify("More games are coming soon")}
+                <Link
+                  href="/plugins"
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
                 >
-                  <IoGameControllerOutline size={22} className="flex-shrink-0" />
-                  Discover More
-                </button>
+                  <IoGameControllerOutline size={18} className="flex-shrink-0 text-light-text" />
+                  Manage Plugins
+                </Link>
+              </>
+            )}
+          </>
+        )}
+
+        {!sidebarCollapsed && (
+          <>
+            <div className="my-2 border-t border-border" />
+
+            <button
+              onClick={() => setSettingsOpen((v) => !v)}
+              className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-wide text-light-text hover:bg-feed-bg"
+            >
+              More
+              {settingsOpen ? <IoChevronUpOutline size={12} /> : <IoChevronDownOutline size={12} />}
+            </button>
+
+            {settingsOpen && (
+              <>
+                {[
+                  { icon: IoMegaphoneOutline, label: "Ads" },
+                  { icon: IoWalletOutline, label: "Wallet" },
+                  { icon: IoStatsChartOutline, label: "Analytics" },
+                  { icon: IoTimeOutline, label: "Service History", href: "/job-request" },
+                  { icon: IoPersonAddOutline, label: "Invite a Friend" },
+                  { icon: IoHelpCircleOutline, label: "Help & Feedback" },
+                  { icon: IoStarOutline, label: "Rate Twedot", external: "https://play.google.com/store/apps/details?id=com.twedot" },
+                ].map(({ icon: Icon, label, href, external }: { icon: React.ElementType; label: string; href?: string; external?: string }) =>
+                  href ? (
+                    <Link
+                      key={label}
+                      href={href}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal ${
+                        pathname === href ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
+                      }`}
+                    >
+                      <Icon size={19} className="flex-shrink-0 text-light-text" />
+                      {label}
+                    </Link>
+                  ) : external ? (
+                    <a
+                      key={label}
+                      href={external}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                    >
+                      <Icon size={19} className="flex-shrink-0 text-light-text" />
+                      {label}
+                    </a>
+                  ) : (
+                    <button
+                      key={label}
+                      onClick={() => notify(`${label} is coming soon`)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                    >
+                      <Icon size={19} className="flex-shrink-0 text-light-text" />
+                      {label}
+                    </button>
+                  )
+                )}
               </>
             )}
           </>
         )}
 
         <div className="mt-auto border-t border-border pt-2">
+          <Link
+            href="/settings"
+            title="Settings"
+            className={`flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-left text-sm font-normal ${
+              pathname.startsWith("/settings") ? "font-semibold text-text" : "text-light-text hover:bg-feed-bg hover:text-text"
+            } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
+          >
+            {pathname.startsWith("/settings") ? (
+              <IoSettings size={22} className="flex-shrink-0" />
+            ) : (
+              <IoSettingsOutline size={22} className="flex-shrink-0" />
+            )}
+            {!sidebarCollapsed && "Settings"}
+          </Link>
           <button
             onClick={async () => {
               await logout();
@@ -236,8 +326,8 @@ export default function SideNav() {
       <button
         onClick={toggleSidebar}
         title="Collapse sidebar"
-        style={{ top: '50vh', left: sidebarCollapsed ? '60px' : '272px' }}
-        className="fixed z-30 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white text-light-text shadow-sm hover:bg-feed-bg transition-[left] duration-150"
+        style={{ top: '50vh', left: sidebarCollapsed ? '52px' : '264px' }}
+        className="fixed z-40 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-light-text shadow-sm hover:bg-feed-bg transition-[left] duration-150"
       >
         <IoMenuOutline size={16} />
       </button>
