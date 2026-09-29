@@ -129,8 +129,8 @@ function CommentItem({
   }
 
   return (
-    <div className="flex gap-2.5 py-3">
-      <button onClick={goToProfile} className="flex-shrink-0">
+    <div className="flex items-start gap-2.5 py-3">
+      <button onClick={goToProfile} className="flex-shrink-0 mt-0.5">
         {comment.userPhoto ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={comment.userPhoto} alt={comment.userName} className="h-8 w-8 rounded-full object-cover" />
@@ -549,7 +549,7 @@ export default function StatusDetailPage() {
                   value={replyText}
                   onChange={(e) => { setReplyText(e.target.value); autoGrow(e.target); }}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-                  placeholder={`Reply to ${threadComment.userName}…`}
+                  placeholder={`Reply to ${replyTo?.name ?? threadComment.userName}…`}
                   rows={1}
                   className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
                   style={{ minHeight: 24 }}
