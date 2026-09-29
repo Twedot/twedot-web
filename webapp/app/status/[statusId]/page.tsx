@@ -643,15 +643,15 @@ export default function StatusDetailPage() {
                 </p>
               )}
               {!isText && (
-                <div className="relative overflow-hidden rounded-2xl bg-zinc-900">
-                  {/* Blurred thumbnail backdrop for videos so the container isn't pure black */}
+                <div className={`relative overflow-hidden rounded-2xl ${isVideo ? "xl:bg-zinc-900" : "bg-zinc-900"}`}>
+                  {/* Blurred thumbnail backdrop for videos — only on xl+ to match the feed */}
                   {isVideo && activeItem.thumbnailUrl && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={activeItem.thumbnailUrl}
                       alt=""
                       aria-hidden
-                      className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+                      className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl hidden xl:block"
                     />
                   )}
                   {/* Media */}
