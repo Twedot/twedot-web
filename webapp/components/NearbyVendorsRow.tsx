@@ -54,7 +54,7 @@ function VendorRow({
       {/* Follow button */}
       <button
         onClick={onToggleFollow}
-        className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
+        className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
           isFollowing
             ? "bg-primary/10 text-primary hover:bg-primary/20"
             : "bg-primary/15 text-primary hover:bg-primary/25"
