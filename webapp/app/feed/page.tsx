@@ -48,6 +48,14 @@ function FeedContent() {
   const [vendors, setVendors] = useState<NearbyVendor[]>([]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const restoredScroll = useRef(false);
+  // Refs so the stable IntersectionObserver callback always reads fresh values
+  // without needing to be recreated on every state change.
+  const hasMoreRef = useRef(hasMore);
+  const isFetchingRef = useRef(isFetching);
+  const pageRef = useRef(page);
+  useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+  useEffect(() => { isFetchingRef.current = isFetching; }, [isFetching]);
+  useEffect(() => { pageRef.current = page; }, [page]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -121,14 +129,21 @@ function FeedContent() {
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMore && !isFetching) {
-        loadPage(page + 1);
-      }
-    });
+    // Single stable observer — reads live values from refs so it never needs to
+    // be recreated on state changes (which caused it to miss intersections that
+    // were already in view when the new observer connected).
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreRef.current && !isFetchingRef.current) {
+          loadPage(pageRef.current + 1);
+        }
+      },
+      { rootMargin: "300px" }, // fire 300 px before the sentinel actually enters view
+    );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, isFetching, page, loadPage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadPage]); // only recreate when query changes (which recreates loadPage)
 
   const sortedPosts = useMemo(() => {
     if (sort === "new") {
@@ -161,14 +176,14 @@ function FeedContent() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-full bg-white">
+    <div className="min-h-full bg-background">
       {query && (
-        <div className="border-b border-border bg-white px-4 py-3 text-sm text-light-text">
+        <div className="border-b border-border bg-background px-4 py-3 text-sm text-light-text">
           Results for <span className="font-semibold text-text">{query}</span>
         </div>
       )}
 
-      <div className="flex items-center gap-2 border-b border-border bg-white px-4 py-2">
+      <div className="flex items-center gap-2 border-b border-border bg-background px-4 py-2">
         <div className="relative">
           <button
             onClick={() => setSortMenuOpen((v) => !v)}
@@ -180,7 +195,7 @@ function FeedContent() {
           {sortMenuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setSortMenuOpen(false)} />
-              <div className="absolute left-0 top-full z-20 mt-1 w-36 overflow-hidden rounded-lg border border-border bg-white shadow-lg">
+              <div className="absolute left-0 top-full z-20 mt-1 w-36 overflow-hidden rounded-lg border border-border bg-background shadow-lg">
                 {(Object.keys(SORT_LABELS) as SortOption[]).map((opt) => (
                   <button
                     key={opt}
@@ -215,6 +230,8 @@ function FeedContent() {
         </p>
       )}
 
+      {isFetching && posts.length === 0 && <FeedSkeleton />}
+
       <div className="flex flex-col">
         {groupedPosts.map((group, i) => (
           <div key={group[0].id} id={`post-${group[0].id}`} style={{ scrollMarginTop: 60 }}>
@@ -226,7 +243,7 @@ function FeedContent() {
         ))}
       </div>
 
-      {isFetching && <p className="py-6 text-center text-sm text-light-text">Loading…</p>}
+      {isFetching && posts.length > 0 && <p className="py-6 text-center text-sm text-light-text">Loading…</p>}
       {!hasMore && posts.length > 0 && (
         <p className="py-6 text-center text-sm text-light-text">You&apos;re all caught up.</p>
       )}
@@ -235,6 +252,29 @@ function FeedContent() {
       )}
 
       <div ref={sentinelRef} />
+    </div>
+  );
+}
+
+function FeedSkeleton() {
+  return (
+    <div className="flex flex-col">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="border-b border-border px-4 py-3.5">
+          <div className="mb-3 flex items-center gap-3">
+            <div className="h-10 w-10 flex-shrink-0 animate-pulse rounded-full bg-feed-bg" />
+            <div className="flex flex-1 flex-col gap-1.5">
+              <div className="h-3 w-28 animate-pulse rounded bg-feed-bg" />
+              <div className="h-2.5 w-20 animate-pulse rounded bg-feed-bg" />
+            </div>
+          </div>
+          <div className="mb-3 flex flex-col gap-2">
+            <div className="h-3 w-full animate-pulse rounded bg-feed-bg" />
+            <div className="h-3 w-4/5 animate-pulse rounded bg-feed-bg" />
+          </div>
+          <div className="aspect-video w-full animate-pulse rounded-xl bg-feed-bg" />
+        </div>
+      ))}
     </div>
   );
 }
