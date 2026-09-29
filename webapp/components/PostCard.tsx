@@ -26,16 +26,18 @@ import { useBookmark } from "@/lib/bookmarks";
 import { postDetailStore } from "@/lib/postDetailStore";
 import type { StatusPost } from "@/lib/types";
 
-function MediaBackdrop({ bgSrc, children }: { bgSrc?: string | null; children: ReactNode }) {
+function MediaBackdrop({ bgSrc, children, isVideo = false }: { bgSrc?: string | null; children: ReactNode; isVideo?: boolean }) {
   return (
-    <div className="relative overflow-hidden rounded-md bg-zinc-900">
+    // For videos: no background on small/laptop screens (xl+: keep the blurred
+    // thumbnail backdrop). Images always keep the backdrop.
+    <div className={`relative overflow-hidden rounded-md ${isVideo ? "xl:bg-zinc-900" : "bg-zinc-900"}`}>
       {bgSrc && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={bgSrc}
           alt=""
           aria-hidden
-          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+          className={`absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl ${isVideo ? "hidden xl:block" : ""}`}
         />
       )}
       <div className="relative flex justify-center">{children}</div>
@@ -243,7 +245,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
       {/* ── Single media item ── */}
       {!compact && items.length === 1 && (active.type === "image" || active.type === "video") && (
         <button onClick={() => openDetail()} className="mb-2 block w-full">
-          <MediaBackdrop bgSrc={active.type === "image" ? active.content : active.thumbnailUrl}>
+          <MediaBackdrop bgSrc={active.type === "image" ? active.content : active.thumbnailUrl} isVideo={active.type === "video"}>
             {active.type === "image" ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={active.content} alt="" className="max-h-[520px] w-full rounded-md object-cover" />
@@ -269,7 +271,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                 onPointerDown={onCarouselPointerDown}
                 onPointerUp={(e) => onCarouselPointerUp(e, it)}
               >
-                <MediaBackdrop bgSrc={it.type === "image" ? it.content : it.thumbnailUrl}>
+                <MediaBackdrop bgSrc={it.type === "image" ? it.content : it.thumbnailUrl} isVideo={it.type === "video"}>
                   {it.type === "image" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={it.content} alt="" className="max-h-[520px] w-full rounded-md object-cover" />

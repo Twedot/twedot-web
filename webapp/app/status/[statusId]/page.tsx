@@ -644,18 +644,30 @@ export default function StatusDetailPage() {
               )}
               {!isText && (
                 <div className="relative overflow-hidden rounded-2xl bg-zinc-900">
+                  {/* Blurred thumbnail backdrop for videos so the container isn't pure black */}
+                  {isVideo && activeItem.thumbnailUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={activeItem.thumbnailUrl}
+                      alt=""
+                      aria-hidden
+                      className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+                    />
+                  )}
                   {/* Media */}
                   {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={activeItem.content || activeItem.thumbnailUrl!}
                       alt={post.caption ?? ""}
-                      className="w-full object-cover"
+                      className="relative w-full object-cover"
                       style={{ maxHeight: 500 }}
                     />
                   )}
                   {isVideo && activeItem.content && (
-                    <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                    <div className="relative">
+                      <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                    </div>
                   )}
                   {/* Chevron navigation — only for group posts */}
                   {groupItems.length > 1 && (
