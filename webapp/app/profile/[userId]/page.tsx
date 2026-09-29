@@ -251,10 +251,9 @@ export default function OtherUserProfilePage() {
       <div className="mx-6 mt-4 flex gap-2">
         <button
           onClick={handleToggleFollow}
-          disabled={followLoading}
           className={`flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
             isFollowing
-              ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
+              ? "bg-primary/10 text-primary hover:bg-primary/20"
               : "bg-primary text-white hover:bg-primary/90"
           }`}
         >

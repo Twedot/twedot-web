@@ -80,13 +80,13 @@ export default function SideNav() {
         {mainItems.map((item) => {
           const active = Boolean(item.href && pathname === item.href);
           const Icon = active ? item.activeIcon : item.icon;
-          const cls = `flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal ${
+          const cls = `flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal ${
             active ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
           } ${sidebarCollapsed ? "justify-center px-0" : ""}`;
           const inner = (
             <>
-              <span className="relative flex-shrink-0">
-                <Icon size={19} className={active ? "text-text" : "text-light-text"} />
+              <span className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                <Icon size={20} className={active ? "text-text" : "text-light-text"} />
                 {item.label === "Stories" && hasUnseenStories && !active && (
                   <span className="absolute -right-0.5 -top-0.5 h-[10px] w-[10px] rounded-full border-2 border-white bg-[#FF3B30]" />
                 )}
@@ -121,13 +121,13 @@ export default function SideNav() {
         <button
           onClick={() => notify("Creating a channel is coming soon")}
           title="Create Channel"
-          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg ${
+          className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg ${
             sidebarCollapsed ? "justify-center px-0" : ""
           }`}
         >
-          {/* No /channels route exists yet, so this can never register as "active" —
-              same grey-by-default, purple-only-when-active rule as every other icon. */}
-          <IoAddOutline size={19} className="flex-shrink-0 text-light-text" />
+          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+            <IoAddOutline size={20} className="text-light-text" />
+          </span>
           {!sidebarCollapsed && "Create Channel"}
         </button>
 
@@ -218,9 +218,11 @@ export default function SideNav() {
 
                 <Link
                   href="/plugins"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                  className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
                 >
-                  <IoGameControllerOutline size={18} className="flex-shrink-0 text-light-text" />
+                  <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                    <IoGameControllerOutline size={20} className="text-light-text" />
+                  </span>
                   Manage Plugins
                 </Link>
               </>
@@ -255,11 +257,13 @@ export default function SideNav() {
                     <Link
                       key={label}
                       href={href}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal ${
+                      className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal ${
                         pathname === href ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
                       }`}
                     >
-                      <Icon size={19} className="flex-shrink-0 text-light-text" />
+                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                        <Icon size={20} className="text-light-text" />
+                      </span>
                       {label}
                     </Link>
                   ) : external ? (
@@ -268,18 +272,22 @@ export default function SideNav() {
                       href={external}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
                     >
-                      <Icon size={19} className="flex-shrink-0 text-light-text" />
+                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                        <Icon size={20} className="text-light-text" />
+                      </span>
                       {label}
                     </a>
                   ) : (
                     <button
                       key={label}
                       onClick={() => notify(`${label} is coming soon`)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
                     >
-                      <Icon size={19} className="flex-shrink-0 text-light-text" />
+                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                        <Icon size={20} className="text-light-text" />
+                      </span>
                       {label}
                     </button>
                   )
@@ -297,11 +305,13 @@ export default function SideNav() {
               pathname.startsWith("/settings") ? "font-semibold text-text" : "text-light-text hover:bg-feed-bg hover:text-text"
             } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
           >
-            {pathname.startsWith("/settings") ? (
-              <IoSettings size={22} className="flex-shrink-0" />
-            ) : (
-              <IoSettingsOutline size={22} className="flex-shrink-0" />
-            )}
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+              {pathname.startsWith("/settings") ? (
+                <IoSettings size={20} />
+              ) : (
+                <IoSettingsOutline size={20} />
+              )}
+            </span>
             {!sidebarCollapsed && "Settings"}
           </Link>
           <button
@@ -314,7 +324,9 @@ export default function SideNav() {
               sidebarCollapsed ? "justify-center px-0" : ""
             }`}
           >
-            <IoLogOutOutline size={22} className="flex-shrink-0" />
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+              <IoLogOutOutline size={20} />
+            </span>
             {!sidebarCollapsed && "Logout"}
           </button>
         </div>
