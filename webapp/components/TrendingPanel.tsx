@@ -189,7 +189,7 @@ export default function TrendingPanel() {
                     onClick={() => toggleFollow(u.id)}
                     className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
                       followingIds.has(u.id)
-                        ? "border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
+                        ? "bg-primary/10 text-primary hover:bg-primary/20"
                         : "bg-primary/15 text-primary hover:bg-primary/25"
                     }`}
                   >
