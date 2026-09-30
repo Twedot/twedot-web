@@ -21,7 +21,7 @@ interface RoomListItem {
   join_type: "open" | "invite_request" | "additional_check";
   member_count: number;
   online_count?: number;
-  last_message?: string | { content: string; message_type: string; key_version?: unknown; created_at: string } | null;
+  last_message?: string | null;
   last_message_time?: string | null;
   unread_count?: number;
   is_member?: boolean;
@@ -120,8 +120,8 @@ function RoomRow({ room, onClick }: { room: RoomListItem; onClick: () => void })
             </>
           )}
         </div>
-        {lastMessageText(room.last_message) && (
-          <p className="mt-0.5 truncate text-[12px] text-light-text">{lastMessageText(room.last_message)}</p>
+        {room.last_message && (
+          <p className="mt-0.5 truncate text-[12px] text-light-text">{room.last_message as string}</p>
         )}
       </div>
       <div className="flex flex-col items-end gap-1.5">
