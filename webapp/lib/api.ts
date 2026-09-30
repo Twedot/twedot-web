@@ -33,11 +33,16 @@ async function request<T>(
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new ApiError("No internet connection. Please check your network and try again.", 0);
+  }
 
   const json = (await res.json().catch(() => null)) as Envelope<T> | null;
 
@@ -73,11 +78,16 @@ export async function apiUploadFile<T>(
   const token = AuthStorage.getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
-    headers,
-    body: formData,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+  } catch {
+    throw new ApiError("No internet connection. Please check your network and try again.", 0);
+  }
 
   const json = (await res.json().catch(() => null)) as { success: boolean; message: string; data: T } | null;
 
