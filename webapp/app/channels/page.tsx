@@ -14,18 +14,29 @@ import { apiGet } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 
 interface RoomListItem {
-  id: string;
+  id?: string;
+  room_id?: string; // GET /rooms/mine uses room_id
   name: string;
   photo_url: string | null;
   join_type: "open" | "invite_request" | "additional_check";
   member_count: number;
   online_count?: number;
-  last_message?: string | null;
+  last_message?: string | { content: string; message_type: string; key_version?: unknown; created_at: string } | null;
   last_message_time?: string | null;
   unread_count?: number;
   is_member?: boolean;
   categories?: string[];
   my_role?: "admin" | "member" | null;
+}
+
+function roomId(r: RoomListItem): string {
+  return (r.id ?? r.room_id ?? "") as string;
+}
+
+function lastMessageText(msg: RoomListItem["last_message"]): string | null {
+  if (!msg) return null;
+  if (typeof msg === "string") return msg;
+  return msg.content ?? null;
 }
 
 interface CategoryCount {
@@ -99,8 +110,8 @@ function RoomRow({ room, onClick }: { room: RoomListItem; onClick: () => void })
             </>
           )}
         </div>
-        {room.last_message && (
-          <p className="mt-0.5 truncate text-[12px] text-light-text">{room.last_message}</p>
+        {lastMessageText(room.last_message) && (
+          <p className="mt-0.5 truncate text-[12px] text-light-text">{lastMessageText(room.last_message)}</p>
         )}
       </div>
       <div className="flex flex-col items-end gap-1.5">
@@ -260,7 +271,7 @@ export default function ChannelsPage() {
               <p className="text-[14px] text-light-text">No channels found for "{search}"</p>
             </div>
           ) : searchResults.map((r) => (
-            <RoomRow key={r.id} room={r} onClick={() => router.push(`/channels/${r.id}`)} />
+            <RoomRow key={roomId(r)} room={r} onClick={() => router.push(`/channels/${roomId(r)}`)} />
           ))}
         </div>
       )}
@@ -306,7 +317,7 @@ export default function ChannelsPage() {
             </div>
           ) : (
             myRooms.map((r) => (
-              <RoomRow key={r.id} room={r} onClick={() => router.push(`/channels/${r.id}`)} />
+              <RoomRow key={roomId(r)} room={r} onClick={() => router.push(`/channels/${roomId(r)}`)} />
             ))
           )}
         </div>
@@ -348,7 +359,7 @@ export default function ChannelsPage() {
                 </div>
               ) : (
                 discoverRooms.map((r) => (
-                  <RoomRow key={r.id} room={r} onClick={() => router.push(`/channels/${r.id}`)} />
+                  <RoomRow key={roomId(r)} room={r} onClick={() => router.push(`/channels/${roomId(r)}`)} />
                 ))
               )}
             </>

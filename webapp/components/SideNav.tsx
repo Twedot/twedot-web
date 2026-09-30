@@ -51,7 +51,7 @@ const PLUGIN_ITEMS = [
 ];
 
 
-interface MyRoom { id: string; name: string; photo_url: string | null; unread_count?: number }
+interface MyRoom { id?: string; room_id?: string; name: string; photo_url: string | null; unread_count?: number }
 
 export default function SideNav() {
   const pathname = usePathname();
@@ -183,11 +183,13 @@ export default function SideNav() {
               </Link>
             )}
 
-            {feedsOpen && myRooms.map((room) => (
+            {feedsOpen && myRooms.map((room) => {
+              const rid = room.id ?? room.room_id ?? "";
+              return (
               <Link
-                key={room.id}
-                href={`/channels/${room.id}`}
-                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm font-normal hover:bg-feed-bg ${pathname === `/channels/${room.id}` ? "text-primary font-semibold" : "text-text"}`}
+                key={rid}
+                href={`/channels/${rid}`}
+                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm font-normal hover:bg-feed-bg ${pathname === `/channels/${rid}` ? "text-primary font-semibold" : "text-text"}`}
               >
                 {room.photo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -204,7 +206,8 @@ export default function SideNav() {
                   </span>
                 )}
               </Link>
-            ))}
+              );
+            })}
 
             <div className="my-2 border-t border-border" />
 
