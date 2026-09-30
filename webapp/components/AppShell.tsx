@@ -65,7 +65,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
             !pathname.startsWith("/settings") &&
             pathname !== "/create-post" &&
             !pathname.startsWith("/login") &&
-            !pathname.startsWith("/register") && <TrendingPanel />
+            !pathname.startsWith("/register") &&
+            // Channel detail is a full-height chat — no trending panel
+            !/^\/channels\/[^/]+/.test(pathname) &&
+            <TrendingPanel />
           )}
         </div>
         <UploadProgress />

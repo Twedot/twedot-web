@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { apiGet } from "@/lib/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -28,6 +29,7 @@ import {
   IoCartOutline,
   IoBriefcaseOutline,
   IoHardwareChipOutline,
+  IoCompassOutline,
 } from "react-icons/io5";
 import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
@@ -38,7 +40,7 @@ import { useJobSocket } from "@/lib/jobSocket";
 const mainItems = [
   { href: "/feed", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
   { href: "/nearby", label: "Nearby", icon: IoLocationOutline, activeIcon: IoLocation },
-  { label: "Chats", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
+  { href: "/channels", label: "Channels", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
   { href: "/job-request", label: "Job Request", icon: IoNotificationsOutline, activeIcon: IoNotifications },
 ];
 
@@ -48,24 +50,30 @@ const PLUGIN_ITEMS = [
   { type: "ai_agent", label: "AI Agent Plugin", icon: IoHardwareChipOutline, color: "bg-purple-500", desc: "Connect your AI agent" },
 ];
 
-const activeChannels = [
-  { label: "General", roomCount: 4 },
-  { label: "Tech Talk", roomCount: 2 },
-  { label: "Naija Hustle", roomCount: 0 },
-  { label: "Music & Vibes", roomCount: 3 },
-  { label: "Sports Zone", roomCount: 0 },
-];
+
+interface MyRoom { id: string; name: string; photo_url: string | null; unread_count?: number }
 
 export default function SideNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const { sidebarCollapsed, toggleSidebar, notify } = useUi();
   const hasUnseenStories = useHasUnseenStories();
   const { badgeCount: jobBadge } = useJobSocket();
   const [gamesOpen, setGamesOpen] = useState(true);
   const [feedsOpen, setFeedsOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const [myRooms, setMyRooms] = useState<MyRoom[]>([]);
+
+  const loadRooms = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await apiGet<MyRoom[]>("/rooms/mine");
+      setMyRooms(Array.isArray(data) ? data.slice(0, 6) : []);
+    } catch { /* silent */ }
+  }, [isAuthenticated]);
+
+  useEffect(() => { loadRooms(); }, [loadRooms]);
 
   const width = sidebarCollapsed ? "w-[68px]" : "w-[280px]";
 
@@ -118,8 +126,8 @@ export default function SideNav() {
           );
         })}
 
-        <button
-          onClick={() => notify("Creating a channel is coming soon")}
+        <Link
+          href="/channels/create"
           title="Create Channel"
           className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg ${
             sidebarCollapsed ? "justify-center px-0" : ""
@@ -129,19 +137,19 @@ export default function SideNav() {
             <IoAddOutline size={20} className="text-light-text" />
           </span>
           {!sidebarCollapsed && "Create Channel"}
-        </button>
+        </Link>
 
         <div className="my-2 border-t border-border" />
 
         {sidebarCollapsed ? (
           <>
-            <button
-              onClick={() => notify("Channels are coming soon")}
-              title="Active Channels"
-              className="flex items-center justify-center rounded-lg px-0 py-2.5 text-text hover:bg-feed-bg"
+            <Link
+              href="/channels"
+              title="Channels"
+              className={`flex items-center justify-center rounded-lg px-0 py-2.5 hover:bg-feed-bg ${pathname.startsWith("/channels") ? "text-primary" : "text-text"}`}
             >
-              <span className="text-lg font-bold text-light-text">#</span>
-            </button>
+              <span className={`text-lg font-bold ${pathname.startsWith("/channels") ? "text-primary" : "text-light-text"}`}>#</span>
+            </Link>
             <Link
               href="/plugins"
               title="Twedot Plugins"
@@ -152,38 +160,51 @@ export default function SideNav() {
           </>
         ) : (
           <>
-            <button
-              onClick={() => setFeedsOpen((v) => !v)}
-              className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-wide text-light-text hover:bg-feed-bg"
-            >
-              Active Channels
-              {feedsOpen ? <IoChevronUpOutline size={12} /> : <IoChevronDownOutline size={12} />}
-            </button>
+            <div className="flex items-center justify-between rounded-lg px-2 py-1.5">
+              <button
+                onClick={() => setFeedsOpen((v) => !v)}
+                className="flex flex-1 items-center justify-between text-left text-[10px] font-bold uppercase tracking-wide text-light-text hover:text-text"
+              >
+                My Channels
+                {feedsOpen ? <IoChevronUpOutline size={12} /> : <IoChevronDownOutline size={12} />}
+              </button>
+              <Link href="/channels" className="ml-2 text-[10px] font-medium text-primary hover:underline">
+                See all
+              </Link>
+            </div>
 
-            {feedsOpen &&
-              activeChannels.filter((c) => c.roomCount > 0).map((channel) => (
-                <button
-                  key={channel.label}
-                  onClick={() => notify(`${channel.label} is coming soon`)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm font-normal text-text hover:bg-feed-bg"
-                >
-                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-feed-bg text-xs font-bold text-light-text">
+            {feedsOpen && myRooms.length === 0 && (
+              <Link
+                href="/channels"
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] text-light-text hover:bg-feed-bg"
+              >
+                <IoCompassOutline size={14} className="flex-shrink-0" />
+                Discover channels
+              </Link>
+            )}
+
+            {feedsOpen && myRooms.map((room) => (
+              <Link
+                key={room.id}
+                href={`/channels/${room.id}`}
+                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm font-normal hover:bg-feed-bg ${pathname === `/channels/${room.id}` ? "text-primary font-semibold" : "text-text"}`}
+              >
+                {room.photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={room.photo_url} alt={room.name} className="h-6 w-6 flex-shrink-0 rounded-full object-cover" />
+                ) : (
+                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
                     #
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate">{channel.label}</div>
-                    <div className="mt-0.5 flex items-center gap-1 text-[10px] font-normal text-light-text">
-                      <span>{channel.roomCount} rooms</span>
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          channel.roomCount > 0 ? "bg-green-500" : "bg-red-500"
-                        }`}
-                      />
-                      <span>active</span>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                )}
+                <span className="min-w-0 flex-1 truncate text-[13px]">{room.name}</span>
+                {(room.unread_count ?? 0) > 0 && (
+                  <span className="flex-shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {(room.unread_count ?? 0) > 99 ? "99+" : room.unread_count}
+                  </span>
+                )}
+              </Link>
+            ))}
 
             <div className="my-2 border-t border-border" />
 
