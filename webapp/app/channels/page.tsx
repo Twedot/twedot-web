@@ -33,14 +33,35 @@ function roomId(r: RoomListItem): string {
   return (r.id ?? r.room_id ?? "") as string;
 }
 
+function previewText(rawContent: string, msgType: string | null): string {
+  const t = msgType?.toLowerCase();
+  if (t === "image") return "📷 Photo";
+  if (t === "video") return "🎥 Video";
+  if (t === "audio") return "🎵 Audio";
+  if (rawContent.startsWith("{")) {
+    try {
+      const p = JSON.parse(rawContent);
+      if (p.type === "image" || p.uris) return "📷 Photo";
+      if (p.type === "video") return "🎥 Video";
+    } catch { /* not JSON */ }
+  }
+  return rawContent;
+}
+
 function normalizeRoom(r: any): RoomListItem {
   const lm = r.last_message;
-  const lastMsgText: string | null =
-    typeof lm === "string" ? lm
-    : lm && typeof lm === "object" ? (lm.content ?? null)
-    : null;
+  let lastMsgText: string | null = null;
   const lastMsgTime: string | null =
     lm && typeof lm === "object" && lm.created_at ? String(lm.created_at) : (r.last_message_time ?? null);
+
+  if (typeof lm === "string") {
+    lastMsgText = lm;
+  } else if (lm && typeof lm === "object") {
+    const rawContent: string | null = lm.content ?? null;
+    const msgType: string | null = lm.message_type ?? null;
+    if (rawContent) lastMsgText = previewText(rawContent, msgType);
+  }
+
   return {
     ...r,
     id: r.id ?? r.room_id,
@@ -158,7 +179,7 @@ export default function ChannelsPage() {
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<RoomListItem[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const loadMine = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -189,8 +210,12 @@ export default function ChannelsPage() {
     setSelectedCat(cat);
     setDiscoverLoading(true);
     try {
-      const data = await apiGet<any[]>(`/rooms/search?category=${encodeURIComponent(cat)}&limit=30`);
-      setDiscoverRooms((Array.isArray(data) ? data : []).map(normalizeRoom));
+      const rawData = await apiGet<any>(`/rooms/search?category=${encodeURIComponent(cat)}&limit=30`);
+      const arr = Array.isArray(rawData) ? rawData
+        : Array.isArray(rawData?.rooms) ? rawData.rooms
+        : Array.isArray(rawData?.data) ? rawData.data
+        : [];
+      setDiscoverRooms(arr.map(normalizeRoom));
     } catch {
       setDiscoverRooms([]);
     } finally {
