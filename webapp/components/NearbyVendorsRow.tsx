@@ -110,7 +110,7 @@ export default function NearbyVendorsRow({ vendors }: { vendors: NearbyVendor[] 
 
   return (
     <div className="px-4 py-2">
-      <h3 className="pb-1 pt-2 text-[17px] font-extrabold text-text">Who to follow</h3>
+      <h3 className="pb-1 pt-2 text-[17px] font-extrabold text-text">You May Know</h3>
       <div className="flex flex-col">
         {vendors.slice(0, 4).map((v) => (
           <VendorRow

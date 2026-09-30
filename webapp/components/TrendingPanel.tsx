@@ -155,11 +155,11 @@ export default function TrendingPanel() {
         </div>
       )}
 
-      {/* Who to follow */}
+      {/* You May Know */}
       {users.length > 0 && (
         <div className="mt-3 rounded-2xl bg-feed-bg">
           <div className="px-4 pb-1 pt-3">
-            <h2 className="text-sm font-bold text-text">Who to follow</h2>
+            <h2 className="text-sm font-bold text-text">You May Know</h2>
           </div>
           <ul>
             {users.map((u) => (
