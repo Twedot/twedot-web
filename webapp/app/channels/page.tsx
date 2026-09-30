@@ -33,10 +33,20 @@ function roomId(r: RoomListItem): string {
   return (r.id ?? r.room_id ?? "") as string;
 }
 
-function lastMessageText(msg: RoomListItem["last_message"]): string | null {
-  if (!msg) return null;
-  if (typeof msg === "string") return msg;
-  return msg.content ?? null;
+function normalizeRoom(r: any): RoomListItem {
+  const lm = r.last_message;
+  const lastMsgText: string | null =
+    typeof lm === "string" ? lm
+    : lm && typeof lm === "object" ? (lm.content ?? null)
+    : null;
+  const lastMsgTime: string | null =
+    lm && typeof lm === "object" && lm.created_at ? String(lm.created_at) : (r.last_message_time ?? null);
+  return {
+    ...r,
+    id: r.id ?? r.room_id,
+    last_message: lastMsgText,
+    last_message_time: lastMsgTime,
+  };
 }
 
 interface CategoryCount {
@@ -154,8 +164,8 @@ export default function ChannelsPage() {
     if (!isAuthenticated) return;
     setMyLoading(true);
     try {
-      const data = await apiGet<RoomListItem[]>("/rooms/mine");
-      setMyRooms(Array.isArray(data) ? data : []);
+      const data = await apiGet<any[]>("/rooms/mine");
+      setMyRooms((Array.isArray(data) ? data : []).map(normalizeRoom));
     } catch {
       setMyRooms([]);
     } finally {
@@ -179,8 +189,8 @@ export default function ChannelsPage() {
     setSelectedCat(cat);
     setDiscoverLoading(true);
     try {
-      const data = await apiGet<RoomListItem[]>(`/rooms/search?category=${encodeURIComponent(cat)}&limit=30`);
-      setDiscoverRooms(Array.isArray(data) ? data : []);
+      const data = await apiGet<any[]>(`/rooms/search?category=${encodeURIComponent(cat)}&limit=30`);
+      setDiscoverRooms((Array.isArray(data) ? data : []).map(normalizeRoom));
     } catch {
       setDiscoverRooms([]);
     } finally {
@@ -198,8 +208,8 @@ export default function ChannelsPage() {
     searchTimer.current = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const data = await apiGet<RoomListItem[]>(`/rooms/search?q=${encodeURIComponent(q)}&limit=20`);
-        setSearchResults(Array.isArray(data) ? data : []);
+        const data = await apiGet<any[]>(`/rooms/search?q=${encodeURIComponent(q)}&limit=20`);
+        setSearchResults((Array.isArray(data) ? data : []).map(normalizeRoom));
       } catch {
         setSearchResults([]);
       } finally {
