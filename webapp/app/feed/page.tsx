@@ -15,8 +15,8 @@ import { feedStateStore } from "@/lib/feedStateStore";
 const PAGE_SIZE = 20;
 const VENDOR_ROW_POSITION = 3;
 
-type SortOption = "best" | "new" | "top";
-const SORT_LABELS: Record<SortOption, string> = { best: "Best", new: "New", top: "Top" };
+type SortOption = "best" | "new" | "top" | "following";
+const SORT_LABELS: Record<SortOption, string> = { best: "Best", new: "New", top: "Top", following: "Following" };
 
 function groupPosts(items: StatusPost[]): StatusPost[][] {
   const groups = new Map<string, StatusPost[]>();
@@ -79,13 +79,19 @@ function FeedContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const sortRef = useRef(sort);
+  useEffect(() => { sortRef.current = sort; }, [sort]);
+
   const loadPage = useCallback(
     async (pageToLoad: number) => {
       setIsFetching(true);
       setError(null);
       try {
+        const currentSort = sortRef.current;
         const path = query
           ? `/status/search?q=${encodeURIComponent(query)}&page=${pageToLoad}&limit=${PAGE_SIZE}`
+          : currentSort === "following"
+          ? `/status/following?page=${pageToLoad}&limit=${PAGE_SIZE}`
           : `/status/public?page=${pageToLoad}&limit=${PAGE_SIZE}`;
         const data = await apiGet<StatusPost[]>(path);
         setPosts((prev) => {
@@ -109,6 +115,21 @@ function FeedContent() {
     if (isAuthenticated && !feedStateStore.hasCache(query)) loadPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, query]);
+
+  // Reload feed when switching to/from Following (different endpoint)
+  const prevSortRef = useRef(sort);
+  useEffect(() => {
+    const prev = prevSortRef.current;
+    prevSortRef.current = sort;
+    if (!isAuthenticated) return;
+    if ((sort === "following") !== (prev === "following")) {
+      setPosts([]);
+      setPage(1);
+      setHasMore(true);
+      loadPage(1);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort]);
 
   useEffect(() => {
     if (isAuthenticated) markFeedSeen();

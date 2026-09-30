@@ -247,8 +247,14 @@ export default function ProfilePage() {
 
       {/* ── Stats row ── */}
       <div className="mx-6 flex">
-        <StatCell value={fmt((user as any)?.follower_count ?? 0)} label="Followers" />
-        <StatCell value={fmt((user as any)?.following_count ?? 0)} label="Following" />
+        <button onClick={() => router.push("/connections?tab=followers")} className="flex flex-1 flex-col items-center gap-0.5 py-1 hover:opacity-70 transition-opacity">
+          <span className="text-[16px] font-bold leading-tight text-text">{fmt((user as any)?.follower_count ?? 0)}</span>
+          <span className="text-[10px] text-light-text">Followers</span>
+        </button>
+        <button onClick={() => router.push("/connections?tab=following")} className="flex flex-1 flex-col items-center gap-0.5 py-1 hover:opacity-70 transition-opacity">
+          <span className="text-[16px] font-bold leading-tight text-text">{fmt((user as any)?.following_count ?? 0)}</span>
+          <span className="text-[10px] text-light-text">Following</span>
+        </button>
         <StatCell value={fmt(likesCount)} label="Likes" />
       </div>
 
