@@ -56,15 +56,17 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <UiProvider>
       <div className="flex min-h-screen flex-col">
         <TopBar />
-        <div className="flex w-full flex-1 gap-24 2xl:gap-40">
+        <div className="flex w-full flex-1">
           <SideNav />
-          <div className="flex flex-1 gap-4 2xl:gap-8">
-            <main className="min-w-0 w-full max-w-[640px] shrink overflow-x-clip">
-              {children}
-            </main>
-            {pathname === "/feed" && <TrendingPanel />}
-            {pathname === "/search" && <SearchPanel />}
-          </div>
+          <main className={`min-w-0 flex-1 overflow-x-clip ${pathname.startsWith("/settings") ? "lg:max-w-[920px] xl:max-w-[980px]" : "lg:max-w-[560px] xl:max-w-[640px] 2xl:ml-40 2xl:max-w-[700px]"}`}>
+            {children}
+          </main>
+          {pathname === "/search" ? <SearchPanel /> : (
+            !pathname.startsWith("/settings") &&
+            pathname !== "/create-post" &&
+            !pathname.startsWith("/login") &&
+            !pathname.startsWith("/register") && <TrendingPanel />
+          )}
         </div>
         <UploadProgress />
       </div>

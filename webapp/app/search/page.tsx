@@ -166,15 +166,15 @@ function SearchPage() {
   }
 
   return (
-    <div className="pb-16 pt-4">
+    <div className="px-4 pb-16 pt-4">
 
       {/* Tab bar + sort — sticky so they don't scroll away */}
-      <div className="sticky top-14 z-10 bg-white pb-2 pt-1">
+      <div className="sticky top-14 z-10 bg-background pb-2 pt-1">
         <div className="no-scrollbar mb-2 flex gap-1 overflow-x-auto">
           {TABS.map((t) => (
             <button key={t.key} onClick={() => switchTab(t.key)}
               className={`flex-shrink-0 rounded-full px-3.5 py-1 text-[11px] font-medium transition-colors ${
-                tab === t.key ? "bg-neutral-200 text-text font-semibold" : "text-light-text hover:text-text hover:bg-feed-bg"
+                tab === t.key ? "bg-primary/20 text-primary font-semibold" : "text-light-text hover:text-text hover:bg-feed-bg"
               }`}>
               {t.label}
             </button>
@@ -424,7 +424,7 @@ function UserRow({ user, onClick, large }: { user: UserResult; onClick: () => vo
 function ItemCard({ item, large }: { item: InventoryItem; large?: boolean }) {
   const img = item.images?.[0]?.image_url ?? null;
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60 bg-white">
+    <div className="overflow-hidden rounded-xl border border-border/60 bg-background">
       <div className={`bg-feed-bg ${large ? "h-32" : "h-24"} relative overflow-hidden`}>
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element

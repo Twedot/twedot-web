@@ -20,6 +20,7 @@ import {
 } from "react-icons/io5";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
+import { useJobSocket } from "@/lib/jobSocket";
 
 export type NotificationFeedType =
   | "status_liked"
@@ -197,6 +198,7 @@ function NotifRow({
 
 export default function InboxPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { clearNotifBadge } = useJobSocket();
   const [items, setItems] = useState<NotificationFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -231,6 +233,9 @@ export default function InboxPage() {
     if (!authLoading && isAuthenticated) load();
     else if (!authLoading && !isAuthenticated) setLoading(false);
   }, [authLoading, isAuthenticated, load]);
+
+  // Clear the header bell badge the moment the user opens this page
+  useEffect(() => { clearNotifBadge(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDelete = (id: string) => {
     setItems((prev) => prev.filter((n) => n.id !== id));

@@ -1,6 +1,19 @@
 @import "tailwindcss";
 
+/* ── Dark (default — matches mobile app) ── */
 :root {
+  --background: #0f1117;
+  --foreground: #e7e9ea;
+  --primary: #6b4eff;
+  --primary-off: #3d2a99;
+  --text: #e7e9ea;
+  --light-text: #71767b;
+  --border: #2f3336;
+  --feed-bg: #16181c;
+}
+
+/* ── Light — via explicit user choice ── */
+[data-theme="light"] {
   --background: #ffffff;
   --foreground: #1e1e1e;
   --primary: #6b4eff;
@@ -9,6 +22,20 @@
   --light-text: #5c6c74;
   --border: #c9d7de;
   --feed-bg: #f6f8f9;
+}
+
+/* ── Light — via OS preference (when user chose "System" and OS is light) ── */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --background: #ffffff;
+    --foreground: #1e1e1e;
+    --primary: #6b4eff;
+    --primary-off: #c8bfff;
+    --text: #1e1e1e;
+    --light-text: #5c6c74;
+    --border: #c9d7de;
+    --feed-bg: #f6f8f9;
+  }
 }
 
 @theme inline {

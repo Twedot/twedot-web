@@ -25,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
       </head>
-      <body className="flex min-h-full flex-col bg-white text-text">
+      <body className="flex min-h-full flex-col bg-background text-text">
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { apiGet, apiPatch, apiUploadFile } from "@/lib/api";
 import { useJobSocket } from "@/lib/jobSocket";
@@ -646,11 +646,29 @@ const CATEGORIES: SettingsCategory[] = [
 
 type MobileStep = "cats" | "items" | "detail";
 
-export default function SettingsPage() {
+function SettingsContent() {
+  const sectionParam = useSearchParams().get("section");
   const [query, setQuery] = useState("");
   const [selectedCatId, setSelectedCatId] = useState<string>(CATEGORIES[0].id);
   const [selectedItemIdx, setSelectedItemIdx] = useState<number | null>(null);
   const [mobileStep, setMobileStep] = useState<MobileStep>("cats");
+
+  // Auto-open a specific item when ?section= is passed (e.g. from "Edit profile" button)
+  useEffect(() => {
+    if (!sectionParam) return;
+    for (const cat of CATEGORIES) {
+      const idx = cat.items.findIndex(
+        (item) => item.label.toLowerCase().replace(/\s+/g, "-") === sectionParam
+      );
+      if (idx !== -1) {
+        setSelectedCatId(cat.id);
+        setSelectedItemIdx(idx);
+        setMobileStep("panel");
+        break;
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const searchResults = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -819,5 +837,13 @@ export default function SettingsPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense>
+      <SettingsContent />
+    </Suspense>
   );
 }

@@ -61,3 +61,33 @@ export const apiPatch = <T>(path: string, body?: unknown, opts?: { auth?: boolea
   request<T>("PATCH", path, body, opts);
 export const apiDelete = <T>(path: string, opts?: { auth?: boolean }) =>
   request<T>("DELETE", path, undefined, opts);
+
+export async function apiUploadFile<T>(
+  path: string,
+  formData: FormData
+): Promise<T> {
+  const headers: Record<string, string> = {
+    "x-device-id": getDeviceId(),
+    "x-platform": "web",
+  };
+  const token = AuthStorage.getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const json = (await res.json().catch(() => null)) as { success: boolean; message: string; data: T } | null;
+
+  if (!res.ok || !json || !json.success) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      AuthStorage.clear();
+      window.location.href = "/login";
+    }
+    throw new ApiError(json?.message ?? `Upload failed (${res.status})`, res.status);
+  }
+
+  return json.data;
+}

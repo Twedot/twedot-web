@@ -1,10 +1,16 @@
 import type { StatusPost } from "./types";
 
-// Module-level cache — persists across Next.js client-side navigation so the profile
-// page can hand the full post object to the detail page without a re-fetch or URL bloat.
 const _cache = new Map<string, StatusPost>();
+const _groupCache = new Map<string, StatusPost[]>(); // groupId → ordered items
 
 export const postDetailStore = {
   set: (post: StatusPost) => _cache.set(post.id, post),
   get: (id: string) => _cache.get(id) ?? null,
+  setGroup: (items: StatusPost[]) => {
+    const gid = items[0]?.groupId;
+    if (gid) _groupCache.set(gid, items);
+    items.forEach((p) => _cache.set(p.id, p));
+  },
+  getGroup: (groupId: string | null | undefined) =>
+    groupId ? (_groupCache.get(groupId) ?? null) : null,
 };

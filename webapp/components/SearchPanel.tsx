@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { IoSearchOutline, IoPersonOutline } from "react-icons/io5";
 import { apiGet } from "@/lib/api";
@@ -14,6 +14,18 @@ interface UserResult {
   occupation: string | null;
   global_activity_score: number;
   rank_visible: boolean;
+}
+
+const RECENT_KEY = "tw_recent_searches";
+
+function loadRecentSearches(): string[] {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]"); } catch { return []; }
+}
+function removeRecentSearch(term: string) {
+  try {
+    const updated = loadRecentSearches().filter((s) => s !== term);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(updated));
+  } catch {}
 }
 
 interface InventoryItem {
@@ -30,16 +42,6 @@ const FOOTER_LINKS = [
   { label: "Privacy Policy & Terms of Service", href: "https://twedot.com/privacy" },
 ];
 
-function relatedQueries(q: string): { label: string; q: string; type?: string }[] {
-  return [
-    { label: `${q} near me`,       q,             type: undefined  },
-    { label: `${q} professionals`, q,             type: "users"    },
-    { label: `best ${q}`,          q,             type: undefined  },
-    { label: `${q} services`,      q,             type: "services" },
-    { label: `${q} products`,      q,             type: "products" },
-  ];
-}
-
 function SearchPanelInner() {
   const params = useSearchParams();
   const router = useRouter();
@@ -48,6 +50,11 @@ function SearchPanelInner() {
 
   const [users, setUsers] = useState<UserResult[]>([]);
   const [items, setItems] = useState<InventoryItem[]>([]);
+  const [history, setHistory] = useState<string[]>([]);
+
+  useEffect(() => {
+    setHistory(loadRecentSearches());
+  }, [q]);
 
   useEffect(() => {
     setUsers([]);
@@ -66,31 +73,35 @@ function SearchPanelInner() {
   if (!q.trim()) return null;
 
   return (
-    <aside className="sticky top-14 hidden h-fit w-[340px] flex-shrink-0 self-start py-4 pr-4 2xl:block">
+    <aside className="sticky top-14 hidden h-fit w-[340px] flex-shrink-0 self-start py-4 pl-4 pr-3 lg:block xl:w-[360px] 2xl:w-[360px] 2xl:pl-8">
 
-      {/* Related searches */}
-      <div className="mb-3 rounded-2xl bg-feed-bg px-4 py-3">
-        <h2 className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-light-text">
-          Related searches
-        </h2>
-        <div className="flex flex-col gap-1.5">
-          {relatedQueries(q).map((rq) => {
-            const url = rq.type
-              ? `/search?q=${encodeURIComponent(rq.q)}&type=${rq.type}`
-              : `/search?q=${encodeURIComponent(rq.q)}`;
-            return (
-              <button
-                key={rq.label}
-                onClick={() => router.push(url)}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white"
-              >
-                <IoSearchOutline size={12} className="flex-shrink-0 text-light-text" />
-                <span className="text-[12px] text-text">{rq.label}</span>
-              </button>
-            );
-          })}
+      {/* Search history */}
+      {history.length > 0 && (
+        <div className="mb-3 rounded-2xl bg-feed-bg px-4 py-3">
+          <h2 className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-light-text">
+            Search history
+          </h2>
+          <div className="flex flex-col gap-0.5">
+            {history.slice(0, 5).map((term) => (
+              <div key={term} className="flex items-center gap-2 rounded-lg hover:bg-background/60">
+                <button
+                  onClick={() => router.push(`/search?q=${encodeURIComponent(term)}`)}
+                  className="flex flex-1 items-center gap-2 px-2 py-1.5 text-left"
+                >
+                  <IoSearchOutline size={12} className="flex-shrink-0 text-light-text" />
+                  <span className="truncate text-[12px] text-text">{term}</span>
+                </button>
+                <button
+                  onClick={() => { removeRecentSearch(term); setHistory((h) => h.filter((s) => s !== term)); }}
+                  className="pr-2 text-[10px] text-light-text hover:text-text"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Matching profiles */}
       {users.length > 0 && (
@@ -106,7 +117,7 @@ function SearchPanelInner() {
               See all
             </button>
           </div>
-          <div className="flex flex-col divide-y divide-border/40">
+          <div className="flex flex-col">
             {users.map((u) => (
               <button
                 key={u.id}
@@ -150,7 +161,7 @@ function SearchPanelInner() {
               See all
             </button>
           </div>
-          <div className="flex flex-col divide-y divide-border/40">
+          <div className="flex flex-col">
             {items.map((item) => {
               const img = item.images?.[0]?.image_url ?? null;
               return (

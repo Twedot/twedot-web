@@ -200,7 +200,7 @@ export default function TrendingPanel() {
             ))}
           </ul>
           <div className="px-4 pb-3 pt-1">
-            <button onClick={() => router.push("/search?type=users")} className="text-[13px] font-medium text-primary hover:underline">
+            <button onClick={() => router.push("/connections?tab=suggested")} className="text-[13px] font-medium text-primary hover:underline">
               Show more
             </button>
           </div>

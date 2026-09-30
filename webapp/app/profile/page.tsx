@@ -266,7 +266,7 @@ export default function ProfilePage() {
       {/* ── Action buttons ── */}
       <div className="mx-6 mt-4 flex gap-2">
         <button
-          onClick={() => router.push("/settings/profile")}
+          onClick={() => router.push("/settings?section=edit-profile")}
           className="flex items-center gap-1 rounded-full bg-primary px-3.5 py-1.5 text-[12px] font-semibold text-white hover:bg-primary/90"
         >
           <IoCreateOutline size={13} />

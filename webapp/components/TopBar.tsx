@@ -16,6 +16,7 @@ import {
 import { MdOutlineAddBox } from "react-icons/md";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
+import { useJobSocket } from "@/lib/jobSocket";
 import { apiGet } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
 
@@ -59,6 +60,7 @@ export default function TopBar() {
   const { user } = useAuth();
   const router = useRouter();
   const { notify } = useUi();
+  const { unreadNotifCount } = useJobSocket();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeQuery, setActiveQuery] = useState("");
@@ -166,7 +168,7 @@ export default function TopBar() {
         }}
       />
     </Suspense>
-    <header className="sticky top-0 z-20 flex h-14 items-center border-b border-border bg-white px-6">
+    <header className="sticky top-0 z-20 flex h-14 items-center border-b border-border bg-background px-6">
       {/* Logo */}
       <div className="flex flex-shrink-0 items-center gap-1">
         <button
@@ -198,7 +200,7 @@ export default function TopBar() {
 
         {/* Unified card — anchored to the wrapper's top edge, extends downward */}
         {open && (
-          <div className="absolute left-0 right-0 top-0 z-50 overflow-hidden rounded-2xl border border-border/50 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.13)]">
+          <div className="absolute left-0 right-0 top-0 z-50 overflow-hidden rounded-2xl border border-border/50 bg-background shadow-[0_8px_32px_rgba(0,0,0,0.13)]">
 
             {/* Input row — filter chip + centered input */}
             <div className="flex items-center gap-2 px-4 py-[11px]">
@@ -402,21 +404,29 @@ export default function TopBar() {
       <div className="ml-auto flex flex-shrink-0 items-center gap-2">
         <button
           onClick={() => notify("Messages are coming soon")}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-text hover:bg-feed-bg"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
         >
           <IoChatbubbleOutline size={19} />
         </button>
 
         <button
-          onClick={() => notify("Post composer is coming soon")}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-text hover:text-primary"
+          onClick={() => router.push("/create-post")}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-light-text hover:text-primary"
         >
           <MdOutlineAddBox size={18} />
           Create
         </button>
 
-        <button className="flex h-9 w-9 items-center justify-center rounded-full text-text hover:bg-feed-bg">
+        <button
+          onClick={() => router.push("/inbox")}
+          className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
+        >
           <IoNotificationsOutline size={20} />
+          {unreadNotifCount > 0 && (
+            <span className="absolute right-0.5 top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#FF3B30] px-[3px] text-[9px] font-bold leading-none text-white">
+              {unreadNotifCount > 99 ? "99+" : unreadNotifCount}
+            </span>
+          )}
         </button>
 
         {user?.profile_photo_url ? (

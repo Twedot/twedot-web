@@ -8,7 +8,11 @@ interface UiContextValue {
   notify: (message: string) => void;
 }
 
-const UiContext = createContext<UiContextValue | null>(null);
+const UiContext = createContext<UiContextValue>({
+  sidebarCollapsed: false,
+  toggleSidebar: () => {},
+  notify: () => {},
+});
 
 export function UiProvider({ children }: { children: ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -41,7 +45,5 @@ export function UiProvider({ children }: { children: ReactNode }) {
 }
 
 export function useUi() {
-  const ctx = useContext(UiContext);
-  if (!ctx) throw new Error("useUi must be used within UiProvider");
-  return ctx;
+  return useContext(UiContext);
 }
