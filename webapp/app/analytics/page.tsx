@@ -1,93 +1,125 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  IoStatsChartOutline,
-  IoEyeOutline,
-  IoTrendingUpOutline,
-  IoMegaphoneOutline,
-  IoPersonOutline,
-  IoChevronForward,
-  IoPulseOutline,
-} from "react-icons/io5";
+import { IoArrowUpCircle, IoArrowDownCircle, IoWalletOutline, IoChevronForward } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { apiGet } from "@/lib/api";
 
-type Tab = "performance" | "growth";
+const DAY_OPTIONS = [7, 28, 60, 365];
 
-interface BoostStats { total_boosts: number; active_boosts: number; total_impressions: number; total_clicks: number }
-interface GrowthPoint { date: string; value: number }
-interface BoostGrowth { impressions?: GrowthPoint[]; clicks?: GrowthPoint[] }
-interface EarningsStats { total_earned: number; this_month: number }
+interface Stats {
+  postViews: number; profileViews: number; likes: number; comments: number;
+  reposts: number; contentPublished: number; jobsCompleted: number;
+  amountEarned: number; jobsRequested: number; amountSpent: number;
+}
+interface AnalyticsResult {
+  current: Stats;
+  deltaPct: Record<keyof Stats, number>;
+}
+
+const CONTENT_KEYS: { key: keyof Stats; label: string }[] = [
+  { key: "postViews", label: "Post Views" },
+  { key: "profileViews", label: "Profile Views" },
+  { key: "likes", label: "Likes" },
+  { key: "comments", label: "Comments" },
+  { key: "reposts", label: "Reposts" },
+  { key: "contentPublished", label: "Content Published" },
+];
+const JOB_KEYS: { key: keyof Stats; label: string; money?: boolean }[] = [
+  { key: "jobsCompleted", label: "Jobs Completed" },
+  { key: "amountEarned", label: "Amount Earned", money: true },
+  { key: "jobsRequested", label: "Jobs Requested" },
+  { key: "amountSpent", label: "Amount Spent", money: true },
+];
 
 function fmt(n: number) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}K`;
   return String(n ?? 0);
 }
 
-function BarChart({ data, label, color }: { data: number[]; label: string; color: string }) {
-  const max = Math.max(...data, 1);
-  const dates = data.map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (data.length - 1 - i));
-    return d.toLocaleDateString("en", { weekday: "short" }).slice(0, 1);
-  });
+function fmtDate(d: Date) {
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+function MetricCard({ label, value, deltaPct, money }: { label: string; value: number; deltaPct: number; money?: boolean }) {
+  const isUp = deltaPct >= 0;
+  const color = isUp ? "#23a55a" : "#ef4444";
   return (
-    <div>
-      <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-light-text">{label}</p>
-      <div className="flex items-end gap-1 h-20">
-        {data.map((v, i) => (
-          <div key={i} className="flex flex-1 flex-col items-center gap-1">
-            <div
-              className="w-full rounded-sm transition-all"
-              style={{ height: `${Math.max(3, (v / max) * 64)}px`, backgroundColor: color }}
-            />
-            <span className="text-[9px] text-light-text">{dates[i]}</span>
-          </div>
-        ))}
+    <div className="w-[48%] mb-2.5 rounded-xl border border-border bg-feed-bg p-[14px]">
+      <p className="text-[13.5px] font-semibold text-text">{label}</p>
+      <p className="mt-1.5 text-[24px] font-extrabold text-text">{money ? `₦${fmt(value)}` : fmt(value)}</p>
+      <div className="mt-1.5 flex items-center gap-1">
+        {isUp
+          ? <IoArrowUpCircle size={14} color={color} />
+          : <IoArrowDownCircle size={14} color={color} />}
+        <span className="text-[12.5px] font-bold" style={{ color }}>{isUp ? "+" : ""}{deltaPct}%</span>
       </div>
     </div>
   );
 }
 
-const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: "performance", label: "Performance", icon: IoStatsChartOutline },
-  { id: "growth", label: "Growth", icon: IoPulseOutline },
-];
+function LineChart({ data, color = "#6B4EFF" }: { data: { day: string; count: number }[]; color?: string }) {
+  const counts = data.map(d => d.count);
+  const max = Math.max(...counts, 1);
+  const min = Math.min(...counts, 0);
+  const range = max - min || 1;
+  const W = 480; const H = 80;
+  const pts = data.map((d, i) => {
+    const x = data.length < 2 ? W / 2 : (i / (data.length - 1)) * W;
+    const y = H - ((d.count - min) / range) * (H - 10) - 5;
+    return `${x},${y}`;
+  });
+  const path = pts.length > 1 ? `M${pts.join(" L")}` : `M${W / 2},${H / 2}`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[80px]" preserveAspectRatio="none">
+      <polyline points={pts.join(" ")} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export default function AnalyticsPage() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("performance");
-  const [boostStats, setBoostStats] = useState<BoostStats | null>(null);
-  const [growth, setGrowth] = useState<BoostGrowth | null>(null);
-  const [earnings, setEarnings] = useState<EarningsStats | null>(null);
+  const [days, setDays] = useState(28);
+  const [stats, setStats] = useState<AnalyticsResult | null>(null);
+  const [growth, setGrowth] = useState<{ day: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
   }, [isLoading, isAuthenticated, router]);
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
+  const load = (d: number) => {
+    setLoading(true);
     Promise.all([
-      apiGet<BoostStats>("/boost/my-stats").catch(() => null),
-      apiGet<BoostGrowth>("/boost/my-growth").catch(() => null),
-      apiGet<EarningsStats>("/wallet/earnings/stats").catch(() => null),
-    ]).then(([bs, g, e]) => {
-      setBoostStats(bs);
-      setGrowth(g);
-      setEarnings(e);
+      apiGet<AnalyticsResult>(`/status/analytics/stats?days=${d}`).catch(() => null),
+      apiGet<{ day: string; count: number }[]>(`/status/analytics/growth?days=${d}`).catch(() => []),
+    ]).then(([s, g]) => {
+      setStats(s);
+      setGrowth(Array.isArray(g) ? g : []);
       setLoading(false);
     });
-  }, [isAuthenticated]);
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    load(days);
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDays = (d: number) => {
+    setDays(d);
+    load(d);
+  };
+
+  const rangeLabel = useMemo(() => {
+    const now = new Date();
+    const from = new Date(now.getTime() - days * 86400000);
+    return `${fmtDate(from)} - ${fmtDate(now)}`;
+  }, [days]);
 
   if (!isAuthenticated) return null;
-
-  const impressionData = growth?.impressions?.slice(-14).map((p) => p.value) ?? [];
-  const clickData = growth?.clicks?.slice(-14).map((p) => p.value) ?? [];
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
@@ -97,98 +129,94 @@ export default function AnalyticsPage() {
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Analytics</h1>
         </div>
-        <div className="flex-1 overflow-y-auto py-1">
-          {TABS.map(({ id, label, icon: Icon }) => {
-            const active = tab === id;
-            return (
+        <div className="flex-1 overflow-y-auto p-4">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-light-text">Period</p>
+          <div className="flex flex-wrap gap-2">
+            {DAY_OPTIONS.map((d) => (
               <button
-                key={id}
-                onClick={() => setTab(id)}
-                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${active ? "bg-feed-bg" : "hover:bg-feed-bg/60"}`}
+                key={d}
+                onClick={() => handleDays(d)}
+                className={`rounded-2xl px-3.5 py-[7px] text-[12.5px] font-bold transition-colors ${days === d ? "bg-primary text-white" : "bg-feed-bg text-light-text"}`}
               >
-                <Icon size={17} className={`flex-shrink-0 ${active ? "text-primary" : "text-light-text"}`} />
-                <span className={`flex-1 text-[13px] font-medium ${active ? "text-primary" : "text-text"}`}>{label}</span>
-                <IoChevronForward size={13} className={`flex-shrink-0 ${active ? "text-primary" : "text-light-text"}`} />
+                {d} days
               </button>
-            );
-          })}
-        </div>
-
-        {/* Profile summary */}
-        <div className="border-t border-border p-4">
-          <div className="flex items-center gap-2.5">
-            {user?.profile_photo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.profile_photo_url} alt="" className="h-8 w-8 rounded-full object-cover" />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                <IoPersonOutline size={14} className="text-primary" />
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="truncate text-[12px] font-semibold text-text">{user?.name ?? "You"}</p>
-              <p className="text-[10px] text-light-text">{fmt(user?.follower_count ?? 0)} followers</p>
-            </div>
+            ))}
           </div>
+        </div>
+        <div className="border-t border-border p-4">
+          <button
+            onClick={() => router.push("/wallet")}
+            className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-3.5 text-left hover:bg-feed-bg/70 transition-colors"
+          >
+            <IoWalletOutline size={18} className="flex-shrink-0 text-primary" />
+            <span className="flex-1 text-[13px] font-semibold text-text">View Wallet balance</span>
+            <IoChevronForward size={14} className="flex-shrink-0 text-light-text" />
+          </button>
         </div>
       </div>
 
       {/* ── Right ── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="border-b border-border px-5 py-4">
-          <h2 className="text-[17px] font-bold text-text">{TABS.find(t => t.id === tab)?.label}</h2>
+          <h2 className="text-[17px] font-bold text-text">Key metrics</h2>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-5">
-
-          {tab === "performance" && (
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {loading ? (
+            <div className="flex flex-wrap gap-[4%]">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="mb-2.5 h-[88px] w-[48%] animate-pulse rounded-xl bg-feed-bg" />
+              ))}
+            </div>
+          ) : (
             <>
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-light-text">Boost Stats</p>
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                {[
-                  { label: "Impressions", value: fmt(boostStats?.total_impressions ?? 0), icon: IoEyeOutline },
-                  { label: "Clicks", value: fmt(boostStats?.total_clicks ?? 0), icon: IoTrendingUpOutline },
-                  { label: "Active Boosts", value: fmt(boostStats?.active_boosts ?? 0), icon: IoMegaphoneOutline },
-                  { label: "Earned (mo.)", value: `$${(earnings?.this_month ?? 0).toFixed(2)}`, icon: IoStatsChartOutline },
-                ].map(({ label, value, icon: Icon }) => (
-                  <div key={label} className="rounded-xl border border-border p-4">
-                    <Icon size={18} className="text-primary" />
-                    <p className="mt-2 text-[22px] font-bold text-text">{loading ? "—" : value}</p>
-                    <p className="text-[11px] text-light-text">{label}</p>
-                  </div>
+              <p className="mb-1 text-[12.5px] font-semibold text-light-text">{rangeLabel}</p>
+
+              {/* Content metrics */}
+              <div className="flex flex-wrap justify-between">
+                {CONTENT_KEYS.map(({ key, label }) => (
+                  <MetricCard
+                    key={key}
+                    label={key === "profileViews" ? `${label} (${days}d)` : label}
+                    value={stats?.current[key] ?? 0}
+                    deltaPct={stats?.deltaPct[key] ?? 0}
+                  />
                 ))}
               </div>
-              {!loading && !boostStats?.total_boosts && (
-                <div className="flex flex-col items-center gap-3 py-10 text-center">
-                  <IoStatsChartOutline size={28} className="text-light-text" />
-                  <p className="text-[13px] font-semibold text-text">No data yet</p>
-                  <p className="text-[12px] text-light-text">Boost posts to start seeing analytics</p>
-                  <button onClick={() => router.push("/ads")} className="mt-1 rounded-full bg-primary px-4 py-1.5 text-[12px] font-semibold text-white">
-                    Create a Boost
-                  </button>
+
+              {/* Post Views chart */}
+              {growth.length > 0 && (
+                <div className="mt-4 rounded-xl border border-border bg-feed-bg p-[14px]">
+                  <p className="mb-2.5 text-[15px] font-extrabold text-text">Post Views</p>
+                  <LineChart data={growth} color="#6B4EFF" />
                 </div>
               )}
+
+              {/* Bookings section */}
+              <p className="mt-6 text-[18px] font-extrabold text-text">Bookings</p>
+              <p className="mb-3.5 mt-0.5 text-[12.5px] font-semibold text-light-text">Jobs done for others, and jobs you've requested</p>
+              <div className="flex flex-wrap justify-between">
+                {JOB_KEYS.map(({ key, label, money }) => (
+                  <MetricCard
+                    key={key}
+                    label={label}
+                    value={stats?.current[key] ?? 0}
+                    deltaPct={stats?.deltaPct[key] ?? 0}
+                    money={money}
+                  />
+                ))}
+              </div>
+
+              {/* Wallet link */}
+              <button
+                onClick={() => router.push("/wallet")}
+                className="mt-4 flex w-full items-center gap-2.5 rounded-[14px] border border-border bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors"
+              >
+                <IoWalletOutline size={18} className="flex-shrink-0 text-primary" />
+                <span className="flex-1 text-[13.5px] font-semibold text-text">View Wallet balance &amp; history</span>
+                <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
+              </button>
             </>
           )}
-
-          {tab === "growth" && (
-            <>
-              {impressionData.length > 0 ? (
-                <div className="flex flex-col gap-6">
-                  <BarChart data={impressionData} label="Impressions (14 days)" color="#6b4eff" />
-                  {clickData.length > 0 && (
-                    <BarChart data={clickData} label="Clicks (14 days)" color="#22c55e" />
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-3 py-16 text-center">
-                  <IoPulseOutline size={28} className="text-light-text" />
-                  <p className="text-[13px] font-semibold text-text">No growth data yet</p>
-                  <p className="text-[12px] text-light-text">Growth charts appear once you have active boosts</p>
-                </div>
-              )}
-            </>
-          )}
-
         </div>
       </div>
     </div>
