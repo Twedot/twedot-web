@@ -271,12 +271,12 @@ export default function SideNav() {
             {settingsOpen && (
               <>
                 {[
-                  { icon: IoMegaphoneOutline, label: "Ads" },
-                  { icon: IoWalletOutline, label: "Wallet" },
-                  { icon: IoStatsChartOutline, label: "Analytics" },
+                  { icon: IoMegaphoneOutline, label: "Ads", href: "/ads" },
+                  { icon: IoWalletOutline, label: "Wallet", href: "/wallet" },
+                  { icon: IoStatsChartOutline, label: "Analytics", href: "/analytics" },
                   { icon: IoTimeOutline, label: "Service History", href: "/job-request" },
-                  { icon: IoPersonAddOutline, label: "Invite a Friend" },
-                  { icon: IoHelpCircleOutline, label: "Help & Feedback" },
+                  { icon: IoPersonAddOutline, label: "Invite a Friend", href: "/invite" },
+                  { icon: IoHelpCircleOutline, label: "Help & Feedback", href: "/help" },
                   { icon: IoStarOutline, label: "Rate Twedot", external: "https://play.google.com/store/apps/details?id=com.twedot" },
                 ].map(({ icon: Icon, label, href, external }: { icon: React.ElementType; label: string; href?: string; external?: string }) =>
                   href ? (

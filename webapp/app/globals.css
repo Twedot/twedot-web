@@ -60,6 +60,26 @@ body {
   color: var(--foreground);
 }
 
+/* ── Global slim scrollbar ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--light-text);
+}
+
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
