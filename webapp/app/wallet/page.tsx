@@ -50,7 +50,7 @@ export default function WalletPage() {
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
 
       {/* ── Left ── */}
-      <div className="flex w-[220px] flex-shrink-0 flex-col border-r border-border">
+      <div className="flex w-[280px] flex-shrink-0 flex-col border-r border-border">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Wallet</h1>
         </div>
@@ -59,7 +59,7 @@ export default function WalletPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`w-full rounded-lg py-2.5 text-[13.5px] font-bold transition-colors ${tab === t ? "bg-primary text-white" : "bg-feed-bg text-light-text"}`}
+              className={`w-full rounded-lg py-2.5 text-[13.5px] font-bold transition-colors ${tab === t ? "bg-feed-bg text-primary" : "text-light-text hover:bg-feed-bg/60"}`}
             >
               {t === "earnings" ? "Earnings" : "Twedot Credits"}
             </button>

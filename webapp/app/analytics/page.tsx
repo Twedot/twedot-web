@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
 
       {/* ── Left ── */}
-      <div className="flex w-[220px] flex-shrink-0 flex-col border-r border-border">
+      <div className="flex w-[280px] flex-shrink-0 flex-col border-r border-border">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Analytics</h1>
         </div>
@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
               <button
                 key={d}
                 onClick={() => handleDays(d)}
-                className={`rounded-2xl px-3.5 py-[7px] text-[12.5px] font-bold transition-colors ${days === d ? "bg-primary text-white" : "bg-feed-bg text-light-text"}`}
+                className={`rounded-2xl px-3.5 py-[7px] text-[12.5px] font-bold transition-colors ${days === d ? "bg-feed-bg text-primary" : "text-light-text hover:bg-feed-bg/60"}`}
               >
                 {d} days
               </button>

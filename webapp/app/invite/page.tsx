@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IoPeopleOutline, IoCopyOutline, IoShareSocialOutline, IoLogoWhatsapp, IoChatbubbleOutline, IoCheckmarkOutline } from "react-icons/io5";
+import { IoPeopleOutline, IoCopyOutline, IoShareSocialOutline, IoChatbubbleOutline, IoCheckmarkOutline } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 
@@ -39,10 +39,6 @@ export default function InviteFriendPage() {
     } else { handleCopy(); }
   };
 
-  const handleWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(inviteMessage)}`, "_blank");
-  };
-
   const handleSMS = () => {
     window.open(`sms:?&body=${encodeURIComponent(inviteMessage)}`, "_blank");
   };
@@ -51,7 +47,7 @@ export default function InviteFriendPage() {
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
 
       {/* ── Left ── */}
-      <div className="flex w-[220px] flex-shrink-0 flex-col border-r border-border">
+      <div className="flex w-[280px] flex-shrink-0 flex-col border-r border-border">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Invite a Friend</h1>
         </div>
@@ -103,13 +99,6 @@ export default function InviteFriendPage() {
           {/* Send via */}
           <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-light-text">Send Via</p>
           <div className="flex flex-col gap-3">
-            <button
-              onClick={handleWhatsApp}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] py-[15px] text-[16px] font-semibold text-white hover:bg-[#22c55e] transition-colors"
-            >
-              <IoLogoWhatsapp size={18} />
-              Send via WhatsApp
-            </button>
             <button
               onClick={handleSMS}
               className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-[15px] text-[16px] font-semibold text-white hover:bg-primary/90 transition-colors"

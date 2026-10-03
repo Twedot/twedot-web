@@ -274,7 +274,7 @@ export default function SideNav() {
                   { icon: IoMegaphoneOutline, label: "Ads", href: "/ads" },
                   { icon: IoWalletOutline, label: "Wallet", href: "/wallet" },
                   { icon: IoStatsChartOutline, label: "Analytics", href: "/analytics" },
-                  { icon: IoTimeOutline, label: "Service History", href: "/job-request" },
+                  { icon: IoTimeOutline, label: "Service History", href: "/service-history" },
                   { icon: IoPersonAddOutline, label: "Invite a Friend", href: "/invite" },
                   { icon: IoHelpCircleOutline, label: "Help & Feedback", href: "/help" },
                   { icon: IoStarOutline, label: "Rate Twedot", external: "https://play.google.com/store/apps/details?id=com.twedot" },
