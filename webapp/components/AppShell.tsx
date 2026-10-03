@@ -61,7 +61,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <main className={`min-w-0 flex-1 overflow-x-clip ${
             ((pathname.startsWith("/channels/") && pathname !== "/channels/create") || pathname.startsWith("/c/"))
               ? "2xl:pl-40"
-              : pathname.startsWith("/settings")
+              : (pathname.startsWith("/settings") || pathname.startsWith("/wallet") || pathname.startsWith("/analytics") || pathname.startsWith("/ads") || pathname.startsWith("/invite") || pathname.startsWith("/help") || pathname.startsWith("/service-history") || pathname.startsWith("/job-request"))
               ? "lg:max-w-[920px] xl:max-w-[980px]"
               : "lg:max-w-[500px] xl:max-w-[580px] 2xl:ml-40 2xl:max-w-[620px]"
           }`}>
@@ -69,6 +69,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </main>
           {pathname === "/search" ? <SearchPanel /> : (
             !pathname.startsWith("/settings") &&
+            !pathname.startsWith("/wallet") &&
+            !pathname.startsWith("/analytics") &&
+            !pathname.startsWith("/ads") &&
+            !pathname.startsWith("/invite") &&
+            !pathname.startsWith("/help") &&
+            !pathname.startsWith("/service-history") &&
+            !pathname.startsWith("/job-request") &&
             pathname !== "/create-post" &&
             !pathname.startsWith("/login") &&
             !pathname.startsWith("/register") &&
