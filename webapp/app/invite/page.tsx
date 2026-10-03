@@ -57,8 +57,8 @@ export default function InviteFriendPage() {
             <div className="mb-3 flex h-[72px] w-[72px] items-center justify-center rounded-[20px] bg-primary/10">
               <IoPeopleOutline size={36} className="text-primary" />
             </div>
-            <p className="text-[18px] font-semibold leading-snug text-text">Twedot is better with friends!</p>
-            <p className="mt-1.5 text-[14px] leading-5 text-light-text">Invite contacts to chat and trade with you on Twedot.</p>
+            <p className="text-[13px] font-semibold leading-snug text-text">Twedot is better with friends!</p>
+            <p className="mt-1.5 text-[12px] leading-5 text-light-text">Invite contacts to chat and trade with you on Twedot.</p>
           </div>
         </div>
       </div>
@@ -66,7 +66,7 @@ export default function InviteFriendPage() {
       {/* ── Right ── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="border-b border-border px-5 py-4">
-          <h2 className="text-[17px] font-bold text-text">Share Your Invite</h2>
+          <h2 className="text-[13px] font-bold text-text">Share Your Invite</h2>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-5">
 
@@ -74,7 +74,7 @@ export default function InviteFriendPage() {
           <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-light-text">Invite Link</p>
           <div className="flex items-center gap-2 mb-4">
             <div className="flex-1 rounded-[10px] border border-border bg-feed-bg px-[14px] py-[11px]">
-              <p className="truncate text-[14px] text-light-text">play.google.com/store/apps/details?id=com.twedot</p>
+              <p className="truncate text-[12px] text-light-text">play.google.com/store/apps/details?id=com.twedot</p>
             </div>
             <button
               onClick={handleCopy}
@@ -93,7 +93,7 @@ export default function InviteFriendPage() {
           {/* Invite message preview */}
           <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-light-text">Invite Message</p>
           <div className="mb-5 rounded-xl border border-border bg-feed-bg p-[14px]">
-            <p className="text-[14px] leading-5 text-light-text">{inviteMessage}</p>
+            <p className="text-[12px] leading-5 text-light-text">{inviteMessage}</p>
           </div>
 
           {/* Send via */}
@@ -101,7 +101,7 @@ export default function InviteFriendPage() {
           <div className="flex flex-col gap-3">
             <button
               onClick={handleSMS}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-[15px] text-[16px] font-semibold text-white hover:bg-primary/90 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-[13px] text-[12px] font-semibold text-white hover:bg-primary/90 transition-colors"
             >
               <IoChatbubbleOutline size={16} />
               Send via SMS
@@ -110,10 +110,10 @@ export default function InviteFriendPage() {
 
           {/* App store links */}
           <div className="mt-6 flex gap-3">
-            <a href={APP_STORE_LINK} target="_blank" rel="noopener noreferrer" className="flex-1 rounded-xl border border-border bg-feed-bg py-2.5 text-center text-[13px] font-semibold text-text hover:bg-feed-bg/70 transition-colors">
+            <a href={APP_STORE_LINK} target="_blank" rel="noopener noreferrer" className="flex-1 rounded-xl border border-border bg-feed-bg py-2.5 text-center text-[12px] font-semibold text-text hover:bg-feed-bg/70 transition-colors">
               App Store (iOS)
             </a>
-            <a href={PLAY_STORE_LINK} target="_blank" rel="noopener noreferrer" className="flex-1 rounded-xl border border-border bg-feed-bg py-2.5 text-center text-[13px] font-semibold text-text hover:bg-feed-bg/70 transition-colors">
+            <a href={PLAY_STORE_LINK} target="_blank" rel="noopener noreferrer" className="flex-1 rounded-xl border border-border bg-feed-bg py-2.5 text-center text-[12px] font-semibold text-text hover:bg-feed-bg/70 transition-colors">
               Google Play
             </a>
           </div>

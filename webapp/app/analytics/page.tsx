@@ -48,13 +48,13 @@ function MetricCard({ label, value, deltaPct, money }: { label: string; value: n
   const color = isUp ? "#23a55a" : "#ef4444";
   return (
     <div className="w-[48%] mb-2.5 rounded-xl border border-border bg-feed-bg p-[14px]">
-      <p className="text-[13px] font-semibold text-text">{label}</p>
-      <p className="mt-1.5 text-[20px] font-extrabold text-text">{money ? `₦${fmt(value)}` : fmt(value)}</p>
+      <p className="text-[12px] font-semibold text-text">{label}</p>
+      <p className="mt-1.5 text-[18px] font-extrabold text-text">{money ? `₦${fmt(value)}` : fmt(value)}</p>
       <div className="mt-1.5 flex items-center gap-1">
         {isUp
-          ? <IoArrowUpCircle size={14} color={color} />
-          : <IoArrowDownCircle size={14} color={color} />}
-        <span className="text-[12px] font-bold" style={{ color }}>{isUp ? "+" : ""}{deltaPct}%</span>
+          ? <IoArrowUpCircle size={13} color={color} />
+          : <IoArrowDownCircle size={13} color={color} />}
+        <span className="text-[11px] font-bold" style={{ color }}>{isUp ? "+" : ""}{deltaPct}%</span>
       </div>
     </div>
   );

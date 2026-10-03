@@ -80,8 +80,8 @@ export default function HelpPage() {
       >
         <opt.icon size={22} className="flex-shrink-0 text-light-text" />
         <div className="flex-1">
-          <p className="text-[16px] text-text">{opt.title}</p>
-          {opt.subtitle && <p className="mt-0.5 text-[13px] text-light-text">{opt.subtitle}</p>}
+          <p className="text-[12px] font-medium text-text">{opt.title}</p>
+          {opt.subtitle && <p className="mt-0.5 text-[11px] text-light-text">{opt.subtitle}</p>}
         </div>
         <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
       </button>
@@ -120,15 +120,15 @@ export default function HelpPage() {
         {pane === "none" && (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center px-8">
             <IoHeadsetOutline size={40} className="text-light-text" />
-            <p className="text-[15px] font-semibold text-text">How can we help?</p>
-            <p className="text-[13px] text-light-text">Select an option from the left to get started.</p>
+            <p className="text-[13px] font-semibold text-text">How can we help?</p>
+            <p className="text-[12px] text-light-text">Select an option from the left to get started.</p>
           </div>
         )}
 
         {pane === "faq" && (
           <>
             <div className="border-b border-border px-5 py-4">
-              <h2 className="text-[17px] font-bold text-text">Frequently Asked Questions</h2>
+              <h2 className="text-[13px] font-bold text-text">Frequently Asked Questions</h2>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-5">
               <div className="overflow-hidden rounded-xl border border-border">
@@ -138,12 +138,12 @@ export default function HelpPage() {
                       onClick={() => setOpenFaq(openFaq === i ? null : i)}
                       className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-feed-bg/60 transition-colors"
                     >
-                      <span className="flex-1 text-[13px] font-medium text-text">{item.q}</span>
-                      <span className="flex-shrink-0 text-[14px] text-light-text">{openFaq === i ? "▲" : "▼"}</span>
+                      <span className="flex-1 text-[12px] font-medium text-text">{item.q}</span>
+                      <span className="flex-shrink-0 text-[12px] text-light-text">{openFaq === i ? "▲" : "▼"}</span>
                     </button>
                     {openFaq === i && (
                       <div className="px-4 pb-4">
-                        <p className="text-[13px] leading-[18px] text-light-text">{item.a}</p>
+                        <p className="text-[12px] leading-[18px] text-light-text">{item.a}</p>
                       </div>
                     )}
                   </div>
@@ -156,7 +156,7 @@ export default function HelpPage() {
         {pane === "feedback" && (
           <>
             <div className="border-b border-border px-5 py-4">
-              <h2 className="text-[17px] font-bold text-text">Give Feedback</h2>
+              <h2 className="text-[13px] font-bold text-text">Give Feedback</h2>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-5">
               {sent ? (
@@ -164,7 +164,7 @@ export default function HelpPage() {
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10">
                     <span className="text-[26px]">✓</span>
                   </div>
-                  <p className="text-[15px] font-semibold text-text">Thanks for your feedback!</p>
+                  <p className="text-[13px] font-semibold text-text">Thanks for your feedback!</p>
                   <p className="text-[12px] text-light-text">We review all submissions and will be in touch if needed.</p>
                   <button onClick={() => setSent(false)} className="mt-2 rounded-full bg-primary px-5 py-1.5 text-[12px] font-semibold text-white hover:bg-primary/90">
                     Send More
@@ -174,7 +174,7 @@ export default function HelpPage() {
                 <form onSubmit={handleFeedbackSubmit} className="flex flex-col gap-4 max-w-lg">
                   <div>
                     <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-light-text">Category</label>
-                    <select value={category} onChange={e => setCategory(e.target.value)} className="w-full rounded-xl border border-border bg-feed-bg px-3 py-2 text-[13px] text-text focus:outline-none focus:ring-1 focus:ring-primary">
+                    <select value={category} onChange={e => setCategory(e.target.value)} className="w-full rounded-xl border border-border bg-feed-bg px-3 py-2 text-[12px] text-text focus:outline-none focus:ring-1 focus:ring-primary">
                       <option value="general">General Feedback</option>
                       <option value="bug">Bug Report</option>
                       <option value="feature">Feature Request</option>
@@ -185,10 +185,10 @@ export default function HelpPage() {
                   <div>
                     <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-light-text">Message</label>
                     <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Tell us what's on your mind…" rows={6} maxLength={1000}
-                      className="w-full resize-none rounded-xl border border-border bg-feed-bg px-3 py-2.5 text-[13px] text-text placeholder:text-light-text/50 focus:outline-none focus:ring-1 focus:ring-primary" />
+                      className="w-full resize-none rounded-xl border border-border bg-feed-bg px-3 py-2.5 text-[12px] text-text placeholder:text-light-text/50 focus:outline-none focus:ring-1 focus:ring-primary" />
                     <p className="mt-1 text-right text-[10px] text-light-text">{message.length}/1000</p>
                   </div>
-                  <button type="submit" disabled={!message.trim() || sending} className="flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[13px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50">
+                  <button type="submit" disabled={!message.trim() || sending} className="flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[12px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50">
                     {sending ? "Sending…" : "Send Feedback"}
                   </button>
                 </form>
