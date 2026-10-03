@@ -12,6 +12,7 @@ import {
   IoBookmarkOutline,
   IoChevronBack,
   IoChevronForward,
+  IoRocketOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -56,6 +57,7 @@ function timeAgo(iso: string) {
 
 export default function PostCard({ items, compact = false }: { items: StatusPost[]; compact?: boolean }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const head = items[0];
   const active = items[activeIndex] ?? head;
@@ -221,9 +223,37 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
             {isFollowing ? "Following" : "Follow"}
           </button>
         )}
-        <button onClick={(e) => e.stopPropagation()} className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-light-text hover:bg-feed-bg">
-          <IoEllipsisHorizontal size={18} />
-        </button>
+        <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
+          >
+            <IoEllipsisHorizontal size={18} />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-8 z-20 min-w-[160px] overflow-hidden rounded-xl border border-border bg-background shadow-lg">
+                {isOwnPost && (
+                  <button
+                    onClick={() => { setMenuOpen(false); router.push(`/boost/${head.id}`); }}
+                    className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                  >
+                    <IoRocketOutline size={15} className="text-primary flex-shrink-0" />
+                    Boost Post
+                  </button>
+                )}
+                <button
+                  onClick={() => { setMenuOpen(false); notify("Copied link"); navigator.clipboard?.writeText(window.location.origin + `/p/${head.id}`).catch(() => {}); }}
+                  className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                >
+                  <IoShareOutline size={15} className="text-light-text flex-shrink-0" />
+                  Copy Link
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       {/* ── Content indented to align with name ── */}
