@@ -172,7 +172,7 @@ export default function TopBar() {
       {/* Logo */}
       <div className="flex flex-shrink-0 items-center gap-1">
         <button
-          onClick={() => router.push("/feed")}
+          onClick={() => router.push("/stories")}
           className="flex items-center gap-1.5 text-xl font-extrabold tracking-tight text-primary"
         >
           <span className="hidden sm:inline">Twedot</span>

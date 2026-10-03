@@ -26,7 +26,7 @@ export default function CompleteProfilePage() {
     setIsSubmitting(true);
     try {
       await completeProfile({ name, occupation, city, country });
-      router.push("/feed");
+      router.push("/stories");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Try again.");
     } finally {

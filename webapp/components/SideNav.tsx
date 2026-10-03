@@ -39,7 +39,7 @@ import { useJobSocket } from "@/lib/jobSocket";
 import { channelUrl } from "@/lib/url";
 
 const mainItems = [
-  { href: "/feed", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
+  { href: "/stories", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
   { href: "/nearby", label: "Nearby", icon: IoLocationOutline, activeIcon: IoLocation },
   { href: "/channels", label: "Channels", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
   { href: "/job-request", label: "Job Request", icon: IoNotificationsOutline, activeIcon: IoNotifications },

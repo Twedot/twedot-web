@@ -138,7 +138,7 @@ export default function CreatePostPage() {
     setPosting(true);
 
     // Navigate to stories immediately — upload continues in the background
-    router.push("/feed");
+    router.push("/stories");
 
     if (mode === "text") {
       uploadStore.set({ total: 1, done: 0, failed: false, label: "text" });

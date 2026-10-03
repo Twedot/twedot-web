@@ -49,7 +49,7 @@ function VerifyForm() {
     setIsSubmitting(true);
     try {
       const result = await verifyOtp(phoneNumber, code.join(""));
-      router.replace(result.profileComplete ? "/feed" : "/complete-profile");
+      router.replace(result.profileComplete ? "/stories" : "/complete-profile");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Invalid code. Try again.");
     } finally {

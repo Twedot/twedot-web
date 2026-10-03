@@ -16,7 +16,7 @@ export default function NotFound() {
         </p>
       </div>
       <Link
-        href="/feed"
+        href="/stories"
         className="rounded-full bg-primary px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-primary/90 transition-colors"
       >
         Go to Feed

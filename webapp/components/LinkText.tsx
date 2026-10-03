@@ -29,7 +29,7 @@ export default function LinkText({ text }: { text: string }) {
           return (
             <Link
               key={i}
-              href={`/feed?q=${encodeURIComponent(part.slice(1))}`}
+              href={`/stories?q=${encodeURIComponent(part.slice(1))}`}
               className="text-blue-500 hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
