@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   // Proxy all /twedot-api/* requests server-side to the backend.
   // This avoids browser CORS entirely — the Go upload service and any other
   // route are all reached through the same Next.js origin.
+  async redirects() {
+    return [
+      { source: "/feed", destination: "/stories", permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       {
