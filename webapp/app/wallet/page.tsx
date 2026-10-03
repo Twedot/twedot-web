@@ -70,7 +70,7 @@ export default function WalletPage() {
       {/* ── Right ── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="border-b border-border px-5 py-4">
-          <h2 className="text-[17px] font-bold text-text">
+          <h2 className="text-[15px] font-bold text-text">
             {tab === "earnings" ? "Earnings" : "Twedot Credits"}
           </h2>
         </div>
@@ -106,12 +106,12 @@ export default function WalletPage() {
                   <div className="rounded-[14px] bg-feed-bg p-4 space-y-3">
                     <p className="text-[13px] font-bold uppercase tracking-[0.4px] text-text">Your activity</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-[13.5px] text-light-text flex-1">Qualified views ({qualifiedViews.toLocaleString()} so far)</span>
-                      <span className="text-[13.5px] font-bold text-text">₦{lifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span className="text-[13px] text-light-text flex-1">Qualified views ({qualifiedViews.toLocaleString()} so far)</span>
+                      <span className="text-[13px] font-bold text-text">₦{lifetimeEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[13.5px] text-light-text flex-1">Supreme welcome bonus</span>
-                      <span className="text-[13.5px] font-bold text-text">₦0.00</span>
+                      <span className="text-[13px] text-light-text flex-1">Supreme welcome bonus</span>
+                      <span className="text-[13px] font-bold text-text">₦0.00</span>
                     </div>
                   </div>
                 )}
@@ -121,11 +121,11 @@ export default function WalletPage() {
                   <p className="text-[13px] font-bold uppercase tracking-[0.4px] text-text">How earning works</p>
                   <div className="flex items-center gap-2.5">
                     <span className={`text-lg flex-shrink-0 ${isSupreme ? "text-green-500" : "text-light-text"}`}>{isSupreme ? "✓" : "○"}</span>
-                    <p className="text-[13.5px] leading-[19px] text-light-text">Reach Supreme, the top rank, to unlock a one-time welcome bonus</p>
+                    <p className="text-[13px] leading-[19px] text-light-text">Reach Supreme, the top rank, to unlock a one-time welcome bonus</p>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="text-lg flex-shrink-0 text-light-text">○</span>
-                    <p className="text-[13.5px] leading-[19px] text-light-text">
+                    <p className="text-[13px] leading-[19px] text-light-text">
                       From then on, you keep earning more the more QUALIFIED views your videos rack up
                       {qualifiedViews > 0 ? ` (you have ${qualifiedViews.toLocaleString()} so far)` : ""}
                     </p>
@@ -164,11 +164,11 @@ export default function WalletPage() {
                   <p className="text-[13px] font-bold uppercase tracking-[0.4px] text-text">What Credits are for</p>
                   <div className="flex items-center gap-2.5">
                     <IoRocketOutline size={20} className="flex-shrink-0 text-light-text" />
-                    <p className="text-[13.5px] leading-[19px] text-light-text">Spend Credits to Boost your posts and reach more people</p>
+                    <p className="text-[13px] leading-[19px] text-light-text">Spend Credits to Boost your posts and reach more people</p>
                   </div>
                   <div className="flex items-center gap-2.5">
-                    <span className="flex-shrink-0 text-[17px] text-light-text">🏷</span>
-                    <p className="text-[13.5px] leading-[19px] text-light-text">1 Twedot Credit = ₦1.5</p>
+                    <span className="flex-shrink-0 text-[15px] text-light-text">🏷</span>
+                    <p className="text-[13px] leading-[19px] text-light-text">1 Twedot Credit = ₦1.5</p>
                   </div>
                 </div>
               </>
@@ -181,30 +181,30 @@ export default function WalletPage() {
               <>
                 <button onClick={() => router.push("/analytics")} className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
                   <IoDiamondOutline size={18} className="flex-shrink-0 text-primary" />
-                  <span className="flex-1 text-[13.5px] font-semibold text-text">Content Monetization — earnings breakdown</span>
+                  <span className="flex-1 text-[13px] font-semibold text-text">Content Monetization — earnings breakdown</span>
                   <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
                 </button>
                 <button onClick={() => router.push("/analytics")} className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
-                  <span className="flex-shrink-0 text-[17px]">📊</span>
-                  <span className="flex-1 text-[13.5px] font-semibold text-text">Analytics — views, engagement &amp; jobs</span>
+                  <span className="flex-shrink-0 text-[15px]">📊</span>
+                  <span className="flex-1 text-[13px] font-semibold text-text">Analytics — views, engagement &amp; jobs</span>
                   <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
                 </button>
                 <a href="https://twedot.com/withdraw-earnings" target="_blank" rel="noopener noreferrer" className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
-                  <span className="flex-shrink-0 text-[17px]">🌐</span>
-                  <span className="flex-1 text-[13.5px] font-semibold text-text">Learn how Rank &amp; Wallet earnings work</span>
+                  <span className="flex-shrink-0 text-[15px]">🌐</span>
+                  <span className="flex-1 text-[13px] font-semibold text-text">Learn how Rank &amp; Wallet earnings work</span>
                   <IoOpenOutline size={16} className="flex-shrink-0 text-light-text" />
                 </a>
               </>
             ) : (
               <>
                 <button onClick={() => router.push("/ads")} className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
-                  <span className="flex-shrink-0 text-[17px]">📊</span>
-                  <span className="flex-1 text-[13.5px] font-semibold text-text">Ads Analytics &amp; transaction history</span>
+                  <span className="flex-shrink-0 text-[15px]">📊</span>
+                  <span className="flex-1 text-[13px] font-semibold text-text">Ads Analytics &amp; transaction history</span>
                   <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
                 </button>
                 <a href="https://twedot.com/credits" target="_blank" rel="noopener noreferrer" className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
-                  <span className="flex-shrink-0 text-[17px]">🌐</span>
-                  <span className="flex-1 text-[13.5px] font-semibold text-text">Learn how Twedot Credits &amp; boosting work</span>
+                  <span className="flex-shrink-0 text-[15px]">🌐</span>
+                  <span className="flex-1 text-[13px] font-semibold text-text">Learn how Twedot Credits &amp; boosting work</span>
                   <IoOpenOutline size={16} className="flex-shrink-0 text-light-text" />
                 </a>
               </>

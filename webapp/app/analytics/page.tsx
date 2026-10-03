@@ -48,13 +48,13 @@ function MetricCard({ label, value, deltaPct, money }: { label: string; value: n
   const color = isUp ? "#23a55a" : "#ef4444";
   return (
     <div className="w-[48%] mb-2.5 rounded-xl border border-border bg-feed-bg p-[14px]">
-      <p className="text-[13.5px] font-semibold text-text">{label}</p>
-      <p className="mt-1.5 text-[24px] font-extrabold text-text">{money ? `₦${fmt(value)}` : fmt(value)}</p>
+      <p className="text-[13px] font-semibold text-text">{label}</p>
+      <p className="mt-1.5 text-[20px] font-extrabold text-text">{money ? `₦${fmt(value)}` : fmt(value)}</p>
       <div className="mt-1.5 flex items-center gap-1">
         {isUp
           ? <IoArrowUpCircle size={14} color={color} />
           : <IoArrowDownCircle size={14} color={color} />}
-        <span className="text-[12.5px] font-bold" style={{ color }}>{isUp ? "+" : ""}{deltaPct}%</span>
+        <span className="text-[12px] font-bold" style={{ color }}>{isUp ? "+" : ""}{deltaPct}%</span>
       </div>
     </div>
   );
@@ -212,7 +212,7 @@ export default function AnalyticsPage() {
                 className="mt-4 flex w-full items-center gap-2.5 rounded-[14px] border border-border bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors"
               >
                 <IoWalletOutline size={18} className="flex-shrink-0 text-primary" />
-                <span className="flex-1 text-[13.5px] font-semibold text-text">View Wallet balance &amp; history</span>
+                <span className="flex-1 text-[13px] font-semibold text-text">View Wallet balance &amp; history</span>
                 <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
               </button>
             </>

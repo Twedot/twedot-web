@@ -82,7 +82,7 @@ export default function ServiceHistoryPage() {
             ].map(({ label, value }) => (
               <div key={label} className="rounded-xl bg-feed-bg p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.3px] text-light-text">{label}</p>
-                <p className="mt-1 text-[17px] font-extrabold text-text">{value}</p>
+                <p className="mt-1 text-[15px] font-bold text-text">{value}</p>
               </div>
             ))}
           </div>
@@ -117,7 +117,7 @@ export default function ServiceHistoryPage() {
       {/* ── Right ── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="border-b border-border flex items-center justify-between px-5 py-4">
-          <h2 className="text-[17px] font-bold text-text">{role === "requester" ? "Requests I Made" : "Jobs I Did"}</h2>
+          <h2 className="text-[15px] font-bold text-text">{role === "requester" ? "Requests I Made" : "Jobs I Did"}</h2>
           <button onClick={handleRefresh} disabled={refreshing} className="text-[12px] text-primary font-semibold disabled:opacity-50">
             {refreshing ? "Refreshing…" : "Refresh"}
           </button>
@@ -138,7 +138,7 @@ export default function ServiceHistoryPage() {
           ) : data.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
               <IoTimeOutline size={40} className="text-light-text" />
-              <p className="text-[14px] text-light-text leading-5 max-w-[220px]">
+              <p className="text-[13px] text-light-text leading-5 max-w-[220px]">
                 {role === "requester" ? "You haven't finished any service requests yet." : "You haven't finished any jobs yet."}
               </p>
             </div>
@@ -157,7 +157,7 @@ export default function ServiceHistoryPage() {
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-semibold text-text">{otherParty?.name ?? "Unknown"}</p>
+                      <p className="text-[13px] font-semibold text-text">{otherParty?.name ?? "Unknown"}</p>
                       <p className="mt-0.5 text-[12px] text-light-text">{item.category}</p>
                       {role === "requester" && item.rating != null && (
                         <div className="mt-1 flex gap-0.5">
@@ -168,7 +168,7 @@ export default function ServiceHistoryPage() {
                       )}
                     </div>
                     <div className="flex flex-col items-end">
-                      <p className="text-[14px] font-bold text-text">₦{item.price.toLocaleString()}</p>
+                      <p className="text-[13px] font-bold text-text">₦{item.price.toLocaleString()}</p>
                       <p className={`mt-0.5 text-[11px] font-semibold ${item.status === "cancelled" ? "text-red-400" : "text-light-text"}`}>
                         {item.status === "finished" ? "Finished" : "Cancelled"}
                       </p>
