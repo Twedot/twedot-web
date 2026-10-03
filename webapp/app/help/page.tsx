@@ -1,180 +1,232 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   IoHelpCircleOutline,
-  IoChevronDownOutline,
-  IoChevronUpOutline,
   IoChatbubbleOutline,
+  IoChevronForward,
+  IoChevronDown,
+  IoChevronUp,
+  IoSendOutline,
   IoCheckmarkCircleOutline,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { apiPost } from "@/lib/api";
 
-const FAQS = [
+type Tab = "faq" | "feedback";
+
+interface FaqItem { q: string; a: string }
+
+const FAQ: FaqItem[] = [
   {
     q: "How do I boost a post?",
-    a: "Go to any of your posts, tap the Boost button, choose your budget and duration, then confirm. Your post will start reaching more people within minutes.",
+    a: "Open the post, tap the three-dot menu, and select 'Boost Post'. Choose your budget and duration, then confirm with your Twedot Credits.",
   },
   {
-    q: "How does the ranking system work?",
-    a: "Your rank is based on your activity score — posting, getting likes, comments, views, and followers all contribute. Higher rank means more visibility on the platform.",
+    q: "How do Twedot Credits work?",
+    a: "Twedot Credits are the in-app currency used to boost posts, tip creators, and access premium features. You can purchase credits from the Wallet screen.",
   },
   {
-    q: "How do I earn from my posts?",
-    a: "Creators earn credits based on engagement on their posts. Credits accumulate in your Wallet and can be withdrawn once you reach the minimum threshold.",
+    q: "Why can't I see my stories?",
+    a: "Stories appear in the Stories tab. Make sure you're following accounts that post stories, or check your feed filter settings.",
   },
   {
-    q: "Can I delete my account?",
-    a: "Yes. Go to Settings → Account → Delete Account. This is permanent and will remove all your data from Twedot.",
+    q: "How do I change my username?",
+    a: "Go to Settings → Profile and tap 'Edit Profile'. You can update your username there. Note: username changes may be rate-limited.",
   },
   {
-    q: "How do I report someone?",
-    a: "Tap the three-dot menu on any post or profile and select Report. Our moderation team reviews all reports within 24 hours.",
+    q: "How do I delete my account?",
+    a: "Go to Settings → Account → Delete Account. This action is permanent and cannot be undone. All your data will be removed within 30 days.",
   },
   {
-    q: "Why is my post not showing on the feed?",
-    a: "New posts may take a few minutes to appear. If it's been longer, check your account status in Settings. Private posts only appear to your followers.",
+    q: "How do referrals work?",
+    a: "Share your unique invite link from the 'Invite a Friend' screen. When a friend signs up using your link, you both earn referral points that unlock rewards.",
+  },
+  {
+    q: "Why is my post not showing up?",
+    a: "Posts go through a brief review process. If your post violates community guidelines it may be removed. Check your notifications for any policy updates.",
+  },
+  {
+    q: "How do I report a user or post?",
+    a: "Tap the three-dot menu on any post or profile and select 'Report'. Our team reviews all reports within 24 hours.",
   },
 ];
 
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="rounded-2xl bg-feed-bg overflow-hidden">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-4 py-3.5 text-left"
-      >
-        <span className="text-[14px] font-medium text-text pr-3">{q}</span>
-        {open ? (
-          <IoChevronUpOutline size={16} className="flex-shrink-0 text-light-text" />
-        ) : (
-          <IoChevronDownOutline size={16} className="flex-shrink-0 text-light-text" />
-        )}
-      </button>
-      {open && (
-        <div className="border-t border-border px-4 pb-4 pt-3">
-          <p className="text-[13px] leading-[20px] text-light-text">{a}</p>
-        </div>
-      )}
-    </div>
-  );
-}
+const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
+  { id: "faq", label: "FAQ", icon: IoHelpCircleOutline },
+  { id: "feedback", label: "Send Feedback", icon: IoChatbubbleOutline },
+];
 
 export default function HelpPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const { notify } = useUi();
   const router = useRouter();
-  const [feedback, setFeedback] = useState("");
-  const [rating, setRating] = useState<number | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [tab, setTab] = useState<Tab>("faq");
+  const [open, setOpen] = useState<number | null>(null);
 
-  if (!isLoading && !isAuthenticated) {
-    router.replace("/login");
-    return null;
-  }
+  // Feedback form
+  const [category, setCategory] = useState("general");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!feedback.trim() || !rating) {
-      notify("Please add a message and rating");
-      return;
-    }
-    setSubmitting(true);
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) router.replace("/login");
+  }, [isLoading, isAuthenticated, router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim() || sending) return;
+    setSending(true);
     try {
-      await apiPost("/feedback", { message: feedback.trim(), rating });
-      setSubmitted(true);
-      setFeedback("");
-      setRating(null);
+      await apiPost("/feedback", { category, message: message.trim() });
+      setSent(true);
+      setMessage("");
+      notify("Feedback sent — thank you!");
     } catch {
-      notify("Failed to send feedback. Please try again.");
+      notify("Failed to send. Please try again.");
     } finally {
-      setSubmitting(false);
+      setSending(false);
     }
   };
 
-  return (
-    <div className="flex flex-col pb-16">
-      {/* Header */}
-      <div className="px-6 pt-6 pb-5">
-        <h1 className="text-[20px] font-bold text-text">Help & Feedback</h1>
-        <p className="mt-0.5 text-[13px] text-light-text">Find answers or send us a message</p>
-      </div>
+  if (!isAuthenticated) return null;
 
-      {/* FAQ */}
-      <div className="px-4">
-        <p className="mb-3 text-[13px] font-semibold text-light-text uppercase tracking-wide">Frequently Asked</p>
-        <div className="flex flex-col gap-2">
-          {FAQS.map((f) => <FaqItem key={f.q} q={f.q} a={f.a} />)}
+  return (
+    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
+
+      {/* ── Left ── */}
+      <div className="flex w-[220px] flex-shrink-0 flex-col border-r border-border">
+        <div className="border-b border-border px-5 py-4">
+          <h1 className="text-[20px] font-bold text-text">Help & Feedback</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto py-1">
+          {TABS.map(({ id, label, icon: Icon }) => {
+            const active = tab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${active ? "bg-feed-bg" : "hover:bg-feed-bg/60"}`}
+              >
+                <Icon size={17} className={`flex-shrink-0 ${active ? "text-primary" : "text-light-text"}`} />
+                <span className={`flex-1 text-[13px] font-medium ${active ? "text-primary" : "text-text"}`}>{label}</span>
+                <IoChevronForward size={13} className={`flex-shrink-0 ${active ? "text-primary" : "text-light-text"}`} />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Support link */}
+        <div className="border-t border-border p-4">
+          <p className="text-[10px] text-light-text leading-[16px]">
+            Need more help?{" "}
+            <a href="mailto:support@twedot.com" className="text-primary underline-offset-2 hover:underline">
+              support@twedot.com
+            </a>
+          </p>
         </div>
       </div>
 
-      {/* Feedback form */}
-      <div className="mt-6 px-4">
-        <p className="mb-3 text-[13px] font-semibold text-light-text uppercase tracking-wide">Send Feedback</p>
+      {/* ── Right ── */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="border-b border-border px-5 py-4">
+          <h2 className="text-[17px] font-bold text-text">{TABS.find(t => t.id === tab)?.label}</h2>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-5">
 
-        {submitted ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl bg-feed-bg py-10 text-center">
-            <IoCheckmarkCircleOutline size={36} className="text-green-400" />
-            <p className="text-[14px] font-semibold text-text">Thank you!</p>
-            <p className="text-[12px] text-light-text">Your feedback helps us improve Twedot.</p>
-            <button onClick={() => setSubmitted(false)} className="mt-1 text-[12px] text-primary hover:underline">
-              Send another
-            </button>
-          </div>
-        ) : (
-          <div className="rounded-2xl bg-feed-bg p-4">
-            {/* Rating */}
-            <p className="mb-2 text-[13px] font-medium text-text">How's your experience?</p>
-            <div className="mb-4 flex gap-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setRating(n)}
-                  className={`flex-1 rounded-xl py-2 text-[18px] transition-colors ${
-                    rating === n ? "bg-primary/20 ring-1 ring-primary" : "bg-background hover:bg-primary/10"
-                  }`}
-                >
-                  {["😞", "😐", "🙂", "😊", "🤩"][n - 1]}
-                </button>
-              ))}
-            </div>
+          {tab === "faq" && (
+            <>
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-light-text">Frequently Asked Questions</p>
+              <div className="flex flex-col divide-y divide-border rounded-xl border border-border overflow-hidden">
+                {FAQ.map((item, i) => {
+                  const isOpen = open === i;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setOpen(isOpen ? null : i)}
+                      className="flex w-full flex-col gap-0 px-4 py-3 text-left hover:bg-feed-bg/60 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[13px] font-medium text-text">{item.q}</span>
+                        {isOpen
+                          ? <IoChevronUp size={14} className="flex-shrink-0 text-light-text" />
+                          : <IoChevronDown size={14} className="flex-shrink-0 text-light-text" />}
+                      </div>
+                      {isOpen && (
+                        <p className="mt-2 text-[12px] leading-[18px] text-light-text pr-4">{item.a}</p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
-            {/* Message */}
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Tell us what you think or report an issue…"
-              rows={4}
-              className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-[13px] text-text placeholder-light-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-            />
+          {tab === "feedback" && (
+            <>
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-light-text">Share Your Thoughts</p>
 
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || !feedback.trim() || !rating}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[13px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
-            >
-              <IoChatbubbleOutline size={15} />
-              {submitting ? "Sending…" : "Send Feedback"}
-            </button>
-          </div>
-        )}
-      </div>
+              {sent ? (
+                <div className="flex flex-col items-center gap-4 py-16 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10">
+                    <IoCheckmarkCircleOutline size={28} className="text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-[15px] font-semibold text-text">Thank you for your feedback!</p>
+                    <p className="mt-1 text-[12px] text-light-text">We review all submissions and will be in touch if needed.</p>
+                  </div>
+                  <button
+                    onClick={() => setSent(false)}
+                    className="mt-2 rounded-full bg-primary px-5 py-1.5 text-[12px] font-semibold text-white hover:bg-primary/90"
+                  >
+                    Send More
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-light-text">Category</label>
+                    <select
+                      value={category}
+                      onChange={e => setCategory(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-feed-bg px-3 py-2 text-[13px] text-text focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="general">General Feedback</option>
+                      <option value="bug">Bug Report</option>
+                      <option value="feature">Feature Request</option>
+                      <option value="content">Content / Safety</option>
+                      <option value="account">Account Issue</option>
+                    </select>
+                  </div>
 
-      {/* Contact */}
-      <div className="mx-4 mt-4 rounded-2xl bg-feed-bg px-4 py-4">
-        <div className="flex items-start gap-3">
-          <IoHelpCircleOutline size={20} className="mt-0.5 flex-shrink-0 text-primary" />
-          <div>
-            <p className="text-[13px] font-semibold text-text">Still need help?</p>
-            <p className="mt-0.5 text-[12px] leading-[18px] text-light-text">
-              Email us at{" "}
-              <span className="select-all text-primary">support@twedot.com</span>
-            </p>
-          </div>
+                  <div>
+                    <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-widest text-light-text">Message</label>
+                    <textarea
+                      value={message}
+                      onChange={e => setMessage(e.target.value)}
+                      placeholder="Tell us what's on your mind…"
+                      rows={6}
+                      className="w-full resize-none rounded-xl border border-border bg-feed-bg px-3 py-2.5 text-[13px] text-text placeholder:text-light-text/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <p className="mt-1 text-right text-[10px] text-light-text">{message.length}/1000</p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={!message.trim() || sending || message.length > 1000}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-[13px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <IoSendOutline size={15} />
+                    {sending ? "Sending…" : "Send Feedback"}
+                  </button>
+                </form>
+              )}
+            </>
+          )}
+
         </div>
       </div>
     </div>
