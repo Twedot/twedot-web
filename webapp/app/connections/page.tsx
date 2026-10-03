@@ -102,7 +102,7 @@ function ConnectionsContent() {
       const [flrs, flng, sugg] = await Promise.all([
         apiGet<{ followers: Person[] }>("/users/me/followers"),
         apiGet<{ following: Person[] }>("/users/me/following"),
-        apiGet<Person[]>("/users/suggested"),
+        apiGet<Person[]>("/users/suggested").catch(() => [] as Person[]),
       ]);
       const flrsData = Array.isArray((flrs as any)?.followers) ? (flrs as any).followers : Array.isArray(flrs) ? flrs : [];
       const flngData = Array.isArray((flng as any)?.following) ? (flng as any).following : Array.isArray(flng) ? flng : [];
