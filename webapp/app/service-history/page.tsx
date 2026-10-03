@@ -57,8 +57,8 @@ export default function ServiceHistoryPage() {
   if (!isAuthenticated) return null;
 
   const data = role === "requester" ? requesterHistory : vendorHistory;
-  const totalEarned = vendorHistory.filter(b => b.status === "finished").reduce((s, b) => s + b.price, 0);
-  const totalSpent = requesterHistory.filter(b => b.status === "finished").reduce((s, b) => s + b.price, 0);
+  const totalEarned = vendorHistory.filter(b => b.status === "finished").reduce((s, b) => s + Number(b.price), 0);
+  const totalSpent = requesterHistory.filter(b => b.status === "finished").reduce((s, b) => s + Number(b.price), 0);
   const jobsDone = vendorHistory.filter(b => b.status === "finished").length;
   const requestsDone = requesterHistory.filter(b => b.status === "finished").length;
 
@@ -66,7 +66,7 @@ export default function ServiceHistoryPage() {
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
 
       {/* ── Left ── */}
-      <div className="flex w-[260px] flex-shrink-0 flex-col border-r border-border">
+      <div className="flex w-[330px] flex-shrink-0 flex-col border-r border-border">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Service History</h1>
         </div>
@@ -80,9 +80,9 @@ export default function ServiceHistoryPage() {
               { label: "Requests Done", value: String(requestsDone) },
               { label: "Spent", value: `₦${totalSpent.toLocaleString()}` },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl bg-feed-bg p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3px] text-light-text">{label}</p>
-                <p className="mt-1 text-[13px] font-bold text-text">{value}</p>
+              <div key={label} className="rounded-xl bg-feed-bg p-3 min-w-0 overflow-hidden">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.3px] text-light-text truncate">{label}</p>
+                <p className="mt-1 text-[13px] font-bold text-text truncate">{value}</p>
               </div>
             ))}
           </div>
@@ -168,7 +168,7 @@ export default function ServiceHistoryPage() {
                       )}
                     </div>
                     <div className="flex flex-col items-end">
-                      <p className="text-[12px] font-bold text-text">₦{item.price.toLocaleString()}</p>
+                      <p className="text-[12px] font-bold text-text">₦{Number(item.price).toLocaleString()}</p>
                       <p className={`mt-0.5 text-[11px] font-semibold ${item.status === "cancelled" ? "text-red-400" : "text-light-text"}`}>
                         {item.status === "finished" ? "Finished" : "Cancelled"}
                       </p>
