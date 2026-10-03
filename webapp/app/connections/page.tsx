@@ -165,7 +165,7 @@ function ConnectionsContent() {
         {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => { setActiveTab(tab.key); router.replace(`/connections?tab=${tab.key}`); }}
             className={`flex-1 py-3 text-[13px] font-semibold transition-colors ${
               activeTab === tab.key
                 ? "border-b-2 border-primary text-primary"
