@@ -1,6 +1,6 @@
 import type { StatusPost } from "./types";
 
-type SortOption = "best" | "new" | "top";
+type SortOption = "best" | "new" | "top" | "following";
 
 interface FeedState {
   posts: StatusPost[];
@@ -25,4 +25,8 @@ export const feedStateStore = {
   get: (): FeedState => ({ ..._state }),
   saveTopPost: (id: string) => { _state.topPostId = id; },
   hasCache: (query: string) => _state.posts.length > 0 && _state.query === query,
+  updatePost: (id: string, patch: Partial<StatusPost>) => {
+    const idx = _state.posts.findIndex((p) => p.id === id);
+    if (idx !== -1) _state.posts[idx] = { ..._state.posts[idx], ...patch };
+  },
 };
