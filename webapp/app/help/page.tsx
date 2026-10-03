@@ -93,7 +93,7 @@ export default function HelpPage() {
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
 
       {/* ── Left ── */}
-      <div className="flex w-[330px] flex-shrink-0 flex-col border-r border-border overflow-y-auto">
+      <div className="flex w-[260px] flex-shrink-0 flex-col border-r border-border overflow-y-auto">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Help</h1>
         </div>
