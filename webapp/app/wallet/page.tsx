@@ -54,12 +54,12 @@ export default function WalletPage() {
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Wallet</h1>
         </div>
-        <div className="px-4 pt-4 flex flex-col gap-2">
+        <div className="px-4 pt-3 flex flex-col gap-0.5">
           {(["earnings", "credits"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`w-full rounded-lg py-2.5 text-[12px] font-bold transition-colors ${tab === t ? "bg-feed-bg text-primary" : "text-light-text hover:bg-feed-bg/60"}`}
+              className={`w-full rounded-lg px-3 py-2 text-left text-[12px] font-semibold transition-colors ${tab === t ? "bg-feed-bg text-primary" : "text-light-text hover:bg-feed-bg/60"}`}
             >
               {t === "earnings" ? "Earnings" : "Twedot Credits"}
             </button>
