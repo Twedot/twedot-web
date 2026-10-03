@@ -138,7 +138,7 @@ function FeedContent() {
   useEffect(() => {
     if (!isAuthenticated) return;
     apiGet<NearbyVendor[]>("/users/suggested")
-      .then((result) => setVendors(result.slice(0, 12)))
+      .then((result) => setVendors(result.filter((u: any) => !u.is_following).slice(0, 12)))
       .catch(() => {});
   }, [isAuthenticated]);
 

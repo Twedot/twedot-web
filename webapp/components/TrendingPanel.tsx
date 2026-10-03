@@ -78,9 +78,9 @@ export default function TrendingPanel() {
     apiGet<SuggestedUser[]>("/users/suggested")
       .then((data) => {
         if (Array.isArray(data)) {
-          const slice = data.slice(0, 4);
-          setUsers(slice);
-          setFollowingIds(new Set(slice.filter((u) => u.is_following).map((u) => u.id)));
+          const unfollowed = data.filter((u) => !u.is_following).slice(0, 4);
+          setUsers(unfollowed);
+          setFollowingIds(new Set());
         }
       })
       .catch(() => {});
