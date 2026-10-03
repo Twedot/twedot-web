@@ -12,6 +12,7 @@ import {
 } from "react-icons/io5";
 import { apiGet } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
+import { channelUrl } from "@/lib/url";
 
 interface RoomListItem {
   id?: string;
@@ -37,14 +38,38 @@ function previewText(rawContent: string, msgType: string | null): string {
   const t = msgType?.toLowerCase();
   if (t === "image") return "📷 Photo";
   if (t === "video") return "🎥 Video";
-  if (t === "audio") return "🎵 Audio";
+  if (t === "audio" || t === "voice") return "🎵 Audio";
+  if (t === "file") return "📎 File";
+
+  // Try to parse JSON payload (mobile sends {"url":"..."} objects)
   if (rawContent.startsWith("{")) {
     try {
       const p = JSON.parse(rawContent);
+      const url: string = (p.url ?? p.uri ?? "").toLowerCase();
       if (p.type === "image" || p.uris) return "📷 Photo";
       if (p.type === "video") return "🎥 Video";
+      if (p.type === "audio" || p.type === "voice") return "🎵 Audio";
+      if (p.type === "file") return "📎 File";
+      // Detect by URL extension
+      if (url.match(/\.(jpg|jpeg|png|gif|webp|heic|avif)/)) return "📷 Photo";
+      if (url.match(/\.(mp4|mov|avi|mkv|webm)/)) return "🎥 Video";
+      if (url.match(/\.(mp3|m4a|aac|ogg|opus|wav)/)) return "🎵 Audio";
+      if (url.match(/\/audio_/) || url.includes("voice")) return "🎵 Audio";
+      if (url.match(/\/image_/) || url.includes("photo")) return "📷 Photo";
+      if (url.match(/\/video_/)) return "🎥 Video";
+      if (url) return "📎 File";
     } catch { /* not JSON */ }
   }
+
+  // Bare URL
+  if (rawContent.startsWith("http")) {
+    const lc = rawContent.toLowerCase();
+    if (lc.match(/\.(jpg|jpeg|png|gif|webp|heic|avif)/)) return "📷 Photo";
+    if (lc.match(/\.(mp4|mov|avi|mkv|webm)/)) return "🎥 Video";
+    if (lc.match(/\.(mp3|m4a|aac|ogg|opus|wav)/) || lc.includes("/audio_") || lc.includes("voice")) return "🎵 Audio";
+    return "📎 File";
+  }
+
   return rawContent;
 }
 
@@ -114,22 +139,22 @@ function RoomRow({ room, onClick }: { room: RoomListItem; onClick: () => void })
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-feed-bg transition-colors"
+      className="flex w-full items-start gap-3 px-4 py-1.5 text-left hover:bg-feed-bg transition-colors"
     >
       {room.photo_url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={room.photo_url} alt={room.name} className="h-12 w-12 flex-shrink-0 rounded-full object-cover" />
+        <img src={room.photo_url} alt={room.name} className="flex-shrink-0 rounded-full object-cover" style={{ width: 32, height: 32, marginTop: 2 }} />
       ) : (
-        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary/15">
-          <span className="text-[18px] font-bold text-primary">#</span>
+        <div className="flex flex-shrink-0 items-center justify-center rounded-full bg-primary/15" style={{ width: 32, height: 32, marginTop: 2 }}>
+          <span className="font-bold text-primary" style={{ fontSize: 10 }}>#</span>
         </div>
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-[14px] font-semibold text-text">{room.name}</span>
+          <span className="truncate font-medium text-text" style={{ fontSize: 12 }}>{room.name}</span>
           <JoinTypeIcon type={room.join_type} />
         </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-[12px] text-light-text">
+        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-light-text">
           <span>{room.member_count} members</span>
           {room.online_count != null && room.online_count > 0 && (
             <>
@@ -142,7 +167,7 @@ function RoomRow({ room, onClick }: { room: RoomListItem; onClick: () => void })
           )}
         </div>
         {room.last_message && (
-          <p className="mt-0.5 truncate text-[12px] text-light-text">{room.last_message as string}</p>
+          <p className="mt-0.5 truncate text-[11px] text-light-text">{room.last_message as string}</p>
         )}
       </div>
       <div className="flex flex-col items-end gap-1.5">
@@ -281,7 +306,7 @@ export default function ChannelsPage() {
             <button
               key={t}
               onClick={() => setTab(t as "mine" | "discover")}
-              className={`mr-4 pb-2.5 text-[14px] font-semibold capitalize transition-colors ${
+              className={`mr-4 pb-2 text-[12px] font-semibold capitalize transition-colors ${
                 tab === t
                   ? "border-b-2 border-primary text-primary"
                   : "text-light-text hover:text-text"
@@ -306,7 +331,7 @@ export default function ChannelsPage() {
               <p className="text-[14px] text-light-text">No channels found for "{search}"</p>
             </div>
           ) : searchResults.map((r) => (
-            <RoomRow key={roomId(r)} room={r} onClick={() => router.push(`/channels/${roomId(r)}`)} />
+            <RoomRow key={roomId(r)} room={r} onClick={() => router.push(channelUrl(r.name ?? "", roomId(r)))} />
           ))}
         </div>
       )}
@@ -352,7 +377,7 @@ export default function ChannelsPage() {
             </div>
           ) : (
             myRooms.map((r) => (
-              <RoomRow key={roomId(r)} room={r} onClick={() => router.push(`/channels/${roomId(r)}`)} />
+              <RoomRow key={roomId(r)} room={r} onClick={() => router.push(channelUrl(r.name ?? "", roomId(r)))} />
             ))
           )}
         </div>
@@ -394,7 +419,7 @@ export default function ChannelsPage() {
                 </div>
               ) : (
                 discoverRooms.map((r) => (
-                  <RoomRow key={roomId(r)} room={r} onClick={() => router.push(`/channels/${roomId(r)}`)} />
+                  <RoomRow key={roomId(r)} room={r} onClick={() => router.push(channelUrl(r.name ?? "", roomId(r)))} />
                 ))
               )}
             </>

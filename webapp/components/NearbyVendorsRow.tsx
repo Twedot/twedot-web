@@ -7,6 +7,7 @@ import RankBadge from "./RankBadge";
 import { apiPost, apiDelete } from "@/lib/api";
 import { useUi } from "@/lib/UiContext";
 import type { NearbyVendor } from "@/lib/vendors";
+import { profileUrl } from "@/lib/url";
 
 function VendorRow({
   vendor,
@@ -54,7 +55,7 @@ function VendorRow({
       {/* Follow button */}
       <button
         onClick={onToggleFollow}
-        className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+        className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
           isFollowing
             ? "bg-primary/10 text-primary hover:bg-primary/20"
             : "bg-primary/15 text-primary hover:bg-primary/25"
@@ -116,7 +117,7 @@ export default function NearbyVendorsRow({ vendors }: { vendors: NearbyVendor[] 
           <VendorRow
             key={v.id}
             vendor={v}
-            onPress={() => router.push(`/profile/${v.id}`)}
+            onPress={() => router.push(profileUrl(v.name, v.id))}
             isFollowing={followingIds.has(v.id)}
             onToggleFollow={(e) => toggleFollow(e, v.id)}
           />

@@ -6,6 +6,7 @@ import { IoSearchOutline, IoPersonOutline } from "react-icons/io5";
 import { apiGet } from "@/lib/api";
 import RankBadge from "./RankBadge";
 import { useUi } from "@/lib/UiContext";
+import { profileUrl } from "@/lib/url";
 
 interface UserResult {
   id: string;
@@ -121,7 +122,7 @@ function SearchPanelInner() {
             {users.map((u) => (
               <button
                 key={u.id}
-                onClick={() => router.push(`/profile/${u.id}`)}
+                onClick={() => router.push(profileUrl(u.name, u.id))}
                 className="flex items-center gap-2.5 py-2.5 text-left hover:opacity-80"
               >
                 {u.profile_photo_url ? (

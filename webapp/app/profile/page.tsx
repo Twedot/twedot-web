@@ -29,6 +29,7 @@ import { useUi } from "@/lib/UiContext";
 import { apiGet } from "@/lib/api";
 import RankBadge from "@/components/RankBadge";
 import type { StatusPost } from "@/lib/types";
+import { channelUrl, postUrl } from "@/lib/url";
 
 interface MyRoom {
   id: string;
@@ -321,7 +322,7 @@ export default function ProfilePage() {
             {rooms.map((room) => (
               <button
                 key={room.id}
-                onClick={() => notify("Rooms are coming soon on web")}
+                onClick={() => router.push(channelUrl(room.name ?? "", room.id ?? room.room_id))}
                 className="flex flex-shrink-0 flex-col items-center gap-1.5"
               >
                 <div className="relative">
@@ -403,7 +404,7 @@ export default function ProfilePage() {
               post={post}
               onClick={() => {
                 postDetailStore.set(post);
-                router.push(`/status/${post.id}`);
+                router.push(postUrl(post.id));
               }}
             />
           ))}

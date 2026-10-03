@@ -8,7 +8,6 @@ import {
   IoTimeOutline,
   IoPersonOutline,
   IoGridOutline,
-  IoHeartOutline,
   IoHeartOutline as IoHeartO,
   IoChatbubbleOutline,
   IoEyeOutline,
@@ -23,7 +22,7 @@ import { useJobSocket } from "@/lib/jobSocket";
 import RankBadge from "@/components/RankBadge";
 import type { UserProfile, StatusPost } from "@/lib/types";
 import { postDetailStore } from "@/lib/postDetailStore";
-import { postUrl } from "@/lib/url";
+import { extractShortId, postUrl } from "@/lib/url";
 
 const WEEK_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -67,12 +66,14 @@ function deduplicateByGroup(items: StatusPost[]): StatusPost[] {
   return out;
 }
 
-export default function OtherUserProfilePage() {
-  const { userId } = useParams<{ userId: string }>();
+export default function UserProfilePage() {
+  const { handle } = useParams<{ handle: string }>();
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   const { notify } = useUi();
   const { socket } = useJobSocket();
+
+  const shortId = extractShortId(decodeURIComponent(handle));
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<StatusPost[]>([]);
@@ -85,32 +86,34 @@ export default function OtherUserProfilePage() {
   }, [isLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    if (!isAuthenticated || !userId) return;
-    apiGet<UserProfile>(`/users/getby_id/${userId}`)
-      .then((p) => { setProfile(p); setIsFollowing(p.is_following ?? false); })
+    if (!isAuthenticated || !shortId) return;
+    apiGet<UserProfile>(`/users/by-short/${shortId}`)
+      .then((p) => {
+        setProfile(p);
+        setIsFollowing(p.is_following ?? false);
+        apiGet<StatusPost[]>(`/status/public?authorId=${p.id}`)
+          .then((res) => { if (Array.isArray(res)) setPosts(res); })
+          .catch(() => {});
+      })
       .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load this profile."));
-    apiGet<StatusPost[]>(`/status/public?authorId=${userId}`)
-      .then((res) => { if (Array.isArray(res)) setPosts(res); })
-      .catch(() => {});
-  }, [isAuthenticated, userId]);
+  }, [isAuthenticated, shortId]);
 
   // Real-time follower count from socket
   useEffect(() => {
-    if (!socket || !userId) return;
+    if (!socket || !profile?.id) return;
     const handler = (data: { userId: string; follower_count: number }) => {
-      if (data.userId === userId) {
+      if (data.userId === profile.id) {
         setProfile((p) => p ? { ...p, follower_count: data.follower_count } : p);
       }
     };
     socket.on("follow_count_update", handler);
     return () => { socket.off("follow_count_update", handler); };
-  }, [socket, userId]);
+  }, [socket, profile?.id]);
 
   const handleToggleFollow = useCallback(async () => {
-    if (followLoadingRef.current) return;
+    if (!profile || followLoadingRef.current) return;
     followLoadingRef.current = true;
 
-    // Optimistic update
     const wasFollowing = isFollowing;
     setIsFollowing(!wasFollowing);
     setProfile((p) => p ? {
@@ -122,12 +125,11 @@ export default function OtherUserProfilePage() {
 
     try {
       if (wasFollowing) {
-        await apiDelete(`/users/follow/${userId}`);
+        await apiDelete(`/users/follow/${profile.id}`);
       } else {
-        await apiPost(`/users/follow/${userId}`, {});
+        await apiPost(`/users/follow/${profile.id}`, {});
       }
     } catch {
-      // Revert on error
       setIsFollowing(wasFollowing);
       setProfile((p) => p ? {
         ...p,
@@ -139,16 +141,16 @@ export default function OtherUserProfilePage() {
     } finally {
       followLoadingRef.current = false;
     }
-  }, [isFollowing, userId, notify]);
+  }, [isFollowing, profile, notify]);
 
   const handleShareProfile = useCallback(async () => {
-    const url = `https://twedot.com/u/${userId}`;
+    const url = `https://twedot.com/u/${handle}`;
     if (typeof navigator !== "undefined" && "share" in navigator) {
       await (navigator as any).share({ title: profile?.name ?? "Twedot", url }).catch(() => {});
     } else {
       try { await (navigator as Navigator).clipboard.writeText(url); notify("Link copied!"); } catch { notify("Profile: " + url); }
     }
-  }, [userId, profile?.name, notify]);
+  }, [handle, profile?.name, notify]);
 
   if (!isAuthenticated) return null;
 
@@ -262,7 +264,7 @@ export default function OtherUserProfilePage() {
           {isFollowing ? "Following" : "Follow"}
         </button>
         <button
-          onClick={() => router.push(`/inbox?userId=${userId}`)}
+          onClick={() => router.push(`/inbox?userId=${profile.id}`)}
           className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
         >
           Message

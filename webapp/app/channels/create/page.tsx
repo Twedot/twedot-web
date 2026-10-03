@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { IoArrowBack, IoCameraOutline, IoCheckmark } from "react-icons/io5";
 import { apiPost, apiUploadFile } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
+import { channelUrl } from "@/lib/url";
 
 type JoinType = "open" | "invite_request" | "additional_check";
 
@@ -96,7 +97,8 @@ export default function CreateChannelPage() {
       }
 
       const room = await apiPost<{ id: string }>("/rooms", body);
-      router.replace(`/channels/${(room as any).id ?? (room as any).room?.id}`);
+      const newRoomId = (room as any).id ?? (room as any).room?.id;
+      router.replace(channelUrl(trimmedName, newRoomId));
     } catch (err: any) {
       setError(err?.message ?? "Failed to create channel");
     } finally {

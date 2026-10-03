@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import RankBadge from "@/components/RankBadge";
+import { profileUrl } from "@/lib/url";
 
 type Tab = "followers" | "following" | "suggested";
 
@@ -36,7 +37,7 @@ function PersonRow({
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3 hover:bg-feed-bg/50">
       <button
-        onClick={() => isMe ? router.push("/profile") : router.push(`/profile/${person.id}`)}
+        onClick={() => isMe ? router.push("/profile") : router.push(profileUrl(person.name ?? "", person.id))}
         className="flex-shrink-0"
       >
         {person.profile_photo_url ? (
@@ -49,7 +50,7 @@ function PersonRow({
         )}
       </button>
       <button
-        onClick={() => isMe ? router.push("/profile") : router.push(`/profile/${person.id}`)}
+        onClick={() => isMe ? router.push("/profile") : router.push(profileUrl(person.name ?? "", person.id))}
         className="min-w-0 flex-1 text-left"
       >
         <div className="flex items-center gap-1.5">
@@ -63,7 +64,7 @@ function PersonRow({
       {!isMe && (
         <button
           onClick={onToggle}
-          className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+          className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
             isFollowing
               ? "bg-primary/10 text-primary hover:bg-primary/20"
               : "bg-primary/15 text-primary hover:bg-primary/25"

@@ -18,9 +18,11 @@ import {
   IoEyeOutline,
   IoTrophyOutline,
 } from "react-icons/io5";
+import { useRouter } from "next/navigation";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 import { useJobSocket } from "@/lib/jobSocket";
+import { profileUrl, postUrl } from "@/lib/url";
 
 export type NotificationFeedType =
   | "status_liked"
@@ -123,6 +125,27 @@ function timeAgo(iso: string) {
   return `${Math.floor(days / 7)}w`;
 }
 
+function getNotifHref(item: NotificationFeedItem): string | null {
+  switch (item.type) {
+    case "status_liked":
+    case "status_commented":
+    case "status_reply":
+    case "status_mentioned":
+    case "comment_mentioned":
+    case "boost_ended":
+      return item.status_id ? postUrl(item.status_id) : null;
+    case "room_mentioned":
+      return item.room_id ? `/c/${item.room_id.slice(0, 8)}` : null;
+    case "profile_viewed":
+      return item.actor_id ? profileUrl(item.actor_name ?? "", item.actor_id) : "/profile";
+    case "rank_upgrade":
+      return "/profile";
+    case "system_announcement":
+    default:
+      return null;
+  }
+}
+
 function Avatar({ url, name, type }: { url: string | null; name: string | null; type: NotificationFeedType }) {
   return (
     <div className="relative flex-shrink-0">
@@ -148,37 +171,48 @@ function NotifRow({
   item,
   isNew,
   onDelete,
+  onNavigate,
 }: {
   item: NotificationFeedItem;
   isNew: boolean;
   onDelete: (id: string) => void;
+  onNavigate: (href: string) => void;
 }) {
+  const href = getNotifHref(item);
   return (
     <div
       className={`group flex items-center gap-3 px-4 py-3.5 ${
         isNew ? "bg-[#6B4EFF1A]" : "hover:bg-feed-bg"
       }`}
     >
-      <Avatar url={item.actor_photo_url} name={item.actor_name} type={item.type} />
+      {/* clickable area: avatar + text + thumbnail */}
+      <button
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        onClick={() => href && onNavigate(href)}
+        disabled={!href}
+        style={{ cursor: href ? "pointer" : "default" }}
+      >
+        <Avatar url={item.actor_photo_url} name={item.actor_name} type={item.type} />
 
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-light-text">
-          {TYPE_LABEL[item.type]}
-          <span className="ml-1.5 normal-case">· {timeAgo(item.created_at)}</span>
-        </p>
-        <p className={`mt-1 line-clamp-2 text-[13px] leading-[18px] text-text ${isNew ? "font-medium" : "font-normal"}`}>
-          {item.body}
-        </p>
-      </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3px] text-light-text">
+            {TYPE_LABEL[item.type]}
+            <span className="ml-1.5 normal-case">· {timeAgo(item.created_at)}</span>
+          </p>
+          <p className={`mt-1 line-clamp-2 text-[13px] leading-[18px] text-text ${isNew ? "font-medium" : "font-normal"}`}>
+            {item.body}
+          </p>
+        </div>
 
-      {item.status_thumbnail_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={item.status_thumbnail_url}
-          alt=""
-          className="h-11 w-11 flex-shrink-0 rounded-md object-cover"
-        />
-      )}
+        {item.status_thumbnail_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.status_thumbnail_url}
+            alt=""
+            className="h-11 w-11 flex-shrink-0 rounded-md object-cover"
+          />
+        )}
+      </button>
 
       {/* delete on hover */}
       <button
@@ -199,6 +233,7 @@ function NotifRow({
 export default function InboxPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { clearNotifBadge } = useJobSocket();
+  const router = useRouter();
   const [items, setItems] = useState<NotificationFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -324,7 +359,7 @@ export default function InboxPage() {
             <>
               <p className="px-4 pt-3 pb-1.5 text-[15px] font-bold text-text">New</p>
               {newRows.map((item) => (
-                <NotifRow key={item.id} item={item} isNew={true} onDelete={handleDelete} />
+                <NotifRow key={item.id} item={item} isNew={true} onDelete={handleDelete} onNavigate={(href) => router.push(href)} />
               ))}
             </>
           )}
@@ -332,7 +367,7 @@ export default function InboxPage() {
             <>
               <p className="px-4 pt-3 pb-1.5 text-[15px] font-bold text-text">Earlier</p>
               {earlierRows.map((item) => (
-                <NotifRow key={item.id} item={item} isNew={false} onDelete={handleDelete} />
+                <NotifRow key={item.id} item={item} isNew={false} onDelete={handleDelete} onNavigate={(href) => router.push(href)} />
               ))}
             </>
           )}

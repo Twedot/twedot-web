@@ -8,6 +8,7 @@ import type { StatusPost } from "@/lib/types";
 import { useUi } from "@/lib/UiContext";
 import { postDetailStore } from "@/lib/postDetailStore";
 import RankBadge from "./RankBadge";
+import { profileUrl, postUrl } from "@/lib/url";
 
 const FOOTER_LINKS = [
   { label: "About", href: null },
@@ -38,6 +39,17 @@ function timeAgo(iso: string) {
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.floor(hours / 24)}d`;
+}
+
+function postPreviewText(post: StatusPost): string {
+  if (post.caption) return post.caption;
+  const c = post.content ?? "";
+  if (c.startsWith("http") && !c.includes(" ")) {
+    const lc = c.toLowerCase();
+    if (lc.includes(".mp4") || lc.includes(".mov") || lc.includes(".webm") || lc.includes("/video_")) return "🎥 Video";
+    return "📷 Photo";
+  }
+  return c || (post.type === "video" ? "🎥 Video" : post.type === "image" ? "📷 Photo" : "");
 }
 
 function deduplicateByGroup(items: StatusPost[]): StatusPost[] {
@@ -128,7 +140,7 @@ export default function TrendingPanel() {
             {posts.map((post) => (
               <li key={post.id}>
                 <button
-                  onClick={() => { postDetailStore.set(post); router.push(`/status/${post.id}`); }}
+                  onClick={() => { postDetailStore.set(post); router.push(postUrl(post.id)); }}
                   className="flex w-full items-start gap-2.5 px-4 py-3 text-left hover:bg-background/60"
                 >
                   {post.userPhoto ? (
@@ -142,7 +154,7 @@ export default function TrendingPanel() {
                       {post.userName} · {timeAgo(post.createdAt)}
                     </div>
                     <div className="line-clamp-2 text-xs font-medium leading-4 text-text">
-                      {post.caption || post.content || (post.type === "video" ? "Video post" : post.type === "image" ? "Photo post" : "")}
+                      {postPreviewText(post)}
                     </div>
                     <div className="mt-0.5 text-[10px] font-normal leading-4 text-light-text">
                       {post.likeCount} likes · {post.commentCount} comments
@@ -167,7 +179,7 @@ export default function TrendingPanel() {
                 <div className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-background/60">
                   <div
                     className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
-                    onClick={() => router.push(`/profile/${u.id}`)}
+                    onClick={() => router.push(profileUrl(u.name, u.id))}
                   >
                     {u.profile_photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -187,7 +199,7 @@ export default function TrendingPanel() {
                   </div>
                   <button
                     onClick={() => toggleFollow(u.id)}
-                    className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+                    className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
                       followingIds.has(u.id)
                         ? "bg-primary/10 text-primary hover:bg-primary/20"
                         : "bg-primary/15 text-primary hover:bg-primary/25"

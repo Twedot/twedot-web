@@ -58,7 +58,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <TopBar />
         <div className="flex w-full flex-1">
           <SideNav />
-          <main className={`min-w-0 flex-1 overflow-x-clip ${pathname.startsWith("/settings") ? "lg:max-w-[920px] xl:max-w-[980px]" : "lg:max-w-[560px] xl:max-w-[640px] 2xl:ml-40 2xl:max-w-[700px]"}`}>
+          <main className={`min-w-0 flex-1 overflow-x-clip ${
+            ((pathname.startsWith("/channels/") && pathname !== "/channels/create") || pathname.startsWith("/c/"))
+              ? "2xl:pl-40"
+              : pathname.startsWith("/settings")
+              ? "lg:max-w-[920px] xl:max-w-[980px]"
+              : "lg:max-w-[500px] xl:max-w-[580px] 2xl:ml-40 2xl:max-w-[620px]"
+          }`}>
             {children}
           </main>
           {pathname === "/search" ? <SearchPanel /> : (
@@ -68,6 +74,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             !pathname.startsWith("/register") &&
             // Channel detail is a full-height chat — no trending panel
             !/^\/channels\/[^/]+/.test(pathname) &&
+            !pathname.startsWith("/c/") &&
             <TrendingPanel />
           )}
         </div>

@@ -6,6 +6,7 @@ import { IoBriefcaseOutline, IoPersonOutline } from "react-icons/io5";
 import { apiGet } from "@/lib/api";
 import type { NearbyVendor, VendorSearchResponse } from "@/lib/vendors";
 import RankBadge from "@/components/RankBadge";
+import { profileUrl } from "@/lib/url";
 
 interface Genre {
   id: string;
@@ -128,7 +129,7 @@ function GenreRow({
             <VendorCard
               key={v.id}
               vendor={v}
-              onPress={() => router.push(`/profile/${v.id}`)}
+              onPress={() => router.push(profileUrl(v.name, v.id))}
             />
           ))}
         </div>

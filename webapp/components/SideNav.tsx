@@ -36,6 +36,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { useHasUnseenStories } from "@/lib/unseenStories";
 import { useJobSocket } from "@/lib/jobSocket";
+import { channelUrl } from "@/lib/url";
 
 const mainItems = [
   { href: "/feed", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
@@ -185,11 +186,12 @@ export default function SideNav() {
 
             {feedsOpen && myRooms.map((room) => {
               const rid = room.id ?? room.room_id ?? "";
+              const cUrl = channelUrl(room.name ?? "", rid);
               return (
               <Link
                 key={rid}
-                href={`/channels/${rid}`}
-                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm font-normal hover:bg-feed-bg ${pathname === `/channels/${rid}` ? "text-primary font-semibold" : "text-text"}`}
+                href={cUrl}
+                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm font-normal hover:bg-feed-bg ${pathname === cUrl ? "text-primary font-semibold" : "text-text"}`}
               >
                 {room.photo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element

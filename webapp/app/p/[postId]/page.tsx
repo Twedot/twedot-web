@@ -82,7 +82,6 @@ function autoGrow(el: HTMLTextAreaElement) {
   el.style.height = el.scrollHeight + "px";
 }
 
-// ── Comment item ──
 function CommentItem({
   comment,
   statusId,
@@ -100,39 +99,45 @@ function CommentItem({
 }) {
   const commentRouter = useRouter();
   const { user: authUser } = useAuth();
-  function goToProfile() {
-    commentRouter.push(comment.userId === authUser?.id ? "/profile" : profileUrl(comment.userName, comment.userId));
-  }
-  function react(type: "agree" | "disagree") {
-    if (!socket) return;
-    let nextReaction: "agree" | "disagree" | null;
-    let agreeDelta = 0;
-    let disagreeDelta = 0;
+  const [localAgree, setLocalAgree] = useState(comment.agreeCount);
+  const [localDisagree, setLocalDisagree] = useState(comment.disagreeCount);
+  const [myReaction, setMyReaction] = useState(comment.myReaction);
 
-    if (comment.myReaction === type) {
-      nextReaction = null;
-      if (type === "agree") agreeDelta = -1;
-      else disagreeDelta = -1;
-    } else {
-      if (comment.myReaction === "agree") agreeDelta = -1;
-      if (comment.myReaction === "disagree") disagreeDelta = -1;
-      nextReaction = type;
-      if (type === "agree") agreeDelta += 1;
-      else disagreeDelta += 1;
-    }
+  useEffect(() => {
+    setLocalAgree(comment.agreeCount);
+    setLocalDisagree(comment.disagreeCount);
+    setMyReaction(comment.myReaction);
+  }, [comment.agreeCount, comment.disagreeCount, comment.myReaction]);
 
-    onReactionUpdate(
-      comment.id,
-      comment.agreeCount + agreeDelta,
-      comment.disagreeCount + disagreeDelta,
-      nextReaction,
-    );
-    socket.emit("react_comment", { statusId, commentId: comment.id, type });
-  }
+  const handleReact = useCallback(
+    (reaction: "agree" | "disagree") => {
+      if (!socket) return;
+      const newReaction = myReaction === reaction ? null : reaction;
+      const oldReaction = myReaction;
+      const oldAgree = localAgree;
+      const oldDisagree = localDisagree;
+      let newAgree = localAgree;
+      let newDisagree = localDisagree;
+      if (oldReaction === "agree") newAgree--;
+      if (oldReaction === "disagree") newDisagree--;
+      if (newReaction === "agree") newAgree++;
+      if (newReaction === "disagree") newDisagree++;
+      setMyReaction(newReaction);
+      setLocalAgree(newAgree);
+      setLocalDisagree(newDisagree);
+      socket.emit("react_comment", { statusId, commentId: comment.id, reaction: newReaction });
+      onReactionUpdate(comment.id, newAgree, newDisagree, newReaction);
+      void oldReaction; void oldAgree; void oldDisagree;
+    },
+    [socket, statusId, comment.id, myReaction, localAgree, localDisagree, onReactionUpdate]
+  );
 
   return (
-    <div className="flex items-start gap-2.5 py-3">
-      <button onClick={goToProfile} className="flex-shrink-0 mt-0.5">
+    <div className="flex gap-2.5 py-3">
+      <button
+        onClick={() => commentRouter.push(comment.userId === authUser?.id ? "/profile" : profileUrl(comment.userName, comment.userId))}
+        className="flex-shrink-0"
+      >
         {comment.userPhoto ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={comment.userPhoto} alt={comment.userName} className="h-8 w-8 rounded-full object-cover" />
@@ -143,57 +148,24 @@ function CommentItem({
         )}
       </button>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
-          <button onClick={goToProfile} className="text-[13px] font-semibold text-text hover:underline">{comment.userName}</button>
-          {comment.userOccupation && (
-            <span className="text-[11px] text-light-text">{comment.userOccupation}</span>
-          )}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[12px] font-bold text-text">{comment.userName}</span>
+          <RankBadge activityScore={comment.userGlobalActivityScore ?? 0} rankVisible={comment.userRankVisible !== false} plain className="" />
           <span className="text-[11px] text-light-text">{timeAgo(comment.createdAt)}</span>
         </div>
-        <RankBadge
-          activityScore={comment.userGlobalActivityScore ?? 0}
-          rankVisible={comment.userRankVisible !== false}
-          plain
-          className="mb-0.5"
-        />
-        <p className="mt-0.5 text-[13px] leading-[19px] text-text">{comment.content}</p>
-        <div className="mt-2 flex items-center gap-3">
-          {/* Agree — green */}
-          <button
-            onClick={() => react("agree")}
-            className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
-              comment.myReaction === "agree" ? "text-green-500" : "text-light-text hover:text-text"
-            }`}
-          >
-            {comment.myReaction === "agree" ? <IoThumbsUp size={13} /> : <IoThumbsUpOutline size={13} />}
-            {comment.agreeCount > 0 && <span>{fmt(comment.agreeCount)}</span>}
+        <p className="mt-0.5 text-[13px] leading-[18px] text-text">{comment.content}</p>
+        <div className="mt-1.5 flex items-center gap-3">
+          <button onClick={() => handleReact("agree")} className={`flex items-center gap-1 text-[11px] font-semibold ${myReaction === "agree" ? "text-primary" : "text-light-text"}`}>
+            {myReaction === "agree" ? <IoThumbsUp size={13} /> : <IoThumbsUpOutline size={13} />}
+            {localAgree > 0 && localAgree}
           </button>
-          {/* Disagree — red */}
-          <button
-            onClick={() => react("disagree")}
-            className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
-              comment.myReaction === "disagree" ? "text-red-500" : "text-light-text hover:text-text"
-            }`}
-          >
-            {comment.myReaction === "disagree" ? <IoThumbsDown size={13} /> : <IoThumbsDownOutline size={13} />}
-            {comment.disagreeCount > 0 && <span>{fmt(comment.disagreeCount)}</span>}
+          <button onClick={() => handleReact("disagree")} className={`flex items-center gap-1 text-[11px] font-semibold ${myReaction === "disagree" ? "text-red-400" : "text-light-text"}`}>
+            {myReaction === "disagree" ? <IoThumbsDown size={13} /> : <IoThumbsDownOutline size={13} />}
+            {localDisagree > 0 && localDisagree}
           </button>
-          {/* Reply */}
-          <button
-            onClick={() => onReply(comment.userName, comment.id)}
-            className="flex items-center gap-1 text-[11px] font-medium text-light-text hover:text-text"
-          >
-            <IoArrowUndoOutline size={12} />
-            Reply
+          <button onClick={() => onReply(comment.userName, comment.id)} className="text-[11px] font-semibold text-light-text hover:text-text">
+            Reply{replyCount > 0 ? ` (${replyCount})` : ""}
           </button>
-          {replyCount > 0 && (
-            <button
-              onClick={() => onReply(comment.userName, comment.id)}
-              className="text-[11px] font-semibold text-light-text hover:text-text"
-            >
-              {replyCount} {replyCount === 1 ? "reply" : "replies"}
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -201,16 +173,19 @@ function CommentItem({
 }
 
 // ── Main page ──
-export default function StatusDetailPage() {
-  const { statusId } = useParams<{ statusId: string }>();
+export default function PostByShortIdPage() {
+  const { postId } = useParams<{ postId: string }>();
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { notify } = useUi();
   const { socket } = useJobSocket();
 
-  const [post, setPost] = useState<StatusPost | null>(() => postDetailStore.get(statusId));
+  // The resolved full UUID (unknown until we fetch from /status/by-short/:postId)
+  const [statusId, setStatusId] = useState<string>("");
+
+  const [post, setPost] = useState<StatusPost | null>(null);
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
-  const [isFollowingAuthor, setIsFollowingAuthor] = useState(() => postDetailStore.get(statusId)?.isFollowingAuthor ?? false);
+  const [isFollowingAuthor, setIsFollowingAuthor] = useState(false);
   const followLoadingRef = useRef(false);
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
@@ -219,15 +194,13 @@ export default function StatusDetailPage() {
   const [replyText, setReplyText] = useState("");
   const [replyTo, setReplyTo] = useState<{ name: string; commentId: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [loadingPost, setLoadingPost] = useState(!post);
-  // Thread view: when set, shows single comment + its replies
+  const [loadingPost, setLoadingPost] = useState(true);
   const [threadCommentId, setThreadCommentId] = useState<string | null>(null);
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(statusId);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const savedScrollY = useRef(0);
   const prevThreadId = useRef<string | null>(null);
 
-  // Restore scroll position when closing thread view
   useEffect(() => {
     if (prevThreadId.current !== null && threadCommentId === null) {
       const y = savedScrollY.current;
@@ -238,7 +211,6 @@ export default function StatusDetailPage() {
     prevThreadId.current = threadCommentId;
   }, [threadCommentId]);
 
-  // Sync counts from post data
   useEffect(() => {
     if (post) {
       setLikeCount(post.likeCount ?? 0);
@@ -247,16 +219,17 @@ export default function StatusDetailPage() {
     }
   }, [post]);
 
-  // Fetch post if not in cache
+  // Step 1: resolve short ID → full UUID + seed post data
   useEffect(() => {
-    if (!isAuthenticated || !statusId) return;
-    if (post) return;
+    if (!isAuthenticated || !postId || statusId) return;
     apiGet<{ id: string; type: string; caption: string | null; thumbnailUrl: string | null; ownerId: string; ownerName: string; ownerPhoto: string | null }>(
-      `/status/${statusId}/preview`
+      `/status/by-short/${postId}`
     )
       .then(async (preview) => {
+        setStatusId(preview.id);
+        // Try to find full post data in the author's public feed
         const feed = await apiGet<StatusPost[]>(`/status/public?authorId=${preview.ownerId}`);
-        const found = Array.isArray(feed) ? feed.find((p) => p.id === statusId) : null;
+        const found = Array.isArray(feed) ? feed.find((p) => p.id === preview.id) : null;
         if (found) {
           setPost(found);
           postDetailStore.set(found);
@@ -283,12 +256,11 @@ export default function StatusDetailPage() {
       })
       .catch(() => {})
       .finally(() => setLoadingPost(false));
-  }, [isAuthenticated, statusId, post]);
+  }, [isAuthenticated, postId, statusId]);
 
-  // Fetch follow status and increment view count once post is known
+  // Step 2: fetch follow status + increment view count once post is known
   useEffect(() => {
-    if (!post || !isAuthenticated || !user) return;
-    // Fetch real follow status if not already set from feed/store
+    if (!post || !isAuthenticated || !user || !statusId) return;
     if (post.userId !== user.id && post.isFollowingAuthor === undefined) {
       apiGet<{ is_following?: boolean }>(`/users/${post.userId}/profile`)
         .then((p) => { if (typeof p.is_following === "boolean") setIsFollowingAuthor(p.is_following); })
@@ -296,11 +268,10 @@ export default function StatusDetailPage() {
     } else if (post.isFollowingAuthor !== undefined) {
       setIsFollowingAuthor(post.isFollowingAuthor);
     }
-    // Increment view count
-    apiPost(`/status/${post.id}/view`, {}).catch(() => {});
+    apiPost(`/status/${statusId}/view`, {}).catch(() => {});
   }, [post?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch comments
+  // Step 3: fetch comments once statusId is known
   useEffect(() => {
     if (!statusId) return;
     apiGet<Comment[]>(`/status/${statusId}/comments`)
@@ -308,7 +279,7 @@ export default function StatusDetailPage() {
       .catch(() => {});
   }, [statusId]);
 
-  // Socket: join room, live events
+  // Socket: join/leave room, live events
   useEffect(() => {
     if (!socket || !statusId) return;
     socket.emit("join_status_room", { statusId });
@@ -402,7 +373,7 @@ export default function StatusDetailPage() {
   }, [socket, statusId]);
 
   const handleLike = useCallback(() => {
-    if (!socket || !post) return;
+    if (!socket || !post || !statusId) return;
     const nowLiked = !isLiked;
     setIsLiked(nowLiked);
     setLikeCount((c) => c + (nowLiked ? 1 : -1));
@@ -438,11 +409,10 @@ export default function StatusDetailPage() {
   );
 
   const handleSubmit = useCallback(async () => {
-    if (!replyText.trim() || submitting) return;
+    if (!replyText.trim() || submitting || !statusId) return;
     setSubmitting(true);
     try {
       const body: Record<string, unknown> = { content: replyText.trim() };
-      // When in thread view, replies go under that comment; otherwise top-level
       const parentId = replyTo?.commentId ?? (threadCommentId ?? undefined);
       if (parentId) body.parentCommentId = parentId;
       const newComment = await apiPost<Comment>(`/status/${statusId}/comments`, body);
@@ -452,9 +422,7 @@ export default function StatusDetailPage() {
       }
       setReplyText("");
       setReplyTo(null);
-      if (inputRef.current) {
-        inputRef.current.style.height = "auto";
-      }
+      if (inputRef.current) inputRef.current.style.height = "auto";
     } catch (err: unknown) {
       notify(err instanceof Error ? err.message : "Couldn't post your reply");
     } finally {
@@ -496,10 +464,8 @@ export default function StatusDetailPage() {
   const isImage = activeItem.type === "image";
   const isText = post.type === "text";
 
-  // In thread view: the root comment + all its replies (flat)
   const threadComment = threadCommentId ? comments.find((c) => c.id === threadCommentId) ?? null : null;
   const threadReplies = threadCommentId ? comments.filter((c) => c.parentCommentId === threadCommentId) : [];
-  // In main view: only top-level comments
   const topLevelComments = comments.filter((c) => !c.parentCommentId);
 
   return (
@@ -530,7 +496,6 @@ export default function StatusDetailPage() {
         {/* ── Thread view ── */}
         {threadComment ? (
           <>
-            {/* Root comment shown at top of thread */}
             <div className="rounded-2xl bg-feed-bg px-3">
               <CommentItem
                 comment={threadComment}
@@ -545,7 +510,6 @@ export default function StatusDetailPage() {
               />
             </div>
 
-            {/* Composer for replies */}
             <div className="mt-3 flex gap-2.5 border-b border-border pb-3">
               {user?.profile_photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -586,7 +550,6 @@ export default function StatusDetailPage() {
               </div>
             </div>
 
-            {/* Replies (flat) */}
             {threadReplies.length > 0 ? (
               <div className="divide-y divide-border/40">
                 {threadReplies.map((reply) => (
@@ -609,7 +572,7 @@ export default function StatusDetailPage() {
           </>
         ) : (
           <>
-            {/* ── Author header — matches PostCard layout ── */}
+            {/* ── Author header ── */}
             <div className="mb-2 flex items-center gap-2">
               <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
                 {post.userPhoto ? (
@@ -650,11 +613,9 @@ export default function StatusDetailPage() {
               )}
             </div>
 
-            {/* ── Post content — indented to align with name ── */}
+            {/* ── Post content ── */}
             <div className="ml-10">
-              {/* Caption — full width */}
               {(() => {
-                // For text posts show content; for media posts only show caption if it's not a raw URL
                 const captionText = isText
                   ? (post.content || post.caption || "")
                   : (post.caption && !post.caption.startsWith("http") ? post.caption : null);
@@ -665,10 +626,8 @@ export default function StatusDetailPage() {
                 ) : null;
               })()}
 
-              {/* Media + vertical actions side by side */}
               {!isText && (
                 <div className="flex gap-6">
-                  {/* Media — shrinks to content so buttons stay close */}
                   <div className="min-w-0 shrink">
                     {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
                       <div className="relative overflow-hidden rounded-2xl bg-zinc-900 mb-2">
@@ -683,7 +642,6 @@ export default function StatusDetailPage() {
                     {isVideo && activeItem.content && (
                       <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
                     )}
-                    {/* Carousel nav for group posts */}
                     {groupItems.length > 1 && (
                       <div className="relative">
                         {activeGroupIdx > 0 && (
@@ -705,7 +663,6 @@ export default function StatusDetailPage() {
                     )}
                   </div>
 
-                  {/* Vertical action buttons */}
                   <div className="flex flex-shrink-0 flex-col items-center justify-center self-stretch gap-3">
                     <div className="flex flex-col items-center gap-0.5">
                       <button onClick={handleLike} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
@@ -734,7 +691,6 @@ export default function StatusDetailPage() {
                 </div>
               )}
 
-              {/* Horizontal actions for text-only posts */}
               {isText && (
                 <footer className="flex items-center gap-2 pt-0.5 pb-2.5 border-b border-border">
                   <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
@@ -760,7 +716,6 @@ export default function StatusDetailPage() {
                 </footer>
               )}
 
-              {/* Bottom border for media posts */}
               {!isText && <div className="border-b border-border mt-2" />}
             </div>
 
@@ -774,7 +729,7 @@ export default function StatusDetailPage() {
               </span>
             </div>
 
-            {/* ── Composer: avatar + name + textarea (matches create-post style) ── */}
+            {/* ── Composer ── */}
             <div className="flex gap-2.5 border-b border-t border-border py-3">
               {user?.profile_photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -808,7 +763,7 @@ export default function StatusDetailPage() {
               </div>
             </div>
 
-            {/* ── Top-level comments (flat, no nesting) ── */}
+            {/* ── Comments ── */}
             {topLevelComments.length > 0 ? (
               <div className="divide-y divide-border/40">
                 {topLevelComments.map((comment) => {

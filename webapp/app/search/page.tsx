@@ -19,6 +19,7 @@ import { apiGet } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
 import RankBadge from "@/components/RankBadge";
 import { postDetailStore } from "@/lib/postDetailStore";
+import { profileUrl, postUrl } from "@/lib/url";
 
 interface UserResult {
   id: string;
@@ -201,7 +202,7 @@ function SearchPage() {
           {posts.length > 0 && (
             <Section label="Posts" onMore={() => switchTab("posts")}>
               <div className="grid grid-cols-3 gap-1.5">
-                {posts.slice(0, 6).map((p) => <StoryCard key={p.id} post={p} onClick={() => { postDetailStore.set(p); router.push(`/status/${p.id}`); }} />)}
+                {posts.slice(0, 6).map((p) => <StoryCard key={p.id} post={p} onClick={() => { postDetailStore.set(p); router.push(postUrl(p.id)); }} />)}
               </div>
             </Section>
           )}
@@ -210,7 +211,7 @@ function SearchPage() {
           {users.length > 0 && (
             <Section label="Profiles" onMore={() => switchTab("users")}>
               {users.slice(0, 4).map((u) => (
-                <UserRow key={u.id} user={u} onClick={() => router.push(`/profile/${u.id}`)} />
+                <UserRow key={u.id} user={u} onClick={() => router.push(profileUrl(u.name, u.id))} />
               ))}
             </Section>
           )}
@@ -262,7 +263,7 @@ function SearchPage() {
           {loadingPosts && posts.length === 0 && <Skeleton />}
           {!loadingPosts && posts.length === 0 && <EmptyState q={q} />}
           <div className="grid grid-cols-3 gap-1.5">
-            {posts.map((p) => <StoryCard key={p.id} post={p} onClick={() => { postDetailStore.set(p); router.push(`/status/${p.id}`); }} />)}
+            {posts.map((p) => <StoryCard key={p.id} post={p} onClick={() => { postDetailStore.set(p); router.push(postUrl(p.id)); }} />)}
           </div>
           {hasMorePosts && posts.length > 0 && (
             <button onClick={() => { const next = postPage + 1; setPostPage(next); fetchPosts(next); }}
@@ -281,7 +282,7 @@ function SearchPage() {
           {loadingUsers && users.length === 0 && <Skeleton />}
           {!loadingUsers && users.length === 0 && <EmptyState q={q} label="No users found" />}
           <div className="divide-y divide-border/40">
-            {users.map((u) => <UserRow key={u.id} user={u} large onClick={() => router.push(`/profile/${u.id}`)} />)}
+            {users.map((u) => <UserRow key={u.id} user={u} large onClick={() => router.push(profileUrl(u.name, u.id))} />)}
           </div>
           {!loadingUsers && users.length > 0 && <EndOfResults />}
         </>
