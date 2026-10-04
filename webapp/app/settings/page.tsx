@@ -6,39 +6,39 @@ import { useAuth } from "@/lib/AuthContext";
 import { apiGet, apiPatch, apiPost, apiDelete, apiUploadFile } from "@/lib/api";
 import { useJobSocket } from "@/lib/jobSocket";
 import {
-  IoPersonOutline,
-  IoCameraOutline,
-  IoLocationOutline,
-  IoCallOutline,
-  IoShieldOutline,
-  IoNotificationsOutline,
-  IoContrastOutline,
-  IoChatbubbleOutline,
-  IoOptionsOutline,
-  IoWalletOutline,
-  IoCubeOutline,
-  IoStatsChartOutline,
-  IoMegaphoneOutline,
-  IoHelpCircleOutline,
-  IoPersonAddOutline,
-  IoStarOutline,
-  IoReloadOutline,
-  IoTimeOutline,
-  IoLockClosedOutline,
-  IoSearchOutline,
+  IoPerson,
+  IoCamera,
+  IoLocation,
+  IoCall,
+  IoShield,
+  IoNotifications,
+  IoContrast,
+  IoChatbubble,
+  IoOptions,
+  IoWallet,
+  IoCube,
+  IoStatsChart,
+  IoMegaphone,
+  IoHelpCircle,
+  IoPersonAdd,
+  IoStar,
+  IoReload,
+  IoTime,
+  IoLockClosed,
+  IoSearch,
   IoChevronForward,
   IoChevronBack,
-  IoKeyOutline,
+  IoKey,
   IoCheckmark,
-  IoSunnyOutline,
-  IoMoonOutline,
-  IoPhonePortraitOutline,
-  IoConstructOutline,
-  IoLogOutOutline,
-  IoCreateOutline,
-  IoBriefcaseOutline,
-  IoGlobeOutline,
-  IoSchoolOutline,
+  IoSunny,
+  IoMoon,
+  IoPhonePortrait,
+  IoConstruct,
+  IoLogOut,
+  IoCreate,
+  IoBriefcase,
+  IoGlobe,
+  IoSchool,
 } from "react-icons/io5";
 
 // ─── Shared input style ───────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ function ComingSoonPanel({ label, description }: { label: string; description: s
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-8 py-20 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-feed-bg">
-        <IoConstructOutline size={28} className="text-light-text" />
+        <IoConstruct size={28} className="text-light-text" />
       </div>
       <p className="text-[16px] font-bold text-text">{label}</p>
       <p className="max-w-xs text-[13px] leading-[20px] text-light-text">
@@ -80,9 +80,9 @@ function AppearancePanel() {
   });
 
   const OPTIONS = [
-    { value: "system" as Theme, label: "System default", description: "Follows your device's light or dark setting", icon: IoPhonePortraitOutline },
-    { value: "light"  as Theme, label: "Light",          description: "Always use the light theme",                 icon: IoSunnyOutline },
-    { value: "dark"   as Theme, label: "Dark",           description: "Always use the dark theme",                  icon: IoMoonOutline },
+    { value: "system" as Theme, label: "System default", description: "Follows your device's light or dark setting", icon: IoPhonePortrait },
+    { value: "light"  as Theme, label: "Light",          description: "Always use the light theme",                 icon: IoSunny },
+    { value: "dark"   as Theme, label: "Dark",           description: "Always use the dark theme",                  icon: IoMoon },
   ];
 
   return (
@@ -282,7 +282,7 @@ function EditProfilePanel() {
             <img src={avatarSrc} alt="Profile" className="h-20 w-20 rounded-full object-cover" />
           ) : (
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-border/40">
-              <IoPersonOutline size={32} className="text-light-text" />
+              <IoPerson size={32} className="text-light-text" />
             </div>
           )}
           <button
@@ -292,7 +292,7 @@ function EditProfilePanel() {
           >
             {photoUploading
               ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              : <IoCameraOutline size={14} />}
+              : <IoCamera size={14} />}
           </button>
         </div>
         <button onClick={() => fileInputRef.current?.click()} disabled={photoUploading}
@@ -316,7 +316,7 @@ function EditProfilePanel() {
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-semibold uppercase tracking-wide text-light-text">Category</label>
           <div className="relative">
-            <IoBriefcaseOutline size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-light-text" />
+            <IoBriefcase size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-light-text" />
             <input className={`${inputCls} pl-8`} placeholder="e.g. Plumber, Hair Stylist" value={occupation} onChange={(e) => setOccupation(e.target.value)} />
           </div>
         </div>
@@ -333,7 +333,7 @@ function EditProfilePanel() {
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-semibold uppercase tracking-wide text-light-text">Links</label>
           <div className="relative">
-            <IoGlobeOutline size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-light-text" />
+            <IoGlobe size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-light-text" />
             <input type="url" className={`${inputCls} pl-8`} placeholder="e.g. mywebsite.com" value={website} onChange={(e) => setWebsite(e.target.value)} />
           </div>
         </div>
@@ -342,7 +342,7 @@ function EditProfilePanel() {
         <div className="relative flex flex-col gap-1">
           <label className="text-[11px] font-semibold uppercase tracking-wide text-light-text">School</label>
           <div className="relative">
-            <IoSchoolOutline size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-light-text" />
+            <IoSchool size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-light-text" />
             <input
               className={`${inputCls} pl-8`}
               placeholder="University or school attended (optional)"
@@ -358,7 +358,7 @@ function EditProfilePanel() {
                 <button key={s.id} onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { setSchool(s.name); setSchoolSuggestions([]); }}
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-[13px] text-text hover:bg-feed-bg">
-                  <IoSchoolOutline size={13} className="flex-shrink-0 text-primary" />
+                  <IoSchool size={13} className="flex-shrink-0 text-primary" />
                   <span className="truncate">{s.name}{s.country ? ` · ${s.country}` : ""}</span>
                 </button>
               ))}
@@ -715,7 +715,7 @@ function BlockedAccountsPanel() {
       {blocked.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-14 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-feed-bg">
-            <IoShieldOutline size={28} className="text-light-text" />
+            <IoShield size={28} className="text-light-text" />
           </div>
           <p className="text-[14px] font-semibold text-text">No blocked accounts</p>
           <p className="max-w-xs text-[12px] leading-[18px] text-light-text">
@@ -733,7 +733,7 @@ function BlockedAccountsPanel() {
                   <img src={person.profile_photo_url} alt="" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
                 ) : (
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <IoPersonOutline size={18} className="text-primary" />
+                    <IoPerson size={18} className="text-primary" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
@@ -767,7 +767,7 @@ function RateTwedotPanel() {
         rel="noopener noreferrer"
         className="flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2 text-[13px] font-semibold text-white hover:bg-primary/90"
       >
-        <IoStarOutline size={15} />
+        <IoStar size={15} />
         Rate on Play Store
       </a>
     </div>
@@ -784,7 +784,7 @@ function ServiceHistoryPanel() {
         onClick={() => router.push("/job-request")}
         className="flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-2 text-[13px] font-semibold text-white hover:bg-primary/90"
       >
-        <IoTimeOutline size={15} />
+        <IoTime size={15} />
         Open Service History
       </button>
     </div>
@@ -811,7 +811,7 @@ function LogoutPanel() {
         disabled={loggingOut}
         className="flex w-fit items-center gap-2 rounded-full border border-red-300 px-5 py-2 text-[13px] font-semibold text-red-500 hover:bg-red-50 disabled:opacity-60 transition-colors"
       >
-        <IoLogOutOutline size={15} />
+        <IoLogOut size={15} />
         {loggingOut ? "Signing out…" : "Sign out"}
       </button>
     </div>
@@ -841,62 +841,62 @@ function soon(icon: React.ElementType, label: string, description: string): Sett
 
 const CATEGORIES: SettingsCategory[] = [
   {
-    id: "account", label: "Your Account", icon: IoPersonOutline,
+    id: "account", label: "Your Account", icon: IoPerson,
     items: [
-      { icon: IoPersonOutline,  label: "Account Information", description: "See your account details.", renderPanel: () => <AccountInfoPanel /> },
-      { icon: IoCreateOutline,  label: "Edit Profile",        description: "Update your name, bio, location and more.", renderPanel: () => <EditProfilePanel /> },
-      soon(IoKeyOutline,        "Change Password",  "Change your Twedot account password."),
-      soon(IoLocationOutline,   "Service Location", "Manage your service delivery area."),
-      soon(IoCallOutline,       "Contact Info",     "Manage your contact details."),
-      { icon: IoLogOutOutline,  label: "Sign Out", description: "Sign out of this account.", renderPanel: () => <LogoutPanel /> },
+      { icon: IoPerson,  label: "Account Information", description: "See your account details.", renderPanel: () => <AccountInfoPanel /> },
+      { icon: IoCreate,  label: "Edit Profile",        description: "Update your name, bio, location and more.", renderPanel: () => <EditProfilePanel /> },
+      soon(IoKey,        "Change Password",  "Change your Twedot account password."),
+      soon(IoLocation,   "Service Location", "Manage your service delivery area."),
+      soon(IoCall,       "Contact Info",     "Manage your contact details."),
+      { icon: IoLogOut,  label: "Sign Out", description: "Sign out of this account.", renderPanel: () => <LogoutPanel /> },
     ],
   },
   {
-    id: "privacy", label: "Privacy & Security", icon: IoShieldOutline,
+    id: "privacy", label: "Privacy & Security", icon: IoShield,
     items: [
-      soon(IoLockClosedOutline, "Account Privacy",    "Control who can see your posts and profile."),
-      soon(IoShieldOutline,     "Security",           "Manage your account security and sessions."),
-      { icon: IoPersonOutline, label: "Blocked Accounts", description: "Manage accounts you have blocked.", renderPanel: () => <BlockedAccountsPanel /> },
-      soon(IoLockClosedOutline, "Data & Permissions", "Control what data Twedot collects."),
-      { icon: IoShieldOutline, label: "Privacy & Security", description: "View our privacy policy and security information.", href: "https://twedot.com/privacy", renderPanel: () => null },
+      soon(IoLockClosed, "Account Privacy",    "Control who can see your posts and profile."),
+      soon(IoShield,     "Security",           "Manage your account security and sessions."),
+      { icon: IoPerson, label: "Blocked Accounts", description: "Manage accounts you have blocked.", renderPanel: () => <BlockedAccountsPanel /> },
+      soon(IoLockClosed, "Data & Permissions", "Control what data Twedot collects."),
+      { icon: IoShield, label: "Privacy & Security", description: "View our privacy policy and security information.", href: "https://twedot.com/privacy", renderPanel: () => null },
     ],
   },
   {
-    id: "notifications", label: "Notifications", icon: IoNotificationsOutline,
+    id: "notifications", label: "Notifications", icon: IoNotifications,
     items: [
-      { icon: IoNotificationsOutline, label: "Push Notifications",  description: "Control push notifications on this browser.", renderPanel: () => <PushNotificationsPanel /> },
-      soon(IoNotificationsOutline, "Email Notifications", "Manage the emails Twedot sends you."),
-      soon(IoNotificationsOutline, "In-App Alerts",       "Customize in-app alert settings."),
+      { icon: IoNotifications, label: "Push Notifications",  description: "Control push notifications on this browser.", renderPanel: () => <PushNotificationsPanel /> },
+      soon(IoNotifications, "Email Notifications", "Manage the emails Twedot sends you."),
+      soon(IoNotifications, "In-App Alerts",       "Customize in-app alert settings."),
     ],
   },
   {
-    id: "chats", label: "Chats & Messaging", icon: IoChatbubbleOutline,
+    id: "chats", label: "Chats & Messaging", icon: IoChatbubble,
     items: [
-      soon(IoChatbubbleOutline, "Chat Preferences", "Manage how your chats appear."),
-      soon(IoChatbubbleOutline, "Message Requests", "Control who can send you messages."),
+      soon(IoChatbubble, "Chat Preferences", "Manage how your chats appear."),
+      soon(IoChatbubble, "Message Requests", "Control who can send you messages."),
     ],
   },
   {
-    id: "preferences", label: "Preferences", icon: IoOptionsOutline,
+    id: "preferences", label: "Preferences", icon: IoOptions,
     items: [
-      { icon: IoContrastOutline, label: "Appearance", description: "Switch between light, dark, or system theme.", renderPanel: () => <AppearancePanel /> },
-      soon(IoOptionsOutline, "App Preferences", "Language, region, and accessibility settings."),
+      { icon: IoContrast, label: "Appearance", description: "Switch between light, dark, or system theme.", renderPanel: () => <AppearancePanel /> },
+      soon(IoOptions, "App Preferences", "Language, region, and accessibility settings."),
     ],
   },
   {
-    id: "help", label: "Help & Feedback", icon: IoHelpCircleOutline,
+    id: "help", label: "Help & Feedback", icon: IoHelpCircle,
     items: [
-      { icon: IoHelpCircleOutline, label: "Help Center",     description: "Browse help articles and FAQs.",          renderPanel: () => <HelpCenterPanel /> },
-      { icon: IoChatbubbleOutline, label: "Send Feedback",   description: "Share your thoughts with us.",              renderPanel: () => <SendFeedbackPanel /> },
-      { icon: IoPersonOutline,     label: "Contact Support", description: "Get in touch with our support team.",        renderPanel: () => <ContactSupportPanel /> },
+      { icon: IoHelpCircle, label: "Help Center",     description: "Browse help articles and FAQs.",          renderPanel: () => <HelpCenterPanel /> },
+      { icon: IoChatbubble, label: "Send Feedback",   description: "Share your thoughts with us.",              renderPanel: () => <SendFeedbackPanel /> },
+      { icon: IoPerson,     label: "Contact Support", description: "Get in touch with our support team.",        renderPanel: () => <ContactSupportPanel /> },
     ],
   },
   {
-    id: "resources", label: "Additional Resources", icon: IoPersonAddOutline,
+    id: "resources", label: "Additional Resources", icon: IoPersonAdd,
     items: [
-      { icon: IoPersonAddOutline, label: "Invite a Friend", description: "Share your invite link with friends.", renderPanel: () => <InviteFriendPanel /> },
-      { icon: IoStarOutline,      label: "Rate Twedot",     description: "Rate us on the Play Store.",          renderPanel: () => <RateTwedotPanel /> },
-      { icon: IoReloadOutline, label: "App Updates", description: "Check for the latest Twedot updates.", renderPanel: () => <AppUpdatesPanel /> },
+      { icon: IoPersonAdd, label: "Invite a Friend", description: "Share your invite link with friends.", renderPanel: () => <InviteFriendPanel /> },
+      { icon: IoStar,      label: "Rate Twedot",     description: "Rate us on the Play Store.",          renderPanel: () => <RateTwedotPanel /> },
+      { icon: IoReload, label: "App Updates", description: "Check for the latest Twedot updates.", renderPanel: () => <AppUpdatesPanel /> },
     ],
   },
 ];
@@ -1020,7 +1020,7 @@ function SettingsContent() {
         </div>
         <div className="px-3 py-2.5">
           <div className="flex items-center gap-2 rounded-full bg-feed-bg px-3.5 py-2">
-            <IoSearchOutline size={15} className="flex-shrink-0 text-light-text" />
+            <IoSearch size={15} className="flex-shrink-0 text-light-text" />
             <input
               type="text"
               placeholder="Search settings"
