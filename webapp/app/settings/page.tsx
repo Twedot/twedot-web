@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
+import { useUi } from "@/lib/UiContext";
 import { apiGet, apiPatch, apiPost, apiDelete, apiUploadFile } from "@/lib/api";
 import { useJobSocket } from "@/lib/jobSocket";
 import {
