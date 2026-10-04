@@ -95,8 +95,8 @@ export default function SideNav() {
           } ${sidebarCollapsed ? "justify-center px-0" : ""}`;
           const inner = (
             <>
-              <span className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                <Icon size={20} className={active ? "text-text" : "text-light-text"} stroke="currentColor" strokeWidth={28} />
+              <span className="icon-bold relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                <Icon size={20} className={active ? "text-text" : "text-light-text"} />
                 {item.label === "Stories" && hasUnseenStories && !active && (
                   <span className="absolute -right-0.5 -top-0.5 h-[10px] w-[10px] rounded-full border-2 border-white bg-[#FF3B30]" />
                 )}
@@ -135,8 +135,8 @@ export default function SideNav() {
             sidebarCollapsed ? "justify-center px-0" : ""
           }`}
         >
-          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
-            <IoAddOutline size={20} className="text-light-text" stroke="currentColor" strokeWidth={28} />
+          <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
+            <IoAddOutline size={20} className="text-light-text" />
           </span>
           {!sidebarCollapsed && "Create Channel"}
         </Link>
@@ -180,7 +180,7 @@ export default function SideNav() {
                 href="/channels"
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] text-light-text hover:bg-feed-bg"
               >
-                <IoCompassOutline size={14} className="flex-shrink-0" stroke="currentColor" strokeWidth={28} />
+                <span className="icon-bold flex-shrink-0"><IoCompassOutline size={14} className="flex-shrink-0" /></span>
                 Discover channels
               </Link>
             )}
@@ -232,8 +232,8 @@ export default function SideNav() {
                       href={`/plugins?type=${p.type}`}
                       className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
                     >
-                      <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${p.color}`}>
-                        <PluginIcon size={14} className="text-white" stroke="currentColor" strokeWidth={28} />
+                      <span className={`icon-bold flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${p.color}`}>
+                        <PluginIcon size={14} className="text-white" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <div className="truncate text-[13px] font-medium">{p.label}</div>
@@ -247,8 +247,8 @@ export default function SideNav() {
                   href="/plugins"
                   className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
                 >
-                  <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                    <IoGameControllerOutline size={20} className="text-light-text" stroke="currentColor" strokeWidth={28} />
+                  <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                    <IoGameControllerOutline size={20} className="text-light-text" />
                   </span>
                   Manage Plugins
                 </Link>
@@ -289,8 +289,8 @@ export default function SideNav() {
                         pathname === href ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
                       }`}
                     >
-                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-light-text" stroke="currentColor" strokeWidth={28} />
+                      <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                        <Icon size={20} className="text-light-text" />
                       </span>
                       {label}
                     </Link>
@@ -302,8 +302,8 @@ export default function SideNav() {
                       rel="noopener noreferrer"
                       className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
                     >
-                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-light-text" stroke="currentColor" strokeWidth={28} />
+                      <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                        <Icon size={20} className="text-light-text" />
                       </span>
                       {label}
                     </a>
@@ -313,8 +313,8 @@ export default function SideNav() {
                       onClick={() => notify(`${label} is coming soon`)}
                       className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
                     >
-                      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-light-text" stroke="currentColor" strokeWidth={28} />
+                      <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                        <Icon size={20} className="text-light-text" />
                       </span>
                       {label}
                     </button>
@@ -333,11 +333,11 @@ export default function SideNav() {
               pathname.startsWith("/settings") ? "font-semibold text-text" : "text-light-text hover:bg-feed-bg hover:text-text"
             } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
           >
-            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+            <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
               {pathname.startsWith("/settings") ? (
                 <IoSettings size={20} />
               ) : (
-                <IoSettingsOutline size={20} stroke="currentColor" strokeWidth={28} />
+                <IoSettingsOutline size={20} />
               )}
             </span>
             {!sidebarCollapsed && "Settings"}
@@ -352,8 +352,8 @@ export default function SideNav() {
               sidebarCollapsed ? "justify-center px-0" : ""
             }`}
           >
-            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
-              <IoLogOutOutline size={20} stroke="currentColor" strokeWidth={28} />
+            <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
+              <IoLogOutOutline size={20} />
             </span>
             {!sidebarCollapsed && "Logout"}
           </button>

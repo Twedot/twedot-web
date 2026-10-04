@@ -87,3 +87,15 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Makes outline SVG icons look bolder by overriding the stroke-width
+   baked into Ionicons path/line/circle presentation attributes */
+.icon-bold path,
+.icon-bold line,
+.icon-bold circle,
+.icon-bold polyline,
+.icon-bold polygon,
+.icon-bold ellipse,
+.icon-bold rect {
+  stroke-width: 56 !important;
+}
