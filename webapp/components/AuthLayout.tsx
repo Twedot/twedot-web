@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState, useEffect } from "react";
+import { IoHeartOutline, IoChatbubbleOutline, IoArrowRedoOutline, IoBookmarkOutline } from "react-icons/io5";
 
 const SLIDES = [
   { sub: "Your people. Your work.", headline: "One place." },
@@ -46,45 +47,100 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         {/* Fanned phone images — centered */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          {/* Back card — artist, rotated left */}
+          {/* Back card — artist */}
           <div
             style={{
               position: "absolute",
-              width: 155,
-              height: 265,
+              width: 158,
+              height: 272,
               borderRadius: 22,
               overflow: "hidden",
               transform: "rotate(-9deg) translate(-48px, 14px)",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
             }}
           >
-            <Image
-              src="/auth/artist.jpg"
-              alt=""
-              fill
-              style={{ objectFit: "cover", objectPosition: "top center" }}
-              sizes="155px"
-            />
+            <Image src="/auth/artist.jpg" alt="" fill style={{ objectFit: "cover", objectPosition: "top center" }} sizes="158px" />
+            {/* Top: post header */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "10px 10px 28px", background: "linear-gradient(to bottom, rgba(0,0,0,0.55), transparent)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#6B4EFF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "1.5px solid rgba(255,255,255,0.4)" }}>
+                  <span style={{ fontSize: 9, color: "white", fontWeight: 700 }}>DA</span>
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "white", lineHeight: 1.2 }}>David A.</div>
+                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.65)", lineHeight: 1.2 }}>2h ago</div>
+                </div>
+              </div>
+            </div>
+            {/* Bottom: caption + actions */}
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.72), transparent)" }}>
+              <p style={{ fontSize: 9, color: "white", lineHeight: 1.4, marginBottom: 8, fontWeight: 500 }}>New piece dropping this week 🎨</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+                  <IoHeartOutline size={11} color="white" />
+                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>142</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+                  <IoChatbubbleOutline size={11} color="white" />
+                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>18</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+                  <IoArrowRedoOutline size={11} color="white" />
+                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>7</span>
+                </div>
+                <div style={{ marginLeft: "auto" }}>
+                  <IoBookmarkOutline size={11} color="white" />
+                </div>
+              </div>
+            </div>
           </div>
-          {/* Front card — discover, rotated right */}
+
+          {/* Front card — discover */}
           <div
             style={{
               position: "absolute",
-              width: 155,
-              height: 265,
+              width: 158,
+              height: 272,
               borderRadius: 22,
               overflow: "hidden",
               transform: "rotate(7deg) translate(48px, -14px)",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
             }}
           >
-            <Image
-              src="/auth/discover.jpg"
-              alt=""
-              fill
-              style={{ objectFit: "cover", objectPosition: "top center" }}
-              sizes="155px"
-            />
+            <Image src="/auth/discover.jpg" alt="" fill style={{ objectFit: "cover", objectPosition: "top center" }} sizes="158px" />
+            {/* Top: post header */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "10px 10px 28px", background: "linear-gradient(to bottom, rgba(0,0,0,0.55), transparent)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#FF6B35", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "1.5px solid rgba(255,255,255,0.4)" }}>
+                  <span style={{ fontSize: 9, color: "white", fontWeight: 700 }}>AK</span>
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "white", lineHeight: 1.2 }}>Amara K.</div>
+                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.65)", lineHeight: 1.2 }}>5h ago</div>
+                </div>
+              </div>
+            </div>
+            {/* Bottom: caption + actions */}
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.72), transparent)" }}>
+              <p style={{ fontSize: 9, color: "white", lineHeight: 1.4, marginBottom: 8, fontWeight: 500 }}>Exploring the city today ✨</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+                  <IoHeartOutline size={11} color="white" />
+                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>89</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+                  <IoChatbubbleOutline size={11} color="white" />
+                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>12</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
+                  <IoArrowRedoOutline size={11} color="white" />
+                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>4</span>
+                </div>
+                <div style={{ marginLeft: "auto" }}>
+                  <IoBookmarkOutline size={11} color="white" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
