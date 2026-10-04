@@ -66,6 +66,8 @@ export default function SideNav() {
   const [feedsOpen, setFeedsOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [myRooms, setMyRooms] = useState<MyRoom[]>([]);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const loadRooms = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -343,11 +345,7 @@ export default function SideNav() {
             {!sidebarCollapsed && "Settings"}
           </Link>
           <button
-            onClick={async () => {
-              if (!window.confirm("Are you sure you want to log out?")) return;
-              await logout();
-              router.push("/login");
-            }}
+            onClick={() => setShowLogoutModal(true)}
             title="Logout"
             className={`flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-light-text hover:bg-feed-bg hover:text-red-500 ${
               sidebarCollapsed ? "justify-center px-0" : ""
@@ -372,6 +370,48 @@ export default function SideNav() {
       >
         <IoMenuOutline size={16} />
       </button>
+
+      {/* Logout confirmation modal */}
+      {showLogoutModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowLogoutModal(false)}
+        >
+          <div
+            className="mx-4 w-full max-w-sm rounded-2xl bg-background p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+              <IoLogOutOutline size={24} className="text-red-500" />
+            </div>
+            <h2 className="mb-1 text-[17px] font-bold text-text">Log out of Twedot?</h2>
+            <p className="mb-6 text-[13px] leading-[18px] text-light-text">
+              You can always log back in at any time.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                disabled={loggingOut}
+                onClick={async () => {
+                  setLoggingOut(true);
+                  await logout();
+                  router.push("/login");
+                }}
+                className="flex h-11 w-full items-center justify-center rounded-xl bg-red-500 text-[14px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {loggingOut ? "Logging out…" : "Log out"}
+              </button>
+              <button
+                disabled={loggingOut}
+                onClick={() => setShowLogoutModal(false)}
+                className="flex h-11 w-full items-center justify-center rounded-xl bg-feed-bg text-[14px] font-semibold text-text transition-colors hover:bg-border/60"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
