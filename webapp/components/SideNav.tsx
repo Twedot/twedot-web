@@ -96,7 +96,7 @@ export default function SideNav() {
           const inner = (
             <>
               <span className="icon-bold relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                <Icon size={20} className={active ? "text-text" : "text-light-text"} />
+                <Icon size={20} className="text-text" />
                 {item.label === "Stories" && hasUnseenStories && !active && (
                   <span className="absolute -right-0.5 -top-0.5 h-[10px] w-[10px] rounded-full border-2 border-white bg-[#FF3B30]" />
                 )}
@@ -136,7 +136,7 @@ export default function SideNav() {
           }`}
         >
           <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-            <IoAddOutline size={20} className="text-light-text" />
+            <IoAddOutline size={20} className="text-text" />
           </span>
           {!sidebarCollapsed && "Create Channel"}
         </Link>
@@ -180,7 +180,7 @@ export default function SideNav() {
                 href="/channels"
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] text-light-text hover:bg-feed-bg"
               >
-                <span className="icon-bold flex-shrink-0"><IoCompassOutline size={14} className="flex-shrink-0" /></span>
+                <span className="icon-bold flex-shrink-0"><IoCompassOutline size={14} className="flex-shrink-0 text-text" /></span>
                 Discover channels
               </Link>
             )}
@@ -248,7 +248,7 @@ export default function SideNav() {
                   className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-text hover:bg-feed-bg"
                 >
                   <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                    <IoGameControllerOutline size={20} className="text-light-text" />
+                    <IoGameControllerOutline size={20} className="text-text" />
                   </span>
                   Manage Plugins
                 </Link>
@@ -290,7 +290,7 @@ export default function SideNav() {
                       }`}
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-light-text" />
+                        <Icon size={20} className="text-text" />
                       </span>
                       {label}
                     </Link>
@@ -303,7 +303,7 @@ export default function SideNav() {
                       className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-text hover:bg-feed-bg"
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-light-text" />
+                        <Icon size={20} className="text-text" />
                       </span>
                       {label}
                     </a>
@@ -314,7 +314,7 @@ export default function SideNav() {
                       className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-text hover:bg-feed-bg"
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-light-text" />
+                        <Icon size={20} className="text-text" />
                       </span>
                       {label}
                     </button>
@@ -337,7 +337,7 @@ export default function SideNav() {
               {pathname.startsWith("/settings") ? (
                 <IoSettings size={20} />
               ) : (
-                <IoSettingsOutline size={20} />
+                <IoSettingsOutline size={20} className="text-light-text" />
               )}
             </span>
             {!sidebarCollapsed && "Settings"}
