@@ -135,8 +135,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             opacity: visible ? 1 : 0,
             transform: visible ? "translateY(0px)" : "translateY(10px)",
           }}>
-            <p className="text-xl font-semibold" style={{ color: "#6b7280" }}>{slide.sub}</p>
-            <p className="mt-1 text-3xl font-bold leading-tight" style={{ color: "#111" }}>{slide.headline}</p>
+            <p className="text-xl font-semibold" style={{ color: "#374151", textShadow: "0 1px 2px rgba(0,0,0,0.12)" }}>{slide.sub}</p>
+            <p className="mt-1 text-3xl font-bold leading-tight" style={{ color: "#0a0a0a", textShadow: "0 1px 3px rgba(0,0,0,0.15)" }}>{slide.headline}</p>
           </div>
 
           <p className="mt-4 text-[13px] leading-relaxed" style={{ color: "#6b7280" }}>
