@@ -213,6 +213,7 @@ export default function ProfilePage() {
           <RankBadge
             activityScore={user.global_activity_score ?? 0}
             rankVisible={user.rank_visible !== false}
+            isOwnProfile={true}
             plain={false}
             className="mt-0.5"
           />
@@ -281,7 +282,7 @@ export default function ProfilePage() {
           Share
         </button>
         <button
-          onClick={() => notify("Invite a friend is coming soon")}
+          onClick={() => router.push("/invite")}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border text-text hover:bg-feed-bg"
         >
           <IoPersonAddOutline size={14} />
@@ -304,7 +305,7 @@ export default function ProfilePage() {
             : <IoCopyOutline size={13} />}
         </button>
         <button
-          onClick={() => notify("Wallet is coming soon on web")}
+          onClick={() => router.push("/wallet")}
           className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[12px] font-semibold text-text hover:bg-border/50"
         >
           <IoWalletOutline size={13} />
@@ -322,7 +323,7 @@ export default function ProfilePage() {
             {rooms.map((room) => (
               <button
                 key={room.id}
-                onClick={() => router.push(channelUrl(room.name ?? "", room.id ?? room.room_id))}
+                onClick={() => router.push(channelUrl(room.name ?? "", room.id))}
                 className="flex flex-shrink-0 flex-col items-center gap-1.5"
               >
                 <div className="relative">
