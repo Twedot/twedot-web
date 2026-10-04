@@ -90,13 +90,13 @@ export default function SideNav() {
         {mainItems.map((item) => {
           const active = Boolean(item.href && pathname === item.href);
           const Icon = active ? item.activeIcon : item.icon;
-          const cls = `flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold ${
-            active ? "font-bold text-text" : "text-text hover:bg-feed-bg"
+          const cls = `flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-light-text ${
+            active ? "font-bold text-text" : "hover:bg-feed-bg"
           } ${sidebarCollapsed ? "justify-center px-0" : ""}`;
           const inner = (
             <>
               <span className="icon-bold relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                <Icon size={20} className="text-text" />
+                <Icon size={20} className={active ? "text-text" : "text-light-text"} />
                 {item.label === "Stories" && hasUnseenStories && !active && (
                   <span className="absolute -right-0.5 -top-0.5 h-[10px] w-[10px] rounded-full border-2 border-white bg-[#FF3B30]" />
                 )}
@@ -131,12 +131,12 @@ export default function SideNav() {
         <Link
           href="/channels/create"
           title="Create Channel"
-          className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-text hover:bg-feed-bg ${
+          className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-light-text hover:bg-feed-bg ${
             sidebarCollapsed ? "justify-center px-0" : ""
           }`}
         >
           <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-            <IoAddOutline size={20} className="text-text" />
+            <IoAddOutline size={20} className="text-light-text" />
           </span>
           {!sidebarCollapsed && "Create Channel"}
         </Link>
@@ -180,7 +180,7 @@ export default function SideNav() {
                 href="/channels"
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] text-light-text hover:bg-feed-bg"
               >
-                <span className="icon-bold flex-shrink-0"><IoCompassOutline size={14} className="flex-shrink-0 text-text" /></span>
+                <span className="icon-bold flex-shrink-0"><IoCompassOutline size={14} className="flex-shrink-0 text-light-text" /></span>
                 Discover channels
               </Link>
             )}
@@ -230,7 +230,7 @@ export default function SideNav() {
                     <Link
                       key={p.type}
                       href={`/plugins?type=${p.type}`}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-text hover:bg-feed-bg"
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-light-text hover:bg-feed-bg"
                     >
                       <span className={`icon-bold flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${p.color}`}>
                         <PluginIcon size={14} className="text-white" />
@@ -245,10 +245,10 @@ export default function SideNav() {
 
                 <Link
                   href="/plugins"
-                  className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-text hover:bg-feed-bg"
+                  className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-light-text hover:bg-feed-bg"
                 >
                   <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                    <IoGameControllerOutline size={20} className="text-text" />
+                    <IoGameControllerOutline size={20} className="text-light-text" />
                   </span>
                   Manage Plugins
                 </Link>
@@ -286,11 +286,11 @@ export default function SideNav() {
                       key={label}
                       href={href}
                       className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold ${
-                        pathname === href ? "font-bold text-text" : "text-text hover:bg-feed-bg"
+                        pathname === href ? "font-bold text-text" : "text-light-text hover:bg-feed-bg"
                       }`}
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-text" />
+                        <Icon size={20} className="text-light-text" />
                       </span>
                       {label}
                     </Link>
@@ -300,10 +300,10 @@ export default function SideNav() {
                       href={external}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-text hover:bg-feed-bg"
+                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-light-text hover:bg-feed-bg"
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-text" />
+                        <Icon size={20} className="text-light-text" />
                       </span>
                       {label}
                     </a>
@@ -311,10 +311,10 @@ export default function SideNav() {
                     <button
                       key={label}
                       onClick={() => notify(`${label} is coming soon`)}
-                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-text hover:bg-feed-bg"
+                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-light-text hover:bg-feed-bg"
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
-                        <Icon size={20} className="text-text" />
+                        <Icon size={20} className="text-light-text" />
                       </span>
                       {label}
                     </button>
