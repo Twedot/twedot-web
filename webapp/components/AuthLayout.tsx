@@ -104,7 +104,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
             }}
           >
-            <Image src="/auth/discover.jpg" alt="" fill style={{ objectFit: "cover", objectPosition: "top center" }} sizes="158px" />
+            <Image src="/auth/lifestyle.png" alt="" fill style={{ objectFit: "cover", objectPosition: "center" }} sizes="158px" />
             {/* Top: post header */}
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "10px 10px 28px", background: "linear-gradient(to bottom, rgba(0,0,0,0.55), transparent)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -119,7 +119,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             </div>
             {/* Bottom-left: caption */}
             <div style={{ position: "absolute", bottom: 0, left: 0, right: 34, padding: "28px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.72), transparent)" }}>
-              <p style={{ fontSize: 9, color: "white", lineHeight: 1.4, fontWeight: 500 }}>Exploring the city today ✨</p>
+              <p style={{ fontSize: 9, color: "white", lineHeight: 1.4, fontWeight: 500 }}>day in the life &gt;</p>
             </div>
             {/* Right rail: vertical actions */}
             <div style={{ position: "absolute", bottom: 10, right: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
