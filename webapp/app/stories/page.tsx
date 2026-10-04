@@ -11,6 +11,7 @@ import PostCard from "@/components/PostCard";
 import NearbyVendorsRow from "@/components/NearbyVendorsRow";
 import { markFeedSeen } from "@/lib/unseenStories";
 import { feedStateStore } from "@/lib/feedStateStore";
+import { videoFeedStore } from "@/lib/videoFeedStore";
 
 const PAGE_SIZE = 20;
 const VENDOR_ROW_POSITION = 3;
@@ -177,6 +178,10 @@ function FeedContent() {
   }, [posts, sort]);
 
   const groupedPosts = useMemo(() => groupPosts(sortedPosts), [sortedPosts]);
+
+  useEffect(() => {
+    videoFeedStore.setFeedVideos(sortedPosts);
+  }, [sortedPosts]);
 
   // Track which post is at the top of the viewport so we can restore scroll by element
   useEffect(() => {

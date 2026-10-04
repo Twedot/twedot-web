@@ -12,6 +12,7 @@ import TopBar from "./TopBar";
 import SideNav from "./SideNav";
 import TrendingPanel from "./TrendingPanel";
 import SearchPanel from "./SearchPanel";
+import VideoFeedModal from "./VideoFeedModal";
 
 function UploadProgress() {
   const [state, setState] = useState<UploadState | null>(uploadStore.get());
@@ -128,6 +129,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           )}
         </div>
         <UploadProgress />
+        <VideoFeedModal />
       </div>
     </UiProvider>
     </JobSocketProvider>

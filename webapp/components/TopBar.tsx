@@ -175,7 +175,7 @@ export default function TopBar() {
           onClick={() => router.push("/stories")}
           className="flex items-center gap-1.5 text-xl font-extrabold tracking-tight text-primary"
         >
-          <span className="hidden sm:inline">Twedot</span>
+          <span>Twedot</span>
         </button>
       </div>
 
