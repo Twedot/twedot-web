@@ -69,7 +69,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthLayout headline1="Your people. Your work." headline2="One place.">
+    <AuthLayout>
       <form onSubmit={handleSubmit} className="flex flex-col">
         <h1 className="text-[22px] font-bold leading-8 tracking-wide text-text">
           Getting Started
