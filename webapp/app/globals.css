@@ -88,14 +88,15 @@ body {
   display: none;
 }
 
-/* Makes outline SVG icons look bolder by overriding the stroke-width
-   baked into Ionicons path/line/circle presentation attributes */
-.icon-bold path,
-.icon-bold line,
-.icon-bold circle,
-.icon-bold polyline,
-.icon-bold polygon,
-.icon-bold ellipse,
-.icon-bold rect {
+/* Bold all outline SVG icons app-wide — overrides the stroke-width="32"
+   baked into Ionicons path elements (filled icons are unaffected because
+   their paths use stroke="none" explicitly) */
+svg path,
+svg line,
+svg circle,
+svg polyline,
+svg polygon,
+svg ellipse,
+svg rect {
   stroke-width: 56 !important;
 }
