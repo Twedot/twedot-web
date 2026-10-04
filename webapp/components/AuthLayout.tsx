@@ -72,26 +72,23 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 </div>
               </div>
             </div>
-            {/* Bottom: caption + actions */}
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.72), transparent)" }}>
-              <p style={{ fontSize: 9, color: "white", lineHeight: 1.4, marginBottom: 8, fontWeight: 500 }}>New piece dropping this week 🎨</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-                  <IoHeartOutline size={11} color="white" />
-                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>142</span>
+            {/* Bottom-left: caption */}
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 34, padding: "28px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.72), transparent)" }}>
+              <p style={{ fontSize: 9, color: "white", lineHeight: 1.4, fontWeight: 500 }}>New piece dropping this week 🎨</p>
+            </div>
+            {/* Right rail: vertical actions */}
+            <div style={{ position: "absolute", bottom: 10, right: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              {[
+                { icon: <IoHeartOutline size={13} color="white" />, count: "142" },
+                { icon: <IoChatbubbleOutline size={13} color="white" />, count: "18" },
+                { icon: <IoArrowRedoOutline size={13} color="white" />, count: "7" },
+                { icon: <IoBookmarkOutline size={13} color="white" />, count: null },
+              ].map(({ icon, count }, i) => (
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  {icon}
+                  {count && <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>{count}</span>}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-                  <IoChatbubbleOutline size={11} color="white" />
-                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>18</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-                  <IoArrowRedoOutline size={11} color="white" />
-                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>7</span>
-                </div>
-                <div style={{ marginLeft: "auto" }}>
-                  <IoBookmarkOutline size={11} color="white" />
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
@@ -120,26 +117,23 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 </div>
               </div>
             </div>
-            {/* Bottom: caption + actions */}
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "28px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.72), transparent)" }}>
-              <p style={{ fontSize: 9, color: "white", lineHeight: 1.4, marginBottom: 8, fontWeight: 500 }}>Exploring the city today ✨</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-                  <IoHeartOutline size={11} color="white" />
-                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>89</span>
+            {/* Bottom-left: caption */}
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 34, padding: "28px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.72), transparent)" }}>
+              <p style={{ fontSize: 9, color: "white", lineHeight: 1.4, fontWeight: 500 }}>Exploring the city today ✨</p>
+            </div>
+            {/* Right rail: vertical actions */}
+            <div style={{ position: "absolute", bottom: 10, right: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              {[
+                { icon: <IoHeartOutline size={13} color="white" />, count: "89" },
+                { icon: <IoChatbubbleOutline size={13} color="white" />, count: "12" },
+                { icon: <IoArrowRedoOutline size={13} color="white" />, count: "4" },
+                { icon: <IoBookmarkOutline size={13} color="white" />, count: null },
+              ].map(({ icon, count }, i) => (
+                <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  {icon}
+                  {count && <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>{count}</span>}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-                  <IoChatbubbleOutline size={11} color="white" />
-                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>12</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-                  <IoArrowRedoOutline size={11} color="white" />
-                  <span style={{ fontSize: 8, color: "rgba(255,255,255,0.9)", fontWeight: 600 }}>4</span>
-                </div>
-                <div style={{ marginLeft: "auto" }}>
-                  <IoBookmarkOutline size={11} color="white" />
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
