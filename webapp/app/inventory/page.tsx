@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   IoCubeOutline,
@@ -109,6 +110,7 @@ export default function InventoryPage() {
   const [isInStock, setIsInStock] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   // Photo state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -276,12 +278,18 @@ export default function InventoryPage() {
 
   // ── Delete item ──────────────────────────────────────────────────────────
 
-  const handleDelete = async (itemId: string) => {
+  const handleDelete = (itemId: string) => {
     if (deleting) return;
-    if (!confirm("Delete this item? This cannot be undone.")) return;
+    setDeleteTargetId(itemId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTargetId || deleting) return;
     setDeleting(true);
+    const id = deleteTargetId;
+    setDeleteTargetId(null);
     try {
-      await apiDelete(`/inventory/${itemId}`);
+      await apiDelete(`/inventory/${id}`);
       await loadItems();
       setView("list");
       setActiveItem(null);
@@ -632,6 +640,37 @@ export default function InventoryPage() {
           </div>
         )}
       </div>
+
+      {/* ── Delete confirmation popover ── */}
+      {deleteTargetId && createPortal(
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setDeleteTargetId(null)} />
+          <div className="fixed left-1/2 top-1/2 z-50 w-[260px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+            <div className="px-4 py-3">
+              <p className="text-[13px] font-bold text-text">Delete this item?</p>
+              <p className="text-[12px] text-light-text">This cannot be undone.</p>
+            </div>
+            <div className="border-t border-border">
+              <button
+                disabled={deleting}
+                onClick={confirmDelete}
+                className="flex w-full items-center gap-3 px-4 py-3 text-[13px] font-semibold text-red-500 transition-colors hover:bg-feed-bg disabled:opacity-60"
+              >
+                <IoTrashOutline size={15} />
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+              <button
+                disabled={deleting}
+                onClick={() => setDeleteTargetId(null)}
+                className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-[13px] font-semibold text-text transition-colors hover:bg-feed-bg"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 }
