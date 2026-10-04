@@ -94,9 +94,6 @@ body {
 svg path,
 svg line,
 svg circle,
-svg polyline,
-svg polygon,
-svg ellipse,
-svg rect {
+svg polyline {
   stroke-width: 56 !important;
 }
