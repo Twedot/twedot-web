@@ -184,7 +184,7 @@ export default function LoginPage() {
         <p className="mt-3 text-center text-[11px] leading-5 text-light-text">
           By continuing, you agree to our{" "}
           <a
-            href="https://twedot.com/privacy"
+            href="https://about.twedot.com/privacy"
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-primary"

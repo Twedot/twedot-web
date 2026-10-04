@@ -859,7 +859,7 @@ const CATEGORIES: SettingsCategory[] = [
       soon(IoShieldOutline,     "Security",           "Manage your account security and sessions."),
       { icon: IoPersonOutline, label: "Blocked Accounts", description: "Manage accounts you have blocked.", renderPanel: () => <BlockedAccountsPanel /> },
       soon(IoLockClosedOutline, "Data & Permissions", "Control what data Twedot collects."),
-      { icon: IoShieldOutline, label: "Privacy & Security", description: "View our privacy policy and security information.", href: "https://twedot.com/privacy", renderPanel: () => null },
+      { icon: IoShieldOutline, label: "Privacy & Security", description: "View our privacy policy and security information.", href: "https://about.twedot.com/privacy", renderPanel: () => null },
     ],
   },
   {

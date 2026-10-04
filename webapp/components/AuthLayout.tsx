@@ -157,8 +157,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <div className="mt-8 pt-5" style={{ borderTop: "1px solid rgba(0,0,0,0.1)" }}>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {[
-                { label: "Privacy", href: "/privacy" },
-                { label: "Terms", href: "/terms" },
+                { label: "Privacy", href: "https://about.twedot.com/privacy" },
+                { label: "Terms", href: "https://about.twedot.com/terms" },
                 { label: "Help", href: "/help" },
                 { label: "About", href: "https://about.twedot.com" },
               ].map(({ label, href }) => (

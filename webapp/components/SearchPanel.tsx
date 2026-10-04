@@ -40,7 +40,7 @@ interface InventoryItem {
 const FOOTER_LINKS = [
   { label: "About", href: null },
   { label: "Help", href: null },
-  { label: "Privacy Policy & Terms of Service", href: "https://twedot.com/privacy" },
+  { label: "Privacy Policy & Terms of Service", href: "https://about.twedot.com/privacy" },
 ];
 
 function SearchPanelInner() {

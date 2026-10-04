@@ -18,7 +18,7 @@ const FOOTER_LINKS = [
   { label: "Press", href: null },
   { label: "Advertise", href: null },
   { label: "Content Policy", href: null },
-  { label: "Privacy Policy & Terms of Service", href: "https://twedot.com/privacy" },
+  { label: "Privacy Policy & Terms of Service", href: "https://about.twedot.com/privacy" },
 ];
 
 interface SuggestedUser {

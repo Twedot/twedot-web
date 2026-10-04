@@ -68,7 +68,7 @@ export default function HelpPage() {
     { id: "feedback", icon: IoBugOutline, title: "Give feedback", subtitle: "Report technical issues", action: () => setPane("feedback") },
   ];
   const aboutOptions: HelpOption[] = [
-    { id: "privacy", icon: IoDocumentTextOutline, title: "Privacy Policy", subtitle: "Twedot terms and privacy policy", action: () => window.open("https://twedot.com/privacy", "_blank") },
+    { id: "privacy", icon: IoDocumentTextOutline, title: "Privacy Policy", subtitle: "Twedot terms and privacy policy", action: () => window.open("https://about.twedot.com/privacy", "_blank") },
     { id: "appinfo", icon: IoInformationCircleOutline, title: "App info", subtitle: "App status", action: () => {} },
   ];
 

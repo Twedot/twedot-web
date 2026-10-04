@@ -189,7 +189,7 @@ export default function WalletPage() {
                   <span className="flex-1 text-[12px] font-semibold text-text">Analytics — views, engagement &amp; jobs</span>
                   <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
                 </button>
-                <a href="https://twedot.com/withdraw-earnings" target="_blank" rel="noopener noreferrer" className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
+                <a href="https://about.twedot.com/withdraw-earnings" target="_blank" rel="noopener noreferrer" className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
                   <span className="flex-shrink-0 text-[15px]">🌐</span>
                   <span className="flex-1 text-[12px] font-semibold text-text">Learn how Rank &amp; Wallet earnings work</span>
                   <IoOpenOutline size={16} className="flex-shrink-0 text-light-text" />
@@ -202,7 +202,7 @@ export default function WalletPage() {
                   <span className="flex-1 text-[12px] font-semibold text-text">Ads Analytics &amp; transaction history</span>
                   <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
                 </button>
-                <a href="https://twedot.com/credits" target="_blank" rel="noopener noreferrer" className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
+                <a href="https://about.twedot.com/credits" target="_blank" rel="noopener noreferrer" className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
                   <span className="flex-shrink-0 text-[15px]">🌐</span>
                   <span className="flex-1 text-[12px] font-semibold text-text">Learn how Twedot Credits &amp; boosting work</span>
                   <IoOpenOutline size={16} className="flex-shrink-0 text-light-text" />
