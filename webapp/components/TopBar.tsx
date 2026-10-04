@@ -411,10 +411,10 @@ export default function TopBar() {
 
         <button
           onClick={() => router.push("/create-post")}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-light-text hover:text-primary"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold text-light-text hover:bg-feed-bg"
         >
           <IoAddCircleOutline size={18} />
-          Create
+          New Story
         </button>
 
         <button
