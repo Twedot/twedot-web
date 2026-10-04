@@ -91,9 +91,9 @@ body {
 /* Bold all outline SVG icons app-wide — overrides the stroke-width="32"
    baked into Ionicons path elements (filled icons are unaffected because
    their paths use stroke="none" explicitly) */
-svg path,
+svg path[fill="none"],
 svg line,
-svg circle,
-svg polyline {
+svg circle[fill="none"],
+svg polyline[fill="none"] {
   stroke-width: 56 !important;
 }
