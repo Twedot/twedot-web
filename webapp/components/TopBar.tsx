@@ -411,7 +411,7 @@ export default function TopBar() {
 
         <button
           onClick={() => router.push("/create-post")}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold text-light-text hover:bg-feed-bg"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold text-text hover:bg-feed-bg"
         >
           <IoAddCircleOutline size={18} />
           New Story
