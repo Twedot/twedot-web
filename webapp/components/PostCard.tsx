@@ -322,26 +322,26 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
             {/* Vertical action buttons — right next to media */}
             <div className="flex flex-shrink-0 flex-col items-center justify-center self-stretch gap-3">
               <div className="flex flex-col items-center gap-0.5">
-                <button onClick={handleLike} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
+                <button onClick={handleLike} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isLiked ? "text-red-500" : "text-light-text"}`}>
                   {isLiked ? <IoHeart size={20} /> : <IoHeartOutline size={20} />}
                 </button>
                 <span className="text-[11px] font-bold tabular-nums text-light-text">{likeCount}</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
-                <button onClick={() => openDetail()} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors">
+                <button onClick={() => openDetail()} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-light-text transition-colors">
                   <IoChatbubbleEllipsesOutline size={20} />
                 </button>
                 <span className="text-[11px] font-bold tabular-nums text-light-text">{active.commentCount}</span>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isBookmarked ? "text-[#D4A400]" : "text-text"}`}>
+              <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
                 {isBookmarked ? <IoBookmark size={20} /> : <IoBookmarkOutline size={20} />}
               </button>
               {!isOwnPost && (
-                <button onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-light-text transition-colors">
                   <FaRetweet size={19} />
                 </button>
               )}
-              <button onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-light-text transition-colors">
                 <IoShareOutline size={20} />
               </button>
             </div>
@@ -351,23 +351,23 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         {/* Horizontal actions for text-only posts */}
         {!compact && !hasMedia && (
           <footer className="flex items-center gap-2 pt-0.5">
-            <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
+            <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${isLiked ? "text-red-500" : "text-light-text"}`}>
               {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
               {likeCount}
             </button>
-            <button onClick={() => openDetail()} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50">
+            <button onClick={() => openDetail()} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-light-text hover:bg-border/50">
               <IoChatbubbleEllipsesOutline size={18} />
               {active.commentCount}
             </button>
-            <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-text"}`}>
+            <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
               {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
             </button>
             {!isOwnPost && (
-              <button onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }} className="flex items-center justify-center rounded-full bg-feed-bg p-1.5 text-text hover:bg-border/50">
+              <button onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }} className="flex items-center justify-center rounded-full bg-feed-bg p-1.5 text-light-text hover:bg-border/50">
                 <FaRetweet size={17} />
               </button>
             )}
-            <button onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50">
+            <button onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-light-text hover:bg-border/50">
               <IoShareOutline size={18} />
               Share
             </button>
