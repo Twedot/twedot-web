@@ -46,7 +46,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         {/* Fanned phone images — centered */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          {/* Back card — rotated left */}
+          {/* Back card — artist, rotated left */}
           <div
             style={{
               position: "absolute",
@@ -59,14 +59,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             }}
           >
             <Image
-              src="/auth/onboarding-hero.jpg"
+              src="/auth/artist.jpg"
               alt=""
               fill
-              style={{ objectFit: "cover", objectPosition: "top" }}
+              style={{ objectFit: "cover", objectPosition: "top center" }}
               sizes="155px"
             />
           </div>
-          {/* Front card — rotated right */}
+          {/* Front card — discover, rotated right */}
           <div
             style={{
               position: "absolute",
@@ -79,10 +79,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             }}
           >
             <Image
-              src="/auth/onboarding-hero.jpg"
+              src="/auth/discover.jpg"
               alt=""
               fill
-              style={{ objectFit: "cover", objectPosition: "center" }}
+              style={{ objectFit: "cover", objectPosition: "top center" }}
               sizes="155px"
             />
           </div>
