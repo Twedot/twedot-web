@@ -12,8 +12,8 @@ import {
   IoBagOutline,
   IoConstructOutline,
   IoChevronForwardOutline,
+  IoAddCircleOutline,
 } from "react-icons/io5";
-import { MdOutlineAddBox } from "react-icons/md";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { useJobSocket } from "@/lib/jobSocket";
@@ -403,7 +403,7 @@ export default function TopBar() {
       {/* Right actions */}
       <div className="ml-auto flex flex-shrink-0 items-center gap-2">
         <button
-          onClick={() => notify("Messages are coming soon")}
+          onClick={() => router.push("/inbox")}
           className="flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
         >
           <IoChatbubbleOutline size={19} />
@@ -413,7 +413,7 @@ export default function TopBar() {
           onClick={() => router.push("/create-post")}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-light-text hover:text-primary"
         >
-          <MdOutlineAddBox size={18} />
+          <IoAddCircleOutline size={18} />
           Create
         </button>
 
