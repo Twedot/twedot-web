@@ -281,7 +281,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setConfirmDelete(false); }} />
-              <div className="absolute right-0 top-8 z-20 min-w-[220px] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+              <div className="absolute right-0 top-8 z-20 w-[240px] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
 
                 {/* Own post actions */}
                 {isOwnPost && (
@@ -291,7 +291,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                       className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
                     >
                       <IoRocketOutline size={16} className="text-primary flex-shrink-0" />
-                      Boost Post
+                      <span className="truncate">Boost Post</span>
                     </button>
                     {!confirmDelete ? (
                       <button
@@ -321,7 +321,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                       className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
                     >
                       <IoThumbsDownOutline size={16} className="text-light-text flex-shrink-0" />
-                      Not interested in this post
+                      <span className="truncate">Not interested in this post</span>
                     </button>
                     <button
                       onClick={(e) => { handleToggleFollow(e); setMenuOpen(false); }}
@@ -330,21 +330,21 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                       {isFollowing
                         ? <IoPersonRemoveOutline size={16} className="text-light-text flex-shrink-0" />
                         : <IoPersonAddOutline size={16} className="text-light-text flex-shrink-0" />}
-                      {isFollowing ? `Unfollow @${head.userName}` : `Follow @${head.userName}`}
+                      <span className="truncate">{isFollowing ? `Unfollow @${head.userName}` : `Follow @${head.userName}`}</span>
                     </button>
                     <button
                       onClick={handleBlock}
                       className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
                     >
                       <IoBanOutline size={16} className="text-light-text flex-shrink-0" />
-                      Block @{head.userName}
+                      <span className="truncate">Block @{head.userName}</span>
                     </button>
                     <button
                       onClick={handleReport}
                       className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-red-500 hover:bg-feed-bg transition-colors"
                     >
                       <IoFlagOutline size={16} className="flex-shrink-0" />
-                      Report post
+                      <span className="truncate">Report post</span>
                     </button>
                   </>
                 )}
@@ -355,7 +355,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                   className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
                 >
                   <IoShareOutline size={16} className="text-light-text flex-shrink-0" />
-                  Copy link
+                  <span className="truncate">Copy link</span>
                 </button>
               </div>
             </>
