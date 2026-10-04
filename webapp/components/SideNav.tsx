@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { apiGet } from "@/lib/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -371,8 +372,8 @@ export default function SideNav() {
         <IoMenuOutline size={16} />
       </button>
 
-      {/* Logout confirmation modal */}
-      {showLogoutModal && (
+      {/* Logout confirmation modal — rendered in document.body via portal to escape sticky stacking context */}
+      {showLogoutModal && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           onClick={() => setShowLogoutModal(false)}
@@ -410,7 +411,8 @@ export default function SideNav() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
