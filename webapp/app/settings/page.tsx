@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
-import { apiGet, apiPatch, apiUploadFile } from "@/lib/api";
+import { apiGet, apiPatch, apiPost, apiDelete, apiUploadFile } from "@/lib/api";
 import { useJobSocket } from "@/lib/jobSocket";
 import {
   IoPersonOutline,
@@ -119,7 +119,7 @@ function AccountInfoPanel() {
       <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-light-text">Account</p>
       {[
         { label: "Name", value: user.name },
-        { label: "Phone", value: user.country_code ? `+${user.country_code} ${user.phone_number}` : user.phone_number },
+        { label: "Phone", value: user.country_code ? `+${String(user.country_code).replace(/^\+/, "")} ${user.phone_number}` : user.phone_number },
         { label: "Occupation", value: user.occupation },
         { label: "Location", value: [user.city, user.country].filter(Boolean).join(", ") },
         { label: "Website", value: user.website },
@@ -489,6 +489,273 @@ function InviteFriendPanel() {
   );
 }
 
+const FAQ_DATA = [
+  { id: "1", question: "What is Twedot all about?", answer: "Twedot is a chat-first social marketplace where people connect, chat, and share what they have to offer. Profiles act like storefronts, and conversations come before transactions." },
+  { id: "2", question: "How do I start a chat with someone?", answer: "Open a person's profile and click Start Chat. You can also message people you find through Search or who appear in your contact list." },
+  { id: "3", question: "How do I add an item to my profile?", answer: "Go to your Profile, scroll to the Inventory section, and tap the Add icon. Upload photos, add a title, and include price or details if you want." },
+  { id: "4", question: "Do I have to add a price to my item?", answer: "No. Pricing is optional. Some people prefer to discuss price in chat before agreeing." },
+  { id: "5", question: "How do people buy items on Twedot?", answer: "Twedot doesn't handle payments in chat. People discuss details in messages and decide how to complete the transaction themselves." },
+  { id: "6", question: "What is Status used for?", answer: "Status lets you share quick updates like new items, availability, or announcements." },
+  { id: "7", question: "Who can see my profile and inventory?", answer: "Anyone on Twedot can view your public profile and the items you list, unless you block them." },
+  { id: "8", question: "How do I edit or remove an item?", answer: "Go to your Profile → Inventory, click the item, and choose Edit or Delete." },
+  { id: "9", question: "Can I use Twedot on multiple devices?", answer: "For now, Twedot is linked to your phone number and works on one device at a time." },
+];
+
+function HelpCenterPanel() {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  return (
+    <div className="px-5 py-5">
+      <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-light-text">Frequently Asked Questions</p>
+      <div className="flex flex-col gap-3">
+        {FAQ_DATA.map((item) => {
+          const open = expandedId === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setExpandedId(open ? null : item.id)}
+              className="w-full rounded-xl border border-border bg-background px-4 py-4 text-left transition-colors hover:bg-feed-bg"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex-1 text-[14px] font-medium text-text">{item.question}</span>
+                <span className="flex-shrink-0 text-[18px] leading-none text-light-text">{open ? "−" : "+"}</span>
+              </div>
+              {open && (
+                <p className="mt-3 text-[13px] leading-[20px] text-light-text">{item.answer}</p>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-8 text-center">
+        <p className="text-[14px] font-semibold text-text">More questions?</p>
+        <p className="mt-1 text-[13px] text-light-text">
+          Email us at{" "}
+          <span className="font-medium text-primary">hi@twedot.com</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+const ISSUE_TYPES = [
+  "Messages not sending",
+  "Can't upload item",
+  "App crashed",
+  "Login problem",
+  "Something else",
+];
+
+function SendFeedbackPanel() {
+  const { notify } = useUi();
+  const [issueType, setIssueType] = useState("");
+  const [description, setDescription] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function handleSend() {
+    if (!issueType || !description.trim() || sending) return;
+    setSending(true);
+    try {
+      await apiPost("/feedback", { issue_type: issueType, description: description.trim() });
+      setSent(true);
+      setIssueType("");
+      setDescription("");
+    } catch {
+      notify("Failed to send feedback. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="flex flex-col items-center gap-3 px-8 py-20 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50">
+          <IoCheckmark size={28} className="text-green-500" />
+        </div>
+        <p className="text-[16px] font-bold text-text">Feedback sent</p>
+        <p className="max-w-xs text-[13px] leading-[20px] text-light-text">
+          We'll get back to you soon at hi@twedot.com.
+        </p>
+        <button onClick={() => setSent(false)} className="mt-2 text-[13px] font-medium text-primary hover:underline">
+          Send another
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-5 py-5">
+      <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-light-text">Give Feedback</p>
+      <p className="mb-5 text-[13px] leading-[20px] text-light-text">Describe the issue you're experiencing. Our team usually replies within 24 hours.</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-light-text">Issue type *</label>
+          <div className="relative">
+            <select
+              value={issueType}
+              onChange={(e) => setIssueType(e.target.value)}
+              className={`${inputCls} appearance-none pr-8`}
+            >
+              <option value="">Select issue</option>
+              {ISSUE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <IoChevronForward size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-light-text" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-light-text">Describe the issue *</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What happened? Include as much detail as possible"
+            className={`${inputCls} min-h-[110px] resize-none`}
+          />
+        </div>
+        <div className="flex justify-end">
+          <button
+            onClick={handleSend}
+            disabled={!issueType || !description.trim() || sending}
+            className="rounded-full bg-primary px-5 py-2 text-[13px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50 transition-all"
+          >
+            {sending ? "Sending…" : "Send feedback"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContactSupportPanel() {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try { await navigator.clipboard.writeText("hi@twedot.com"); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+  }
+  return (
+    <div className="px-5 py-5">
+      <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-light-text">Contact Support</p>
+      <p className="mb-5 text-[13px] leading-[20px] text-light-text">
+        Have a question or issue? Our support team is happy to help. We usually respond within 24 hours.
+      </p>
+      <div className="flex items-center gap-2 rounded-lg border border-border bg-feed-bg px-3 py-2.5">
+        <span className="flex-1 text-[13px] text-text">hi@twedot.com</span>
+        <button onClick={copy} className="flex-shrink-0 rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary/90">
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AppUpdatesPanel() {
+  return (
+    <div className="px-5 py-5">
+      <p className="mb-4 text-[11px] font-bold uppercase tracking-widest text-light-text">App Updates</p>
+      <div className="flex items-center gap-4 rounded-xl border border-border bg-feed-bg p-4">
+        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <span className="text-[20px] font-black text-primary">T</span>
+        </div>
+        <div className="flex-1">
+          <p className="text-[14px] font-semibold text-text">Twedot Web</p>
+          <p className="text-[12px] text-light-text">Always up to date</p>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <IoCheckmark size={15} className="text-green-500" />
+          <span className="text-[12px] font-medium text-green-500">Up to date</span>
+        </div>
+      </div>
+      <p className="mt-4 text-[12px] leading-[18px] text-light-text">
+        The Twedot web app updates automatically — there's nothing to install. You always have the latest version when you reload the page.
+      </p>
+    </div>
+  );
+}
+
+interface BlockedPerson {
+  id: string;
+  name: string | null;
+  phone_number: string;
+  profile_photo_url: string | null;
+  occupation: string | null;
+}
+
+function BlockedAccountsPanel() {
+  const { notify } = useUi();
+  const [blocked, setBlocked] = useState<BlockedPerson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [unblocking, setUnblocking] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiGet<any>("/users/blocked")
+      .then((res) => {
+        const list = Array.isArray(res) ? res : Array.isArray((res as any)?.data) ? (res as any).data : [];
+        setBlocked(list);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function unblock(person: BlockedPerson) {
+    setUnblocking(person.id);
+    try {
+      await apiDelete(`/users/block/${person.id}`);
+      setBlocked((prev) => prev.filter((p) => p.id !== person.id));
+    } catch {
+      notify("Could not unblock — try again");
+    } finally {
+      setUnblocking(null);
+    }
+  }
+
+  if (loading) return <div className="flex items-center justify-center py-16 text-sm text-light-text">Loading…</div>;
+
+  return (
+    <div className="px-5 py-5">
+      <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-light-text">Blocked Accounts</p>
+      {blocked.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-14 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-feed-bg">
+            <IoShieldOutline size={28} className="text-light-text" />
+          </div>
+          <p className="text-[14px] font-semibold text-text">No blocked accounts</p>
+          <p className="max-w-xs text-[12px] leading-[18px] text-light-text">
+            Accounts you block won't be able to message you or see your stories.
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="mb-4 text-[12px] text-light-text">{blocked.length} blocked {blocked.length === 1 ? "account" : "accounts"}</p>
+          <div className="flex flex-col">
+            {blocked.map((person) => (
+              <div key={person.id} className="flex items-center gap-3 border-b border-border py-3 last:border-0">
+                {person.profile_photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={person.profile_photo_url} alt="" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <IoPersonOutline size={18} className="text-primary" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold text-text">{person.name ?? person.phone_number}</p>
+                  {person.occupation && <p className="truncate text-[11px] text-light-text">{person.occupation}</p>}
+                </div>
+                <button
+                  onClick={() => unblock(person)}
+                  disabled={unblocking === person.id}
+                  className="flex-shrink-0 rounded-full border border-border px-3 py-1.5 text-[12px] font-semibold text-light-text hover:border-primary hover:text-primary disabled:opacity-50 transition-colors"
+                >
+                  {unblocking === person.id ? "…" : "Unblock"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function RateTwedotPanel() {
   return (
     <div className="px-5 py-5">
@@ -558,6 +825,7 @@ type SettingsItem = {
   label: string;
   description: string;
   renderPanel: () => React.ReactNode;
+  href?: string;
 };
 
 type SettingsCategory = {
@@ -588,8 +856,9 @@ const CATEGORIES: SettingsCategory[] = [
     items: [
       soon(IoLockClosedOutline, "Account Privacy",    "Control who can see your posts and profile."),
       soon(IoShieldOutline,     "Security",           "Manage your account security and sessions."),
-      soon(IoPersonOutline,     "Blocked Accounts",   "Manage accounts you have blocked."),
+      { icon: IoPersonOutline, label: "Blocked Accounts", description: "Manage accounts you have blocked.", renderPanel: () => <BlockedAccountsPanel /> },
       soon(IoLockClosedOutline, "Data & Permissions", "Control what data Twedot collects."),
+      { icon: IoShieldOutline, label: "Privacy & Security", description: "View our privacy policy and security information.", href: "https://twedot.com/privacy", renderPanel: () => null },
     ],
   },
   {
@@ -615,21 +884,11 @@ const CATEGORIES: SettingsCategory[] = [
     ],
   },
   {
-    id: "commerce", label: "Wallet & Commerce", icon: IoWalletOutline,
-    items: [
-      soon(IoWalletOutline,     "Wallet",          "Manage your wallet and transactions."),
-      soon(IoCubeOutline,       "Inventory",       "Manage your service inventory."),
-      soon(IoStatsChartOutline, "Analytics",       "View your performance analytics."),
-      soon(IoMegaphoneOutline,  "Ads",             "Manage your ad campaigns."),
-      { icon: IoTimeOutline,    label: "Service History", description: "View past service bookings.", renderPanel: () => <ServiceHistoryPanel /> },
-    ],
-  },
-  {
     id: "help", label: "Help & Feedback", icon: IoHelpCircleOutline,
     items: [
-      soon(IoHelpCircleOutline, "Help Center",     "Browse help articles and FAQs."),
-      soon(IoChatbubbleOutline, "Send Feedback",   "Share your thoughts with us."),
-      soon(IoPersonOutline,     "Contact Support", "Get in touch with our support team."),
+      { icon: IoHelpCircleOutline, label: "Help Center",     description: "Browse help articles and FAQs.",          renderPanel: () => <HelpCenterPanel /> },
+      { icon: IoChatbubbleOutline, label: "Send Feedback",   description: "Share your thoughts with us.",              renderPanel: () => <SendFeedbackPanel /> },
+      { icon: IoPersonOutline,     label: "Contact Support", description: "Get in touch with our support team.",        renderPanel: () => <ContactSupportPanel /> },
     ],
   },
   {
@@ -637,7 +896,7 @@ const CATEGORIES: SettingsCategory[] = [
     items: [
       { icon: IoPersonAddOutline, label: "Invite a Friend", description: "Share your invite link with friends.", renderPanel: () => <InviteFriendPanel /> },
       { icon: IoStarOutline,      label: "Rate Twedot",     description: "Rate us on the Play Store.",          renderPanel: () => <RateTwedotPanel /> },
-      soon(IoReloadOutline, "App Updates", "Check for the latest Twedot updates."),
+      { icon: IoReloadOutline, label: "App Updates", description: "Check for the latest Twedot updates.", renderPanel: () => <AppUpdatesPanel /> },
     ],
   },
 ];
@@ -663,7 +922,7 @@ function SettingsContent() {
       if (idx !== -1) {
         setSelectedCatId(cat.id);
         setSelectedItemIdx(idx);
-        setMobileStep("panel");
+        setMobileStep("detail");
         break;
       }
     }
@@ -731,7 +990,7 @@ function SettingsContent() {
           return (
             <button
               key={item.label}
-              onClick={() => pickItem(idx)}
+              onClick={() => item.href ? window.open(item.href, "_blank") : pickItem(idx)}
               className="flex w-full items-center gap-4 px-5 py-3.5 text-left transition-colors hover:bg-feed-bg"
             >
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-feed-bg">
