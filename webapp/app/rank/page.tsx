@@ -135,13 +135,13 @@ export default function RankPage() {
               aria-checked={rankVisible}
               disabled={saving}
               onClick={() => toggleVisibility(!rankVisible)}
-              className={`relative h-[30px] w-[52px] flex-shrink-0 overflow-hidden rounded-full transition-colors duration-200 ${
+              className={`flex h-[22px] w-[38px] flex-shrink-0 items-center rounded-full p-[2px] transition-colors duration-200 ${
                 rankVisible ? "bg-primary" : "bg-border"
               } ${saving ? "opacity-50" : ""}`}
             >
               <span
-                className={`absolute top-[3px] h-6 w-6 rounded-full bg-white shadow transition-transform duration-200 ${
-                  rankVisible ? "translate-x-[25px]" : "translate-x-[3px]"
+                className={`h-[18px] w-[18px] flex-shrink-0 rounded-full bg-white shadow transition-transform duration-200 ${
+                  rankVisible ? "translate-x-[16px]" : "translate-x-0"
                 }`}
               />
             </button>
