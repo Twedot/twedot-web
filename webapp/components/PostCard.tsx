@@ -13,6 +13,12 @@ import {
   IoChevronBack,
   IoChevronForward,
   IoRocketOutline,
+  IoPersonRemoveOutline,
+  IoPersonAddOutline,
+  IoBanOutline,
+  IoFlagOutline,
+  IoTrashOutline,
+  IoThumbsDownOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -74,6 +80,8 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
   // survives a page refresh without showing "Follow" for accounts we already follow.
   const [isFollowing, setIsFollowing] = useState(head.isFollowingAuthor ?? false);
   const followLoadingRef = useRef(false);
+  const [hidden, setHidden] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Local like state so the button responds instantly without a feed refetch
   const [isLiked, setIsLiked] = useState(active.isLiked ?? false);
@@ -154,6 +162,44 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
     }
   }, [isFollowing, head.userId, notify]);
 
+  async function handleNotInterested() {
+    setMenuOpen(false);
+    setHidden(true);
+    try { await apiPost(`/status/${head.id}/hide`, {}); } catch { /* silent */ }
+  }
+
+  async function handleBlock() {
+    setMenuOpen(false);
+    try {
+      await apiPost(`/users/block/${head.userId}`, {});
+      setHidden(true);
+      notify(`@${head.userName} blocked`);
+    } catch {
+      notify("Could not block — try again");
+    }
+  }
+
+  async function handleReport() {
+    setMenuOpen(false);
+    try {
+      await apiPost(`/status/${head.id}/report`, { reason: "inappropriate" });
+      notify("Post reported — thanks for the feedback");
+    } catch {
+      notify("Post reported");
+    }
+  }
+
+  async function handleDelete() {
+    setMenuOpen(false);
+    try {
+      await apiDelete(`/status/${head.id}`);
+      setHidden(true);
+      notify("Post deleted");
+    } catch {
+      notify("Could not delete — try again");
+    }
+  }
+
   function handleScroll() {
     const el = scrollRef.current;
     if (!el || el.clientWidth === 0) return;
@@ -184,6 +230,8 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
       router.push(postUrl(items[0].id));
     }
   }
+
+  if (hidden) return null;
 
   return (
     <article className={`border-b border-border bg-background px-4 hover:bg-feed-bg/50 ${compact ? "py-2.5" : "py-3.5"} flex flex-col`}>
@@ -232,23 +280,82 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
           </button>
           {menuOpen && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-8 z-20 min-w-[160px] overflow-hidden rounded-xl border border-border bg-background shadow-lg">
+              <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setConfirmDelete(false); }} />
+              <div className="absolute right-0 top-8 z-20 min-w-[220px] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+
+                {/* Own post actions */}
                 {isOwnPost && (
-                  <button
-                    onClick={() => { setMenuOpen(false); router.push(`/boost/${head.id}`); }}
-                    className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-text hover:bg-feed-bg transition-colors"
-                  >
-                    <IoRocketOutline size={15} className="text-primary flex-shrink-0" />
-                    Boost Post
-                  </button>
+                  <>
+                    <button
+                      onClick={() => { setMenuOpen(false); router.push(`/boost/${head.id}`); }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoRocketOutline size={16} className="text-primary flex-shrink-0" />
+                      Boost Post
+                    </button>
+                    {!confirmDelete ? (
+                      <button
+                        onClick={() => setConfirmDelete(true)}
+                        className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-red-500 hover:bg-feed-bg transition-colors"
+                      >
+                        <IoTrashOutline size={16} className="flex-shrink-0" />
+                        Delete post
+                      </button>
+                    ) : (
+                      <div className="border-t border-border px-4 py-3">
+                        <p className="mb-2.5 text-[12px] text-light-text">Delete this post?</p>
+                        <div className="flex gap-2">
+                          <button onClick={handleDelete} className="flex-1 rounded-lg bg-red-500 py-1.5 text-[12px] font-bold text-white hover:opacity-90">Delete</button>
+                          <button onClick={() => setConfirmDelete(false)} className="flex-1 rounded-lg bg-feed-bg py-1.5 text-[12px] font-semibold text-text hover:bg-border/60">Cancel</button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
+
+                {/* Other user's post actions */}
+                {!isOwnPost && (
+                  <>
+                    <button
+                      onClick={handleNotInterested}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoThumbsDownOutline size={16} className="text-light-text flex-shrink-0" />
+                      Not interested in this post
+                    </button>
+                    <button
+                      onClick={(e) => { handleToggleFollow(e); setMenuOpen(false); }}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      {isFollowing
+                        ? <IoPersonRemoveOutline size={16} className="text-light-text flex-shrink-0" />
+                        : <IoPersonAddOutline size={16} className="text-light-text flex-shrink-0" />}
+                      {isFollowing ? `Unfollow @${head.userName}` : `Follow @${head.userName}`}
+                    </button>
+                    <button
+                      onClick={handleBlock}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoBanOutline size={16} className="text-light-text flex-shrink-0" />
+                      Block @{head.userName}
+                    </button>
+                    <button
+                      onClick={handleReport}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-red-500 hover:bg-feed-bg transition-colors"
+                    >
+                      <IoFlagOutline size={16} className="flex-shrink-0" />
+                      Report post
+                    </button>
+                  </>
+                )}
+
+                {/* Always: copy link */}
                 <button
-                  onClick={() => { setMenuOpen(false); notify("Copied link"); navigator.clipboard?.writeText(window.location.origin + `/p/${head.id}`).catch(() => {}); }}
-                  className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                  onClick={() => { setMenuOpen(false); navigator.clipboard?.writeText(window.location.origin + `/p/${head.id}`).catch(() => {}); notify("Link copied"); }}
+                  className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
                 >
-                  <IoShareOutline size={15} className="text-light-text flex-shrink-0" />
-                  Copy Link
+                  <IoShareOutline size={16} className="text-light-text flex-shrink-0" />
+                  Copy link
                 </button>
               </div>
             </>
