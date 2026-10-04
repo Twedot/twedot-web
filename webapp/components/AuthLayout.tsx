@@ -40,7 +40,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
   return (
     /* Force light mode on the entire auth layout */
-    <div data-theme="light" className="flex h-screen overflow-hidden" style={{ colorScheme: "light" }}>
+    <div data-theme="light" className="flex overflow-hidden" style={{ colorScheme: "light", height: "100dvh" }}>
 
       {/* ── Left brand panel ── */}
       <div
