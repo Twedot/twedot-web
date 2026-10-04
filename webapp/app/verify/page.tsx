@@ -84,10 +84,10 @@ function VerifyForm() {
       </button>
 
       <div className="flex flex-col items-center text-center">
-        <h1 className="text-2xl font-bold text-text">
+        <h1 className="text-[22px] font-bold text-text">
           {otpChannel === "email" ? email || phoneNumber : phoneNumber}
         </h1>
-        <p className="mt-2 text-[15px] text-light-text">
+        <p className="mt-2 text-[13px] text-light-text">
           Enter the 6-digit code that we sent by {otpChannel === "email" ? "email" : "SMS"}
         </p>
 
@@ -121,17 +121,17 @@ function VerifyForm() {
           ))}
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+        {error && <p className="mt-3 text-xs text-red-500">{error}</p>}
 
         <div className="mt-5">
           {!canResend ? (
-            <span className="text-base text-light-text">Resend in {formatTime(timer)}</span>
+            <span className="text-[13px] text-light-text">Resend in {formatTime(timer)}</span>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <button
                 type="button"
                 onClick={() => handleResend(otpChannel)}
-                className="text-base font-medium text-primary"
+                className="text-[13px] font-medium text-primary"
               >
                 Tap to get a code via {otpChannel === "email" ? "email" : "SMS"}
               </button>
@@ -153,7 +153,7 @@ function VerifyForm() {
         type="button"
         onClick={handleVerify}
         disabled={!isValid || isSubmitting}
-        className="mt-10 h-10 w-full rounded-lg text-sm font-medium text-white disabled:cursor-not-allowed"
+        className="mt-10 h-9 w-full rounded-lg text-[13px] font-medium text-white disabled:cursor-not-allowed"
         style={{ background: isValid ? "var(--primary)" : "var(--primary-off)" }}
       >
         {isSubmitting ? "Verifying..." : "Continue"}

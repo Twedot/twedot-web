@@ -16,8 +16,8 @@ import type { UserProfile, VerifyOtpResult } from "./types";
 interface CompleteProfilePayload {
   name: string;
   occupation: string;
-  city: string;
-  country: string;
+  city?: string;
+  country?: string;
 }
 
 interface AuthContextValue {
@@ -40,8 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUser(AuthStorage.getProfile());
+    const stored = AuthStorage.getProfile();
+    if (stored) {
+      // Derive profileComplete from name — don't rely on the stored flag
+      const profileComplete = !!(stored.name && stored.name.trim().length > 0);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUser({ ...stored, profileComplete });
+    }
     setIsLoading(false);
   }, []);
 
@@ -67,27 +72,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       { phone_number: phoneNumber, otp, device_id: getDeviceId() },
       { auth: false }
     );
+    const profile = { ...result.user, profileComplete: result.profileComplete };
     AuthStorage.setToken(result.token);
-    AuthStorage.setProfile(result.user);
-    setUser(result.user);
+    AuthStorage.setProfile(profile);
+    setUser(profile);
     return result;
   }, []);
 
   const completeProfile = useCallback(async (payload: CompleteProfilePayload) => {
-    const updated = await apiPatch<UserProfile>("/users/complete-profile", payload);
-    AuthStorage.setProfile(updated);
-    setUser(updated);
+    // Backend returns { user: UserProfile, updated: boolean }
+    const res = await apiPatch<{ user: UserProfile; updated: boolean }>("/users/complete-profile", payload);
+    const profile = { ...res.user, profileComplete: true };
+    AuthStorage.setProfile(profile);
+    setUser(profile);
   }, []);
 
   const refreshUser = useCallback(async () => {
     const fresh = await apiGet<UserProfile>("/users/me");
-    AuthStorage.setProfile(fresh);
-    setUser(fresh);
+    // Derive profileComplete from whether the user has a name — the backend
+    // doesn't return this flag on /users/me, so we infer it here.
+    const profileComplete = !!(fresh.name && fresh.name.trim().length > 0);
+    const profile = { ...fresh, profileComplete };
+    AuthStorage.setProfile(profile);
+    setUser(profile);
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await apiPost("/users/auth/logout");
+      await apiPost("/users/auth/logout", { device_id: getDeviceId() });
     } catch {
       // best-effort — clear local state regardless
     }

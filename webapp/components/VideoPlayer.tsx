@@ -1,12 +1,29 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoPlay, IoVolumeMute, IoVolumeHigh } from "react-icons/io5";
 
 export default function VideoPlayer({ src, poster }: { src: string; poster?: string }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+
+  // Pause when scrolled out of view
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          el.pause();
+          setIsPlaying(false);
+        }
+      },
+      { threshold: 0.25 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   function togglePlay() {
     const el = videoRef.current;
@@ -28,14 +45,9 @@ export default function VideoPlayer({ src, poster }: { src: string; poster?: str
     setIsMuted(el.muted);
   }
 
-  // The outer element only centers — it stays full width so the video can sit in the
-  // middle of the post, but it has no background of its own. The inner element wraps
-  // tightly around the <video> (a block element sizes to its content by default), so
-  // the rounded/black chrome exactly matches the video's own rendered box instead of
-  // stretching full-card-width and letterboxing a portrait clip with dead black bars.
   return (
-    <div className="mb-2 flex justify-center">
-      <div className="relative overflow-hidden rounded-md bg-black" onClick={togglePlay}>
+    <div className="mb-2">
+      <div className="relative inline-block overflow-hidden rounded-md" onClick={togglePlay}>
         <video
           ref={videoRef}
           src={src}

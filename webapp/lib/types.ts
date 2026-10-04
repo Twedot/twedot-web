@@ -6,6 +6,7 @@ export interface UserProfile {
   occupation: string | null;
   profile_photo_url: string | null;
   is_verified: boolean;
+  profileComplete?: boolean;
   is_official: boolean;
   bio: string | null;
   city: string | null;

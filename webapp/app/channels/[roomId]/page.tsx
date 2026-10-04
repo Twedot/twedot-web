@@ -378,7 +378,7 @@ function MessageBubble({
   onDelete: (id: string) => void;
   onVote: (id: string, v: 1 | -1) => void;
   onOpenReplies: (msg: RoomMessage) => void;
-  onImageClick: (url: string) => void;
+  onImageClick: (urls: string[], idx: number) => void;
 }) {
   return (
     <div className="group relative px-3 py-1 hover:bg-feed-bg/50">

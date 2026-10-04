@@ -19,6 +19,11 @@ import {
   IoFlagOutline,
   IoTrashOutline,
   IoThumbsDownOutline,
+  IoVolumeMuteOutline,
+  IoStatsChartOutline,
+  IoCodeSlashOutline,
+  IoPinOutline,
+  IoThumbsUpOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -168,6 +173,16 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
     try { await apiPost(`/status/${head.id}/hide`, {}); } catch { /* silent */ }
   }
 
+  async function handleMoreLikeThis() {
+    setMenuOpen(false);
+    try {
+      await apiPost(`/status/${head.id}/more-like-this`, {});
+      notify("Got it — we'll show you more like this");
+    } catch {
+      notify("Got it — we'll show you more like this");
+    }
+  }
+
   async function handleBlock() {
     setMenuOpen(false);
     try {
@@ -198,6 +213,39 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
     } catch {
       notify("Could not delete — try again");
     }
+  }
+
+  async function handleMute() {
+    setMenuOpen(false);
+    try {
+      await apiPost(`/users/mute/${head.userId}`, {});
+      setHidden(true);
+      notify(`@${head.userName} muted`);
+    } catch {
+      notify("Could not mute — try again");
+    }
+  }
+
+  async function handlePin() {
+    setMenuOpen(false);
+    try {
+      await apiPost(`/status/${head.id}/pin`, {});
+      notify("Post pinned to your profile");
+    } catch {
+      notify("Could not pin — try again");
+    }
+  }
+
+  function handleEmbedPost() {
+    setMenuOpen(false);
+    const embedCode = `<iframe src="${window.location.origin}${postUrl(head.id)}" width="550" height="400" frameborder="0" scrolling="no"></iframe>`;
+    navigator.clipboard?.writeText(embedCode).catch(() => {});
+    notify("Embed code copied");
+  }
+
+  function handleViewActivity() {
+    setMenuOpen(false);
+    router.push(postUrl(head.id));
   }
 
   function handleScroll() {
@@ -293,6 +341,20 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                       <IoRocketOutline size={16} className="text-primary flex-shrink-0" />
                       <span className="truncate">Boost Post</span>
                     </button>
+                    <button
+                      onClick={handlePin}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoPinOutline size={16} className="text-light-text flex-shrink-0" />
+                      <span className="truncate">Pin to your profile</span>
+                    </button>
+                    <button
+                      onClick={handleViewActivity}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoStatsChartOutline size={16} className="text-light-text flex-shrink-0" />
+                      <span className="truncate">View post activity</span>
+                    </button>
                     {!confirmDelete ? (
                       <button
                         onClick={() => setConfirmDelete(true)}
@@ -324,6 +386,13 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                       <span className="truncate">Not interested in this post</span>
                     </button>
                     <button
+                      onClick={handleMoreLikeThis}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoThumbsUpOutline size={16} className="text-light-text flex-shrink-0" />
+                      <span className="truncate">More like this</span>
+                    </button>
+                    <button
                       onClick={(e) => { handleToggleFollow(e); setMenuOpen(false); }}
                       className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
                     >
@@ -333,11 +402,32 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                       <span className="truncate">{isFollowing ? `Unfollow @${head.userName}` : `Follow @${head.userName}`}</span>
                     </button>
                     <button
+                      onClick={handleMute}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoVolumeMuteOutline size={16} className="text-light-text flex-shrink-0" />
+                      <span className="truncate">Mute @{head.userName}</span>
+                    </button>
+                    <button
                       onClick={handleBlock}
                       className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
                     >
                       <IoBanOutline size={16} className="text-light-text flex-shrink-0" />
                       <span className="truncate">Block @{head.userName}</span>
+                    </button>
+                    <button
+                      onClick={handleViewActivity}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoStatsChartOutline size={16} className="text-light-text flex-shrink-0" />
+                      <span className="truncate">View post activity</span>
+                    </button>
+                    <button
+                      onClick={handleEmbedPost}
+                      className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
+                    >
+                      <IoCodeSlashOutline size={16} className="text-light-text flex-shrink-0" />
+                      <span className="truncate">Embed post</span>
                     </button>
                     <button
                       onClick={handleReport}
@@ -351,7 +441,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
 
                 {/* Always: copy link */}
                 <button
-                  onClick={() => { setMenuOpen(false); navigator.clipboard?.writeText(window.location.origin + `/p/${head.id}`).catch(() => {}); notify("Link copied"); }}
+                  onClick={() => { setMenuOpen(false); navigator.clipboard?.writeText(window.location.origin + postUrl(head.id)).catch(() => {}); notify("Link copied"); }}
                   className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors"
                 >
                   <IoShareOutline size={16} className="text-light-text flex-shrink-0" />

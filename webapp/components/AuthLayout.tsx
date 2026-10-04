@@ -11,39 +11,47 @@ export default function AuthLayout({
   headline2?: string;
 }) {
   return (
-    <div className="flex flex-1">
-      <div className="relative hidden w-1/2 lg:block">
-        <Image
-          src="/auth/onboarding-hero.jpg"
-          alt=""
-          fill
-          priority
-          sizes="50vw"
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/30" />
+    <div className="flex h-screen overflow-hidden">
 
-        <div className="absolute top-8 left-8 flex items-center gap-2">
-          <Image src="/auth/mini-logo.svg" alt="" width={28} height={24} />
-          <span className="text-2xl font-bold tracking-wide text-white">Twedot</span>
+      {/* ── Left brand panel ── */}
+      <div className="relative hidden w-5/12 flex-col justify-between overflow-hidden px-10 py-10 lg:flex" style={{ background: "#edeff3" }}>
+
+        {/* Twedot logo */}
+        <div className="flex items-center gap-2">
+          <Image src="/auth/mini-logo.svg" alt="" width={24} height={20} />
+          <span className="text-xl font-bold tracking-wide text-text">Twedot</span>
         </div>
 
-        {(headline1 || headline2) && (
-          <div className="absolute bottom-16 left-8 right-8">
-            {headline1 && (
-              <p className="text-2xl font-semibold text-white">{headline1}</p>
-            )}
-            {headline2 && (
-              <p className="mt-2 text-4xl font-semibold leading-tight text-white">
-                {headline2}
-              </p>
-            )}
-          </div>
-        )}
+        {/* Headline block */}
+        <div className="pb-4">
+          {headline1 && (
+            <p className="text-xl font-semibold text-light-text">{headline1}</p>
+          )}
+          {headline2 && (
+            <p className="mt-2 text-3xl font-bold leading-tight text-text">{headline2}</p>
+          )}
+          <p className="mt-4 text-[13px] leading-relaxed text-light-text">
+            Connect with people, showcase your work, and grow your network — all in one place.
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-1 items-center justify-center bg-background px-6 py-12">
-        <div className="w-full max-w-sm">{children}</div>
+      {/* ── Right form panel ── */}
+      <div
+        className="relative flex flex-1 items-center justify-center overflow-hidden px-6"
+        style={{
+          background:
+            "linear-gradient(to bottom, #edeff3 calc(50% - 30vw), var(--background) calc(50% - 30vw), var(--background) calc(50% + 30vw), #edeff3 calc(50% + 30vw))",
+        }}
+      >
+
+        {/* Decorative circle */}
+        <div
+          className="pointer-events-none absolute top-1/2 -translate-y-1/2 rounded-full"
+          style={{ background: "#edeff3", width: "60vw", height: "60vw", left: "-30vw" }}
+        />
+
+        <div className="no-scrollbar relative z-10 w-full max-w-sm overflow-y-auto py-12" style={{ maxHeight: "100%" }}>{children}</div>
       </div>
     </div>
   );

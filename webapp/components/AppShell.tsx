@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
@@ -46,10 +46,50 @@ function UploadProgress() {
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
-  if (!isAuthenticated) return <>{children}</>;
+  const isLoginOrVerify = pathname === "/login" || pathname === "/verify";
+  const isCompleteProfile = pathname === "/complete-profile";
+  const profileComplete = !!user?.profileComplete;
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      // Unauthenticated: only /login and /verify are allowed
+      if (!isLoginOrVerify) router.replace("/login");
+      return;
+    }
+
+    if (!profileComplete) {
+      // Authenticated but profile incomplete: only /complete-profile allowed
+      if (!isCompleteProfile) router.replace("/complete-profile");
+      return;
+    }
+
+    // Fully authenticated: redirect away from auth pages
+    if (isLoginOrVerify || isCompleteProfile) router.replace("/stories");
+  }, [isLoading, isAuthenticated, profileComplete, isLoginOrVerify, isCompleteProfile, router]);
+
+  // Hold render while auth state resolves to avoid flash
+  if (isLoading) return null;
+
+  // Unauthenticated: only render /login and /verify
+  if (!isAuthenticated) {
+    if (isLoginOrVerify) return <>{children}</>;
+    return null;
+  }
+
+  // Authenticated, profile incomplete: only render /complete-profile
+  if (!profileComplete) {
+    if (isCompleteProfile) return <>{children}</>;
+    return null;
+  }
+
+  // Authenticated, profile complete: block auth pages (redirect fires above)
+  if (isLoginOrVerify || isCompleteProfile) return null;
 
   return (
     <JobSocketProvider>
@@ -61,7 +101,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <main className={`min-w-0 flex-1 overflow-x-clip ${
             ((pathname.startsWith("/channels/") && pathname !== "/channels/create") || pathname.startsWith("/c/"))
               ? "2xl:pl-40"
-              : (pathname.startsWith("/settings") || pathname.startsWith("/wallet") || pathname.startsWith("/analytics") || pathname.startsWith("/ads") || pathname.startsWith("/invite") || pathname.startsWith("/help") || pathname.startsWith("/service-history") || pathname.startsWith("/job-request") || pathname.startsWith("/boost"))
+              : (pathname.startsWith("/settings") || pathname.startsWith("/wallet") || pathname.startsWith("/analytics") || pathname.startsWith("/ads") || pathname.startsWith("/invite") || pathname.startsWith("/help") || pathname.startsWith("/service-history") || pathname.startsWith("/job-request") || pathname.startsWith("/boost") || pathname.startsWith("/inventory"))
               ? "lg:max-w-[800px] xl:max-w-[860px]"
               : "lg:max-w-[500px] xl:max-w-[580px] 2xl:ml-40 2xl:max-w-[620px]"
           }`}>
@@ -77,6 +117,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             !pathname.startsWith("/service-history") &&
             !pathname.startsWith("/job-request") &&
             !pathname.startsWith("/boost") &&
+            !pathname.startsWith("/inventory") &&
             pathname !== "/create-post" &&
             !pathname.startsWith("/login") &&
             !pathname.startsWith("/register") &&
