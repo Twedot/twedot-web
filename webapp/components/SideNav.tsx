@@ -90,8 +90,8 @@ export default function SideNav() {
         {mainItems.map((item) => {
           const active = Boolean(item.href && pathname === item.href);
           const Icon = active ? item.activeIcon : item.icon;
-          const cls = `flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal ${
-            active ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
+          const cls = `flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-medium ${
+            active ? "font-bold text-text" : "text-text hover:bg-feed-bg"
           } ${sidebarCollapsed ? "justify-center px-0" : ""}`;
           const inner = (
             <>
@@ -131,7 +131,7 @@ export default function SideNav() {
         <Link
           href="/channels/create"
           title="Create Channel"
-          className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg ${
+          className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-text hover:bg-feed-bg ${
             sidebarCollapsed ? "justify-center px-0" : ""
           }`}
         >
@@ -192,7 +192,7 @@ export default function SideNav() {
               <Link
                 key={rid}
                 href={cUrl}
-                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm font-normal hover:bg-feed-bg ${pathname === cUrl ? "text-primary font-semibold" : "text-text"}`}
+                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-left text-sm font-medium hover:bg-feed-bg ${pathname === cUrl ? "text-primary font-bold" : "text-text"}`}
               >
                 {room.photo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -230,7 +230,7 @@ export default function SideNav() {
                     <Link
                       key={p.type}
                       href={`/plugins?type=${p.type}`}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-text hover:bg-feed-bg"
                     >
                       <span className={`icon-bold flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${p.color}`}>
                         <PluginIcon size={14} className="text-white" />
@@ -245,7 +245,7 @@ export default function SideNav() {
 
                 <Link
                   href="/plugins"
-                  className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                  className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-text hover:bg-feed-bg"
                 >
                   <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
                     <IoGameControllerOutline size={20} className="text-light-text" />
@@ -285,8 +285,8 @@ export default function SideNav() {
                     <Link
                       key={label}
                       href={href}
-                      className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal ${
-                        pathname === href ? "font-semibold text-text" : "text-text hover:bg-feed-bg"
+                      className={`flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-medium ${
+                        pathname === href ? "font-bold text-text" : "text-text hover:bg-feed-bg"
                       }`}
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
@@ -300,7 +300,7 @@ export default function SideNav() {
                       href={external}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-text hover:bg-feed-bg"
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
                         <Icon size={20} className="text-light-text" />
@@ -311,7 +311,7 @@ export default function SideNav() {
                     <button
                       key={label}
                       onClick={() => notify(`${label} is coming soon`)}
-                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-normal text-text hover:bg-feed-bg"
+                      className="flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-text hover:bg-feed-bg"
                     >
                       <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
                         <Icon size={20} className="text-light-text" />
@@ -329,8 +329,8 @@ export default function SideNav() {
           <Link
             href="/settings"
             title="Settings"
-            className={`flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-left text-sm font-normal ${
-              pathname.startsWith("/settings") ? "font-semibold text-text" : "text-light-text hover:bg-feed-bg hover:text-text"
+            className={`flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
+              pathname.startsWith("/settings") ? "font-bold text-text" : "text-light-text hover:bg-feed-bg hover:text-text"
             } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
           >
             <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
@@ -348,7 +348,7 @@ export default function SideNav() {
               router.push("/login");
             }}
             title="Logout"
-            className={`flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-left text-sm font-normal text-light-text hover:bg-feed-bg hover:text-red-500 ${
+            className={`flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-light-text hover:bg-feed-bg hover:text-red-500 ${
               sidebarCollapsed ? "justify-center px-0" : ""
             }`}
           >
