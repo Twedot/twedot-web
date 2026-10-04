@@ -25,11 +25,13 @@ interface Person {
 function PersonRow({
   person,
   isFollowing,
+  isFollower,
   isMe,
   onToggle,
 }: {
   person: Person;
   isFollowing: boolean;
+  isFollower: boolean;
   isMe: boolean;
   onToggle: () => void;
 }) {
@@ -70,7 +72,7 @@ function PersonRow({
               : "bg-primary/15 text-primary hover:bg-primary/25"
           }`}
         >
-          {isFollowing ? "Following" : "Follow"}
+          {isFollowing ? "Following" : isFollower ? "Follow back" : "Follow"}
         </button>
       )}
     </div>
@@ -89,6 +91,7 @@ function ConnectionsContent() {
   const [suggested, setSuggested] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [followerIds, setFollowerIds] = useState<Set<string>>(new Set());
   const loadingRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -114,6 +117,7 @@ function ConnectionsContent() {
       flngData.forEach((p: Person) => seed.add(p.id));
       suggData.filter((p: Person) => p.is_following).forEach((p: Person) => seed.add(p.id));
       setFollowingIds(seed);
+      setFollowerIds(new Set(flrsData.map((p: Person) => p.id)));
     } finally {
       setLoading(false);
     }
@@ -190,6 +194,7 @@ function ConnectionsContent() {
               key={person.id}
               person={person}
               isFollowing={followingIds.has(person.id)}
+              isFollower={followerIds.has(person.id)}
               isMe={person.id === user?.id}
               onToggle={() => toggleFollow(person.id)}
             />
