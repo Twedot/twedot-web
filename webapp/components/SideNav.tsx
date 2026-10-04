@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { apiGet } from "@/lib/api";
 import Link from "next/link";
@@ -69,6 +69,7 @@ export default function SideNav() {
   const [myRooms, setMyRooms] = useState<MyRoom[]>([]);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const logoutBtnRef = useRef<HTMLButtonElement>(null);
 
   const loadRooms = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -346,6 +347,7 @@ export default function SideNav() {
             {!sidebarCollapsed && "Settings"}
           </Link>
           <button
+            ref={logoutBtnRef}
             onClick={() => setShowLogoutModal(true)}
             title="Logout"
             className={`flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-light-text hover:bg-feed-bg hover:text-red-500 ${
@@ -372,25 +374,25 @@ export default function SideNav() {
         <IoMenuOutline size={16} />
       </button>
 
-      {/* Logout confirmation modal — rendered in document.body via portal to escape sticky stacking context */}
+      {/* Logout popover — small context menu anchored above the logout button */}
       {showLogoutModal && createPortal(
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => setShowLogoutModal(false)}
-        >
+        <>
+          {/* invisible overlay to catch outside clicks */}
+          <div className="fixed inset-0 z-40" onClick={() => setShowLogoutModal(false)} />
           <div
-            className="mx-4 w-full max-w-sm rounded-2xl bg-background p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed z-50 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+            style={{
+              bottom: `${window.innerHeight - (logoutBtnRef.current?.getBoundingClientRect().top ?? 0) + 8}px`,
+              left: `${logoutBtnRef.current?.getBoundingClientRect().left ?? 8}px`,
+              width: `${logoutBtnRef.current?.getBoundingClientRect().width ?? 240}px`,
+              minWidth: '200px',
+            }}
           >
-            {/* Icon */}
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-              <IoLogOutOutline size={24} className="text-red-500" />
+            <div className="px-4 py-3">
+              <p className="text-[13px] font-bold text-text">Log out of Twedot?</p>
+              <p className="text-[12px] text-light-text">You can log back in any time.</p>
             </div>
-            <h2 className="mb-1 text-[17px] font-bold text-text">Log out of Twedot?</h2>
-            <p className="mb-6 text-[13px] leading-[18px] text-light-text">
-              You can always log back in at any time.
-            </p>
-            <div className="flex flex-col gap-2">
+            <div className="border-t border-border">
               <button
                 disabled={loggingOut}
                 onClick={async () => {
@@ -398,20 +400,21 @@ export default function SideNav() {
                   await logout();
                   router.push("/login");
                 }}
-                className="flex h-11 w-full items-center justify-center rounded-xl bg-red-500 text-[14px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="flex w-full items-center gap-3 px-4 py-3 text-[13px] font-semibold text-red-500 transition-colors hover:bg-feed-bg disabled:opacity-60"
               >
+                <IoLogOutOutline size={16} />
                 {loggingOut ? "Logging out…" : "Log out"}
               </button>
               <button
                 disabled={loggingOut}
                 onClick={() => setShowLogoutModal(false)}
-                className="flex h-11 w-full items-center justify-center rounded-xl bg-feed-bg text-[14px] font-semibold text-text transition-colors hover:bg-border/60"
+                className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-[13px] font-semibold text-text transition-colors hover:bg-feed-bg"
               >
                 Cancel
               </button>
             </div>
           </div>
-        </div>,
+        </>,
         document.body
       )}
     </div>
