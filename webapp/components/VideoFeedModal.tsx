@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { apiPost, apiDelete } from "@/lib/api";
 import { useBookmark } from "@/lib/bookmarks";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { profileUrl, postUrl } from "@/lib/url";
 import type { StatusPost } from "@/lib/types";
 import LinkText from "./LinkText";
@@ -73,7 +73,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
       <div className="absolute bottom-24 right-3 z-10 flex flex-col items-center gap-4">
         {/* Avatar with + follow button */}
         <div className="relative mb-1">
-          <button onClick={() => { videoFeedStore.close(); router.push(profileUrl(video.userName, video.userId)); }}>
+          <button onClick={() => router.push(profileUrl(video.userName, video.userId))}>
             {video.userPhoto ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={video.userPhoto} alt="" className="h-12 w-12 rounded-full object-cover ring-2 ring-white/40" />
@@ -105,7 +105,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
         {/* Comment */}
         <div className="flex flex-col items-center gap-0.5">
           <button
-            onClick={() => { videoFeedStore.close(); router.push(postUrl(video.id)); }}
+            onClick={() => router.push(postUrl(video.id))}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
           >
             <IoChatbubbleOutline size={22} />
@@ -144,7 +144,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
       <div className="absolute bottom-8 left-4 right-20 z-10">
         <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
           <button
-            onClick={() => { videoFeedStore.close(); router.push(profileUrl(video.userName, video.userId)); }}
+            onClick={() => router.push(profileUrl(video.userName, video.userId))}
             className="text-[14px] font-bold text-white drop-shadow"
           >
             @{video.userName}
@@ -183,6 +183,12 @@ export default function VideoFeedModal() {
   const [tab, setTab] = useState<"stories" | "following">("stories");
   const scrollRef = useRef<HTMLDivElement>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pathname = usePathname();
+
+  // Auto-hide when navigating away (e.g. to post detail or profile).
+  // We do NOT call store.close() so that when the user presses Back,
+  // the modal re-appears on the feed page at the same video.
+  const isFeedPage = pathname === "/stories" || pathname === "/";
 
   const displayVideos = tab === "following"
     ? videos.filter(v => v.isFollowingAuthor)
@@ -243,7 +249,7 @@ export default function VideoFeedModal() {
     if (idx !== currentIdx) setCurrentIdx(idx);
   }, [currentIdx]);
 
-  if (!isOpen || videos.length === 0) return null;
+  if (!isOpen || videos.length === 0 || !isFeedPage) return null;
 
   return (
     <div className="fixed inset-0 z-[100] bg-black md:hidden">

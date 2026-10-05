@@ -19,6 +19,17 @@ import {
   IoThumbsDown,
   IoChevronBack,
   IoChevronForward,
+  IoEllipsisHorizontal,
+  IoRocketOutline,
+  IoPinOutline,
+  IoStatsChartOutline,
+  IoTrashOutline,
+  IoPersonAddOutline,
+  IoPersonRemoveOutline,
+  IoVolumeMuteOutline,
+  IoBanOutline,
+  IoFlagOutline,
+  IoCodeSlashOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useAuth } from "@/lib/AuthContext";
@@ -32,7 +43,7 @@ import RankBadge from "@/components/RankBadge";
 import LinkText from "@/components/LinkText";
 import VideoPlayer from "@/components/VideoPlayer";
 import type { StatusPost } from "@/lib/types";
-import { profileUrl } from "@/lib/url";
+import { profileUrl, postUrl } from "@/lib/url";
 
 interface Comment {
   id: string;
@@ -187,6 +198,8 @@ export default function PostPageClient() {
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [isFollowingAuthor, setIsFollowingAuthor] = useState(false);
   const followLoadingRef = useRef(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -399,6 +412,50 @@ export default function PostPageClient() {
     }
   }, [post, isFollowingAuthor, notify]);
 
+  async function handleNotInterested() {
+    setMenuOpen(false);
+    try { await apiPost(`/status/${statusId}/hide`, {}); router.back(); } catch { /* silent */ }
+  }
+  async function handleMoreLikeThis() {
+    setMenuOpen(false);
+    try { await apiPost(`/status/${statusId}/more-like-this`, {}); } catch { /* silent */ }
+    notify("Got it — we'll show you more like this");
+  }
+  async function handleMute() {
+    setMenuOpen(false);
+    if (!post) return;
+    try { await apiPost(`/users/mute/${post.userId}`, {}); notify(`@${post.userName} muted`); router.back(); } catch { notify("Could not mute — try again"); }
+  }
+  async function handleBlock() {
+    setMenuOpen(false);
+    if (!post) return;
+    try { await apiPost(`/users/block/${post.userId}`, {}); notify(`@${post.userName} blocked`); router.back(); } catch { notify("Could not block — try again"); }
+  }
+  async function handleReport() {
+    setMenuOpen(false);
+    try { await apiPost(`/status/${statusId}/report`, { reason: "inappropriate" }); notify("Post reported — thanks for the feedback"); } catch { notify("Post reported"); }
+  }
+  async function handleDelete() {
+    setMenuOpen(false);
+    try { await apiDelete(`/status/${statusId}`); notify("Post deleted"); router.back(); } catch { notify("Could not delete — try again"); }
+  }
+  async function handlePin() {
+    setMenuOpen(false);
+    try { await apiPost(`/status/${statusId}/pin`, {}); notify("Post pinned to your profile"); } catch { notify("Could not pin — try again"); }
+  }
+  function handleCopyLink() {
+    setMenuOpen(false);
+    navigator.clipboard?.writeText(window.location.href).catch(() => {});
+    notify("Link copied");
+  }
+  function handleEmbedPost() {
+    setMenuOpen(false);
+    if (!statusId) return;
+    const embedCode = `<iframe src="${window.location.origin}${postUrl(statusId)}" width="550" height="400" frameborder="0" scrolling="no"></iframe>`;
+    navigator.clipboard?.writeText(embedCode).catch(() => {});
+    notify("Embed code copied");
+  }
+
   const handleCommentReaction = useCallback(
     (commentId: string, agreeCount: number, disagreeCount: number, myReaction: "agree" | "disagree" | null) => {
       setComments((prev) =>
@@ -605,6 +662,77 @@ export default function PostPageClient() {
                   {isFollowingAuthor ? "Following" : "Follow"}
                 </button>
               )}
+
+              {/* 3-dot menu */}
+              <div className="relative mt-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => setMenuOpen(o => !o)}
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
+                >
+                  <IoEllipsisHorizontal size={18} />
+                </button>
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setConfirmDelete(false); }} />
+                    <div className="absolute right-0 top-8 z-20 w-[240px] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+                      {user?.id === post.userId ? (
+                        <>
+                          <button onClick={() => { setMenuOpen(false); router.push(`/boost/${statusId}`); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoRocketOutline size={16} className="text-primary flex-shrink-0" /><span className="truncate">Boost Post</span>
+                          </button>
+                          <button onClick={handlePin} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoPinOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Pin to your profile</span>
+                          </button>
+                          <button onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoStatsChartOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">View post activity</span>
+                          </button>
+                          {!confirmDelete ? (
+                            <button onClick={() => setConfirmDelete(true)} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-red-500 hover:bg-feed-bg">
+                              <IoTrashOutline size={16} className="flex-shrink-0" />Delete post
+                            </button>
+                          ) : (
+                            <div className="border-t border-border px-4 py-3">
+                              <p className="mb-2.5 text-[12px] text-light-text">Delete this post?</p>
+                              <div className="flex gap-2">
+                                <button onClick={handleDelete} className="flex-1 rounded-lg bg-red-500 py-1.5 text-[12px] font-bold text-white hover:opacity-90">Delete</button>
+                                <button onClick={() => setConfirmDelete(false)} className="flex-1 rounded-lg bg-feed-bg py-1.5 text-[12px] font-semibold text-text hover:bg-border/60">Cancel</button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={handleNotInterested} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoThumbsDownOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Not interested in this post</span>
+                          </button>
+                          <button onClick={handleMoreLikeThis} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoThumbsUpOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">More like this</span>
+                          </button>
+                          <button onClick={async (e) => { await handleToggleFollow(); setMenuOpen(false); }} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            {isFollowingAuthor ? <IoPersonRemoveOutline size={16} className="text-light-text flex-shrink-0" /> : <IoPersonAddOutline size={16} className="text-light-text flex-shrink-0" />}
+                            <span className="truncate">{isFollowingAuthor ? `Unfollow @${post.userName}` : `Follow @${post.userName}`}</span>
+                          </button>
+                          <button onClick={handleMute} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoVolumeMuteOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Mute @{post.userName}</span>
+                          </button>
+                          <button onClick={handleBlock} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoBanOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Block @{post.userName}</span>
+                          </button>
+                          <button onClick={handleEmbedPost} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoCodeSlashOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Embed post</span>
+                          </button>
+                          <button onClick={handleReport} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-red-500 hover:bg-feed-bg">
+                            <IoFlagOutline size={16} className="flex-shrink-0" /><span className="truncate">Report post</span>
+                          </button>
+                        </>
+                      )}
+                      <button onClick={handleCopyLink} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                        <IoShareOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Copy link</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </header>
 
             {/* ── Caption — full width, no indent ── */}
