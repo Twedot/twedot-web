@@ -322,9 +322,6 @@ export default function TopBar() {
 
         {/* Right actions */}
         <div className="ml-auto flex flex-shrink-0 items-center gap-1">
-          <button onClick={() => router.push("/inbox")} className="flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg">
-            <IoChatbubbleOutline size={19} />
-          </button>
           <button onClick={() => router.push("/create-post")} className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold text-light-text hover:bg-feed-bg">
             <IoAddCircleOutline size={18} />
             New Story

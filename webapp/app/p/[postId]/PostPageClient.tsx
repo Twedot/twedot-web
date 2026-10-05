@@ -572,152 +572,110 @@ export default function PostPageClient() {
           </>
         ) : (
           <>
-            {/* ── Author header ── */}
-            <div className="mb-2 flex items-center gap-2">
-              <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
+            {/* ── Author header — 2-line format matching PostCard ── */}
+            <header className="mb-3 flex items-start gap-2.5">
+              <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="mt-0.5 flex-shrink-0">
                 {post.userPhoto ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={post.userPhoto} alt={post.userName} className="h-8 w-8 rounded-full object-cover" />
+                  <img src={post.userPhoto} alt={post.userName} className="h-9 w-9 rounded-full object-cover" />
                 ) : (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-border/40">
-                    <IoPersonOutline size={16} className="text-light-text" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-border/40">
+                    <IoPersonOutline size={18} className="text-light-text" />
                   </div>
                 )}
               </button>
-              <div className="min-w-0 flex-1">
-                <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="text-left">
-                  <div className="flex flex-wrap items-center gap-1">
-                    <span className="text-[13px] font-semibold text-text">{post.userName}</span>
-                    {post.userOccupation && (
-                      <>
-                        <span className="text-[11px] text-light-text">·</span>
-                        <span className="truncate text-[11px] text-light-text">{post.userOccupation}</span>
-                      </>
-                    )}
-                    <span className="text-[11px] text-light-text">· {timeAgo(post.createdAt)}</span>
-                  </div>
-                </button>
-                <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="mt-0.5" />
-              </div>
+              <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="min-w-0 flex-1 text-left">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[13px] font-bold leading-tight text-text">{post.userName}</span>
+                  <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} />
+                </div>
+                <p className="mt-0.5 text-[11px] text-light-text">
+                  {post.userOccupation ? `${post.userOccupation} · ` : ""}{timeAgo(post.createdAt)}
+                </p>
+              </button>
               {user?.id !== post.userId && (
                 <button
                   onClick={handleToggleFollow}
-                  className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
+                  className={`mt-0.5 flex-shrink-0 rounded-full px-3.5 py-1 text-[12px] font-bold transition-colors ${
                     isFollowingAuthor
-                      ? "bg-primary/10 text-primary hover:bg-primary/20"
-                      : "bg-primary/15 text-primary hover:bg-primary/25"
+                      ? "border border-border bg-feed-bg text-text hover:bg-border/40"
+                      : "bg-primary text-white hover:opacity-90"
                   }`}
                 >
                   {isFollowingAuthor ? "Following" : "Follow"}
                 </button>
               )}
-            </div>
+            </header>
 
-            {/* ── Post content ── */}
-            <div className="ml-10">
-              {(() => {
-                const captionText = isText
-                  ? (post.content || post.caption || "")
-                  : (post.caption ?? null);
-                return captionText ? (
-                  <p className="mb-2 whitespace-pre-wrap text-[13px] font-medium leading-[18px] text-text">
-                    <LinkText text={captionText} />
-                  </p>
-                ) : null;
-              })()}
+            {/* ── Caption — full width, no indent ── */}
+            {(() => {
+              const captionText = isText
+                ? (post.content || post.caption || "")
+                : (post.caption ?? null);
+              return captionText ? (
+                <p className="mb-3 whitespace-pre-wrap text-[14px] leading-[20px] text-text">
+                  <LinkText text={captionText} />
+                </p>
+              ) : null;
+            })()}
 
-              {!isText && (
-                <div className="flex gap-6">
-                  <div className="min-w-0 shrink">
-                    {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
-                      <div className="relative overflow-hidden rounded-2xl bg-zinc-900 mb-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={activeItem.content || activeItem.thumbnailUrl!}
-                          alt=""
-                          className="relative max-h-[500px] max-w-full object-cover"
-                        />
-                      </div>
-                    )}
-                    {isVideo && activeItem.content && (
-                      <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
-                    )}
-                    {groupItems.length > 1 && (
-                      <div className="relative">
-                        {activeGroupIdx > 0 && (
-                          <button onClick={() => setActiveGroupIdx((i) => i - 1)} className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
-                            <IoChevronBack size={20} />
-                          </button>
-                        )}
-                        {activeGroupIdx < groupItems.length - 1 && (
-                          <button onClick={() => setActiveGroupIdx((i) => i + 1)} className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
-                            <IoChevronForward size={20} />
-                          </button>
-                        )}
-                        <div className="mt-1.5 flex justify-center gap-1.5">
-                          {groupItems.map((_, i) => (
-                            <button key={i} onClick={() => setActiveGroupIdx(i)} className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeGroupIdx ? "bg-primary" : "bg-border"}`} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+            {/* ── Media — full width, carousel arrows overlaid ── */}
+            {!isText && (isImage || isVideo) && (
+              <div className="relative mb-1 overflow-hidden rounded-xl">
+                {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={activeItem.content || activeItem.thumbnailUrl!}
+                    alt=""
+                    className="w-full object-cover"
+                    style={{ maxHeight: 560 }}
+                  />
+                )}
+                {isVideo && activeItem.content && (
+                  <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                )}
+                {groupItems.length > 1 && activeGroupIdx > 0 && (
+                  <button onClick={() => setActiveGroupIdx((i) => i - 1)} className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+                    <IoChevronBack size={20} />
+                  </button>
+                )}
+                {groupItems.length > 1 && activeGroupIdx < groupItems.length - 1 && (
+                  <button onClick={() => setActiveGroupIdx((i) => i + 1)} className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+                    <IoChevronForward size={20} />
+                  </button>
+                )}
+              </div>
+            )}
+            {!isText && groupItems.length > 1 && (
+              <div className="mb-2 mt-1.5 flex justify-center gap-1.5">
+                {groupItems.map((_, i) => (
+                  <button key={i} onClick={() => setActiveGroupIdx(i)} className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeGroupIdx ? "bg-primary" : "bg-border"}`} />
+                ))}
+              </div>
+            )}
 
-                  <div className="flex flex-shrink-0 flex-col items-center justify-center self-stretch gap-3">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <button onClick={handleLike} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
-                        {isLiked ? <IoHeart size={20} /> : <IoHeartOutline size={20} />}
-                      </button>
-                      <span className="text-[11px] font-bold tabular-nums text-light-text">{likeCount}</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-0.5">
-                      <button onClick={() => inputRef.current?.focus()} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors">
-                        <IoChatbubbleEllipsesOutline size={20} />
-                      </button>
-                      <span className="text-[11px] font-bold tabular-nums text-light-text">{commentCount}</span>
-                    </div>
-                    <button onClick={toggleBookmark} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isBookmarked ? "text-[#D4A400]" : "text-text"}`}>
-                      {isBookmarked ? <IoBookmark size={20} /> : <IoBookmarkOutline size={20} />}
-                    </button>
-                    {user?.id !== post.userId && (
-                      <button onClick={() => notify("Repost is coming soon")} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors">
-                        <FaRetweet size={19} />
-                      </button>
-                    )}
-                    <button onClick={() => notify("Share is coming soon")} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors">
-                      <IoShareOutline size={20} />
-                    </button>
-                  </div>
-                </div>
+            {/* ── Action bar — horizontal below for all post types ── */}
+            <footer className="flex items-center gap-1.5 border-b border-border pb-3 pt-1">
+              <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
+                {isLiked ? <IoHeart size={16} /> : <IoHeartOutline size={16} />}
+                <span>{likeCount}</span>
+              </button>
+              <button onClick={() => inputRef.current?.focus()} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-light-text transition-colors hover:bg-border/50">
+                <IoChatbubbleEllipsesOutline size={16} />
+                <span>{commentCount}</span>
+              </button>
+              <button onClick={toggleBookmark} className={`flex items-center justify-center rounded-full bg-feed-bg p-[9px] transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
+                {isBookmarked ? <IoBookmark size={16} /> : <IoBookmarkOutline size={16} />}
+              </button>
+              {user?.id !== post.userId && (
+                <button onClick={() => notify("Repost is coming soon")} className="flex items-center justify-center rounded-full bg-feed-bg p-[9px] text-light-text transition-colors hover:bg-border/50">
+                  <FaRetweet size={15} />
+                </button>
               )}
-
-              {isText && (
-                <footer className="flex items-center gap-2 pt-0.5 pb-2.5 border-b border-border">
-                  <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
-                    {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
-                    {likeCount}
-                  </button>
-                  <button onClick={() => inputRef.current?.focus()} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50">
-                    <IoChatbubbleEllipsesOutline size={18} />
-                    {commentCount}
-                  </button>
-                  <button onClick={toggleBookmark} className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-text"}`}>
-                    {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
-                  </button>
-                  {user?.id !== post.userId && (
-                    <button onClick={() => notify("Repost is coming soon")} className="flex items-center justify-center rounded-full bg-feed-bg p-1.5 text-text hover:bg-border/50">
-                      <FaRetweet size={17} />
-                    </button>
-                  )}
-                  <button onClick={() => notify("Share is coming soon")} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50">
-                    <IoShareOutline size={18} />
-                    Share
-                  </button>
-                </footer>
-              )}
-
-              {!isText && <div className="border-b border-border mt-2" />}
-            </div>
+              <button onClick={() => notify("Share is coming soon")} className="flex items-center justify-center rounded-full bg-feed-bg p-[9px] text-light-text transition-colors hover:bg-border/50">
+                <IoShareOutline size={16} />
+              </button>
+            </footer>
 
             {/* ── Date · Views ── */}
             <div className="flex items-center gap-2 py-2 text-[11px] text-light-text">
