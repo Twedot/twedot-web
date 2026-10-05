@@ -767,7 +767,7 @@ export default function PostPageClient() {
                     <img
                       src={activeItem.content || activeItem.thumbnailUrl!}
                       alt=""
-                      className="relative w-full"
+                      className="relative max-w-full"
                     />
                   </div>
                 )}

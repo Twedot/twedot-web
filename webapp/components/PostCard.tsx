@@ -431,7 +431,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
       {/* ── Media (mobile: full-width stack / desktop: with right action rail) ── */}
       {!compact && hasMedia && (
         <div className="sm:ml-[46px]">
-          <div className="sm:flex sm:items-start sm:gap-3">
+          <div className="sm:flex sm:items-center sm:gap-3">
             {/* Media column */}
             <div className="mb-2.5 overflow-hidden rounded-xl sm:mb-0 sm:min-w-0 sm:flex-1">
               {/* Single image */}
@@ -441,7 +441,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                   <img
                     src={active.content}
                     alt=""
-                    className="w-full cursor-pointer"
+                    className="max-w-full cursor-pointer"
                     onClick={() => openDetail()}
                   />
                 </MediaBackdrop>
@@ -453,7 +453,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                   <div className="relative cursor-pointer md:hidden" onClick={openVideo}>
                     {active.thumbnailUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={active.thumbnailUrl} alt="" className="w-full" />
+                      <img src={active.thumbnailUrl} alt="" className="max-w-full" />
                     ) : (
                       <div className="h-64 w-full bg-zinc-900" />
                     )}
@@ -478,7 +478,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                         <MediaBackdrop bgSrc={it.type === "image" ? it.content : it.thumbnailUrl} isVideo={it.type === "video"}>
                           {it.type === "image" ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={it.content} alt="" className="w-full" />
+                            <img src={it.content} alt="" className="max-w-full" />
                           ) : (
                             <VideoPlayer src={it.content} poster={it.thumbnailUrl ?? undefined} />
                           )}
