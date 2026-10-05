@@ -528,29 +528,22 @@ export default function PostPageClient() {
   return (
     <div className="mx-auto max-w-2xl pb-20">
 
-      {/* ── Back bar ── */}
-      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-3 py-2.5 backdrop-blur">
-        <button
-          onClick={() => {
-            if (threadCommentId) {
-              setThreadCommentId(null);
-              setReplyTo(null);
-            } else {
-              router.back();
-            }
-          }}
-          className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-text hover:bg-border/50 active:bg-border/70"
-        >
-          <IoArrowBack size={16} />
-          <span>{threadCommentId ? "Replies" : "Stories"}</span>
-        </button>
-      </div>
-
-      <div className="px-4 pt-4">
+      {/* ── Back bar — only for thread/replies view (main post uses TopBar back) ── */}
+      {threadCommentId && (
+        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-3 py-2.5 backdrop-blur">
+          <button
+            onClick={() => { setThreadCommentId(null); setReplyTo(null); }}
+            className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-text hover:bg-border/50 active:bg-border/70"
+          >
+            <IoArrowBack size={16} />
+            <span>Replies</span>
+          </button>
+        </div>
+      )}
 
         {/* ── Thread view ── */}
         {threadComment ? (
-          <>
+          <div className="px-4 pt-4">
             <div className="rounded-2xl bg-feed-bg px-3">
               <CommentItem
                 comment={threadComment}
@@ -624,9 +617,11 @@ export default function PostPageClient() {
             ) : (
               <p className="py-6 text-center text-[13px] text-light-text">No replies yet.</p>
             )}
-          </>
+          </div>
         ) : (
           <>
+            {/* ── Author header + caption — padded ── */}
+            <div className="px-4 pt-4">
             {/* ── Author header — 2-line format matching PostCard ── */}
             <header className="mb-3 flex items-start gap-2.5">
               <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="mt-0.5 flex-shrink-0">
@@ -745,9 +740,11 @@ export default function PostPageClient() {
               ) : null;
             })()}
 
-            {/* ── Media — full width, carousel arrows overlaid ── */}
+            </div>{/* end px-4 pt-4 header+caption block */}
+
+            {/* ── Media — true full width, no px-4 constraint ── */}
             {!isText && (isImage || isVideo) && (
-              <div className="relative -mx-4 mb-1 overflow-hidden sm:mx-0 sm:rounded-xl">
+              <div className="relative mb-1 overflow-hidden">
                 {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -780,6 +777,8 @@ export default function PostPageClient() {
               </div>
             )}
 
+            {/* ── rest of content: padded ── */}
+            <div className="px-4">
             {/* ── Action bar — horizontal below for all post types ── */}
             <footer className="flex items-center gap-1.5 border-b border-border pb-3 pt-1">
               <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
@@ -871,10 +870,10 @@ export default function PostPageClient() {
                 <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
               </div>
             )}
+            </div>{/* end px-4 rest-of-content block */}
           </>
         )}
 
-      </div>
     </div>
   );
 }

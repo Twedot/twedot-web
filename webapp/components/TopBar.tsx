@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   IoNotificationsOutline,
   IoChatbubbleOutline,
@@ -13,6 +13,7 @@ import {
   IoConstructOutline,
   IoChevronForwardOutline,
   IoAddCircleOutline,
+  IoArrowBack,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
@@ -59,8 +60,10 @@ function removeRecent(term: string) {
 export default function TopBar() {
   const { user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { notify } = useUi();
   const { unreadNotifCount } = useJobSocket();
+  const isPostPage = pathname.startsWith("/p/");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeQuery, setActiveQuery] = useState("");
@@ -300,6 +303,17 @@ export default function TopBar() {
         >
           Twedot
         </button>
+
+        {/* Back chip — shown on post detail pages, mobile only */}
+        {isPostPage && (
+          <button
+            onClick={() => router.back()}
+            className="sm:hidden flex items-center gap-1 rounded-full bg-feed-bg px-2.5 py-1.5 text-[13px] font-bold text-text hover:bg-border/50 active:bg-border/70"
+          >
+            <IoArrowBack size={14} />
+            <span>Stories</span>
+          </button>
+        )}
 
         {/* Desktop search — absolute centered, hidden on mobile */}
         <div ref={wrapperRef} className="hidden sm:block absolute left-1/2 w-full max-w-xl -translate-x-1/2 px-4">
