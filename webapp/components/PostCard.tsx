@@ -433,7 +433,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         <div className="sm:ml-[46px]">
           <div className="sm:flex sm:items-center sm:gap-3">
             {/* Media column */}
-            <div className="mb-2.5 overflow-hidden rounded-xl sm:mb-0 sm:min-w-0 sm:flex-1">
+            <div className="mb-2.5 overflow-hidden rounded-xl sm:mb-0 sm:max-w-[420px] sm:w-full">
               {/* Single image */}
               {items.length === 1 && active.type === "image" && (
                 <MediaBackdrop bgSrc={active.content}>
