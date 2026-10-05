@@ -441,32 +441,28 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                   <img
                     src={active.content}
                     alt=""
-                    className="max-w-full cursor-pointer"
+                    className="w-full cursor-pointer object-cover"
+                    style={{ maxHeight: 480 }}
                     onClick={() => openDetail()}
                   />
                 </MediaBackdrop>
               )}
 
-              {/* Single video — thumbnail on mobile, inline player on desktop */}
+              {/* Single video — thumbnail + play on all screens; tap opens detail/modal */}
               {items.length === 1 && active.type === "video" && (
-                <>
-                  <div className="relative cursor-pointer md:hidden" onClick={openVideo}>
-                    {active.thumbnailUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={active.thumbnailUrl} alt="" className="max-w-full" />
-                    ) : (
-                      <div className="h-64 w-full bg-zinc-900" />
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
-                        <IoPlay size={28} className="ml-1 text-white" />
-                      </div>
+                <div className="relative cursor-pointer" onClick={openVideo}>
+                  {active.thumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={active.thumbnailUrl} alt="" className="w-full object-cover" style={{ maxHeight: 480 }} />
+                  ) : (
+                    <div className="h-64 w-full bg-zinc-900" />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
+                      <IoPlay size={28} className="ml-1 text-white" />
                     </div>
                   </div>
-                  <div className="hidden md:block">
-                    <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} />
-                  </div>
-                </>
+                </div>
               )}
 
               {/* Carousel */}
@@ -478,9 +474,21 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                         <MediaBackdrop bgSrc={it.type === "image" ? it.content : it.thumbnailUrl} isVideo={it.type === "video"}>
                           {it.type === "image" ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={it.content} alt="" className="max-w-full" />
+                            <img src={it.content} alt="" className="w-full object-cover" style={{ maxHeight: 480 }} />
                           ) : (
-                            <VideoPlayer src={it.content} poster={it.thumbnailUrl ?? undefined} />
+                            <div className="relative cursor-pointer" onClick={openVideo}>
+                              {it.thumbnailUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={it.thumbnailUrl} alt="" className="w-full object-cover" style={{ maxHeight: 480 }} />
+                              ) : (
+                                <div className="h-64 w-full bg-zinc-900" />
+                              )}
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
+                                  <IoPlay size={28} className="ml-1 text-white" />
+                                </div>
+                              </div>
+                            </div>
                           )}
                         </MediaBackdrop>
                       </div>
