@@ -46,8 +46,8 @@ export default function VideoPlayer({ src, poster }: { src: string; poster?: str
   }
 
   return (
-    <div className="w-full">
-      <div className="relative block w-full overflow-hidden" onClick={togglePlay}>
+    <div className="w-full sm:w-fit">
+      <div className="relative block w-full overflow-hidden sm:w-fit" onClick={togglePlay}>
         <video
           ref={videoRef}
           src={src}
@@ -56,7 +56,7 @@ export default function VideoPlayer({ src, poster }: { src: string; poster?: str
           playsInline
           loop
           onEnded={() => setIsPlaying(false)}
-          className="block w-full cursor-pointer"
+          className="block w-full cursor-pointer sm:w-auto sm:max-h-[460px]"
         />
 
         {!isPlaying && (

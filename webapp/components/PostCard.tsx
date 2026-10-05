@@ -88,6 +88,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
   const followLoadingRef = useRef(false);
   const [hidden, setHidden] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [desktopPlaying, setDesktopPlaying] = useState(false);
 
   const [isLiked, setIsLiked] = useState(active.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(active.likeCount ?? 0);
@@ -143,11 +144,12 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
 
   function openVideo(e: React.MouseEvent) {
     e.stopPropagation();
-    // Mobile: open TikTok-style full-screen player; desktop: open detail page
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      videoFeedStore.open(active.id);
+    if (typeof window !== "undefined" && window.innerWidth >= 640) {
+      // Desktop: play inline — no navigation
+      setDesktopPlaying(true);
     } else {
-      openDetail(e);
+      // Mobile: open TikTok-style full-screen player
+      videoFeedStore.open(active.id);
     }
   }
 
@@ -449,21 +451,35 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                 </div>
               )}
 
-              {/* Single video — thumbnail + play on all screens; tap opens detail/modal */}
+              {/* Single video */}
               {items.length === 1 && active.type === "video" && (
-                <div className="relative cursor-pointer sm:w-fit" onClick={openVideo}>
-                  {active.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={active.thumbnailUrl} alt="" className="w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]" />
-                  ) : (
-                    <div className="h-64 w-full bg-zinc-900" />
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
-                      <IoPlay size={28} className="ml-1 text-white" />
+                desktopPlaying ? (
+                  /* Desktop inline player — same size as thumbnail */
+                  <div className="sm:w-fit">
+                    <video
+                      src={active.content}
+                      poster={active.thumbnailUrl ?? undefined}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative cursor-pointer sm:w-fit" onClick={openVideo}>
+                    {active.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={active.thumbnailUrl} alt="" className="w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]" />
+                    ) : (
+                      <div className="h-64 w-full bg-zinc-900" />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
+                        <IoPlay size={28} className="ml-1 text-white" />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )
               )}
 
               {/* Carousel */}
