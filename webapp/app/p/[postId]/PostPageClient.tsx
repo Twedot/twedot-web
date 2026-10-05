@@ -752,7 +752,7 @@ export default function PostPageClient() {
 
             {/* ── Media + desktop right-rail ── */}
             {!isText && (isImage || isVideo) && (
-              <div className="sm:flex sm:items-start sm:gap-4 sm:pl-[62px] sm:pr-4">
+              <div className="sm:flex sm:items-center sm:gap-4 sm:pl-[62px] sm:pr-4">
                 {/* Media column */}
                 <div className="relative mx-4 mb-2.5 overflow-hidden rounded-xl sm:mx-0 sm:max-w-[480px] sm:flex-shrink-0">
                   {/* Image with blurred backdrop (same as MediaBackdrop in PostCard) */}
@@ -793,7 +793,7 @@ export default function PostPageClient() {
                 </div>
 
                 {/* Desktop right-side action rail */}
-                <div className="hidden sm:flex sm:flex-shrink-0 sm:flex-col sm:items-center sm:gap-3 sm:pt-1">
+                <div className="hidden sm:flex sm:flex-shrink-0 sm:flex-col sm:items-center sm:gap-3">
                   <div className="flex flex-col items-center gap-0.5">
                     <button onClick={handleLike} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
                       {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
@@ -810,14 +810,12 @@ export default function PostPageClient() {
                     <button onClick={toggleBookmark} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
                       {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
                     </button>
-                    <span className="text-[11px] font-bold text-light-text">Save</span>
                   </div>
                   {user?.id !== post.userId && (
                     <div className="flex flex-col items-center gap-0.5">
                       <button onClick={() => notify("Repost is coming soon")} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
                         <FaRetweet size={16} />
                       </button>
-                      <span className="text-[11px] font-bold text-light-text">Repost</span>
                     </div>
                   )}
                   <div className="flex flex-col items-center gap-0.5">

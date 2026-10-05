@@ -515,7 +515,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
             </div>
 
             {/* Desktop: vertical action rail to the right of media */}
-            <div className="hidden sm:flex sm:flex-shrink-0 sm:flex-col sm:items-center sm:gap-3 sm:pt-1">
+            <div className="hidden sm:flex sm:flex-shrink-0 sm:flex-col sm:items-center sm:gap-3">
               <div className="flex flex-col items-center gap-0.5">
                 <button onClick={handleLike} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
                   {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
@@ -532,14 +532,12 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                 <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
                   {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
                 </button>
-                <span className="text-[11px] font-bold text-light-text">Save</span>
               </div>
               {!isOwnPost && (
                 <div className="flex flex-col items-center gap-0.5">
                   <button onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
                     <FaRetweet size={16} />
                   </button>
-                  <span className="text-[11px] font-bold text-light-text">Repost</span>
                 </div>
               )}
               <div className="flex flex-col items-center gap-0.5">

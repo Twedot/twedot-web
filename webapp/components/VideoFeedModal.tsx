@@ -138,7 +138,6 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
           >
             {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
           </button>
-          <span className="text-[11px] font-bold text-white drop-shadow">Save</span>
         </div>
 
         {/* Repost */}
@@ -150,7 +149,6 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
             >
               <FaRetweet size={21} />
             </button>
-            <span className="text-[11px] font-bold text-white drop-shadow">Repost</span>
           </div>
         )}
 
