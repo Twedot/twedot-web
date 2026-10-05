@@ -84,7 +84,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
           {!isOwn && !following && (
             <button
               onClick={handleFollow}
-              className="absolute bottom-1 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-[#22C55E] text-white"
+              className="absolute -bottom-1 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-[#22C55E] text-white"
             >
               <span className="text-[13px] font-black leading-none">+</span>
             </button>
