@@ -140,7 +140,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
 
           <p className="mt-4 text-[13px] leading-relaxed" style={{ color: "#6b7280" }}>
-            Connect with people, showcase your work, and grow your network — all in one place.
+            The open network for people and businesses — connect, discover, and grow.
           </p>
 
           <div className="mt-5 flex items-center gap-1.5">

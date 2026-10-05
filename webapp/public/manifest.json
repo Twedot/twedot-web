@@ -1,0 +1,19 @@
+{
+  "name": "Twedot — The Open Network for People and Businesses",
+  "short_name": "Twedot",
+  "description": "Connect with people, discover local services, join channels, and grow your brand on Twedot.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#6B4EFF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "business", "lifestyle"]
+}
