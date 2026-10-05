@@ -34,9 +34,9 @@ export default function MobileBottomNav() {
     function onScroll() {
       const y = scroller!.scrollTop;
       const delta = y - lastScrollY.current;
-      if (delta > 4) setNavHidden(true);
-      else if (delta < -4) setNavHidden(false);
       lastScrollY.current = y;
+      if (delta > 0 && y > 40) setNavHidden(true);   // any downward scroll past 40px
+      else if (delta < 0) setNavHidden(false);         // any upward scroll
     }
     scroller.addEventListener("scroll", onScroll, { passive: true });
     return () => scroller.removeEventListener("scroll", onScroll);

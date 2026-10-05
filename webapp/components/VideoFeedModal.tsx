@@ -38,12 +38,28 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const didSeekRef = useRef(false);
 
+  // IntersectionObserver drives play/pause — more reliable than prop on fast swipes
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-    if (active) { el.play().catch(() => {}); setPaused(false); }
-    else { el.pause(); el.currentTime = 0; setPaused(false); }
-  }, [active]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.intersectionRatio >= 0.85) {
+          el.play().catch(() => {});
+          setPaused(false);
+        } else {
+          el.pause();
+          if (entry.intersectionRatio < 0.15) {
+            el.currentTime = 0;
+            setPaused(false);
+          }
+        }
+      },
+      { threshold: [0.15, 0.85] }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function clearSeek() {
     if (seekTimerRef.current) clearTimeout(seekTimerRef.current);
@@ -406,12 +422,11 @@ export default function VideoFeedModal() {
         style={{
           overflowY: "scroll",
           scrollSnapType: "y mandatory",
-          WebkitOverflowScrolling: "touch",
           overscrollBehavior: "contain",
         } as React.CSSProperties}
       >
         {displayVideos.length === 0 ? (
-          <div className="flex items-center justify-center" style={{ height: "100svh" }}>
+          <div className="flex h-full items-center justify-center">
             <p className="text-sm text-white/50">No videos from people you follow yet</p>
           </div>
         ) : (
@@ -420,7 +435,7 @@ export default function VideoFeedModal() {
               key={video.id}
               className="relative"
               style={{
-                height: "100svh",
+                height: "100%",
                 scrollSnapAlign: "start",
                 scrollSnapStop: "always",
               }}
