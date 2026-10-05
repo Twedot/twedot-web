@@ -454,17 +454,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
               {/* Single video */}
               {items.length === 1 && active.type === "video" && (
                 desktopPlaying ? (
-                  /* Desktop inline player — same size as thumbnail */
-                  <div className="sm:w-fit">
-                    <video
-                      src={active.content}
-                      poster={active.thumbnailUrl ?? undefined}
-                      controls
-                      autoPlay
-                      playsInline
-                      className="w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]"
-                    />
-                  </div>
+                  <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
                 ) : (
                   <div className="relative cursor-pointer sm:w-fit" onClick={openVideo}>
                     {active.thumbnailUrl ? (
