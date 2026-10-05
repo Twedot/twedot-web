@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import {
   IoPlay, IoPlayOutline,
   IoLocation, IoLocationOutline,
@@ -24,9 +25,28 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const hasUnseenStories = useHasUnseenStories();
   const { badgeCount: jobBadge } = useJobSocket();
+  const [navHidden, setNavHidden] = useState(false);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const scroller = document.querySelector("main") as HTMLElement | null;
+    if (!scroller) return;
+    function onScroll() {
+      const y = scroller!.scrollTop;
+      const delta = y - lastScrollY.current;
+      if (delta > 4) setNavHidden(true);
+      else if (delta < -4) setNavHidden(false);
+      lastScrollY.current = y;
+    }
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Always show nav when route changes
+  useEffect(() => { setNavHidden(false); }, [pathname]);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-14 items-center justify-around border-t border-border bg-background lg:hidden">
+    <nav className={`fixed bottom-0 left-0 right-0 z-30 flex h-14 items-center justify-around border-t border-border bg-background lg:hidden transition-transform duration-300 ${navHidden ? "translate-y-full" : "translate-y-0"}`}>
       {NAV_ITEMS.map((item) => {
         const active = item.href === "/profile"
           ? pathname === "/profile" || pathname.startsWith("/profile/")
