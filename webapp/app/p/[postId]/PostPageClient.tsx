@@ -734,13 +734,13 @@ export default function PostPageClient() {
               </div>
             </header>
 
-            {/* ── Caption — full width, no indent ── */}
+            {/* ── Caption ── */}
             {(() => {
               const captionText = isText
                 ? (post.content || post.caption || "")
                 : (post.caption ?? null);
               return captionText ? (
-                <p className="mb-3 whitespace-pre-wrap text-[14px] leading-[20px] text-text">
+                <p className="mb-3 whitespace-pre-wrap text-[14px] leading-[20px] text-text sm:ml-[46px]">
                   <LinkText text={captionText} />
                 </p>
               ) : null;
@@ -750,7 +750,7 @@ export default function PostPageClient() {
 
             {/* ── Media — matches feed card: rounded-xl, blurred backdrop, dark bg ── */}
             {!isText && (isImage || isVideo) && (
-              <div className="relative mx-4 mb-2.5 overflow-hidden rounded-xl">
+              <div className="relative mx-4 mb-2.5 overflow-hidden rounded-xl sm:ml-[62px]">
                 {/* Image with blurred backdrop (same as MediaBackdrop in PostCard) */}
                 {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
                   <div className="relative bg-zinc-900">
@@ -800,7 +800,7 @@ export default function PostPageClient() {
             {/* ── rest of content: padded ── */}
             <div className="px-4">
             {/* ── Action bar — horizontal below for all post types ── */}
-            <footer className="flex items-center gap-1.5 border-b border-border pb-3 pt-1">
+            <footer className="flex items-center gap-1.5 border-b border-border pb-3 pt-1 sm:ml-[46px]">
               <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
                 {isLiked ? <IoHeart size={16} /> : <IoHeartOutline size={16} />}
                 <span>{likeCount}</span>

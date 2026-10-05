@@ -419,18 +419,18 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         </div>
       </header>
 
-      {/* ── Caption — full width ── */}
+      {/* ── Caption — full width on mobile, indented on desktop ── */}
       {(active.caption || active.type === "text") && (
-        <button onClick={() => openDetail()} className="mb-2.5 block w-full text-left">
+        <button onClick={() => openDetail()} className="mb-2.5 block w-full text-left sm:pl-[46px]">
           <p className="whitespace-pre-wrap text-[14px] leading-[20px] text-text">
             <LinkText text={active.caption ?? active.content} />
           </p>
         </button>
       )}
 
-      {/* ── Media — full width, natural height ── */}
+      {/* ── Media — full width on mobile, indented on desktop ── */}
       {!compact && hasMedia && (
-        <div className="mb-2.5 overflow-hidden rounded-xl">
+        <div className="mb-2.5 overflow-hidden rounded-xl sm:ml-[46px]">
           {/* Single image */}
           {items.length === 1 && active.type === "image" && (
             <MediaBackdrop bgSrc={active.content}>
@@ -529,7 +529,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
 
       {/* ── Action bar — horizontal below content, for all post types ── */}
       {!compact && (
-        <footer className="flex items-center gap-1.5 pt-0.5">
+        <footer className="flex items-center gap-1.5 pt-0.5 sm:ml-[46px]">
           {/* Like */}
           <button
             onClick={handleLike}
