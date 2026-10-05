@@ -529,7 +529,7 @@ export default function PostPageClient() {
     <div className="mx-auto max-w-2xl pb-20">
 
       {/* ── Back bar ── */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-3 py-2.5 backdrop-blur">
         <button
           onClick={() => {
             if (threadCommentId) {
@@ -539,13 +539,11 @@ export default function PostPageClient() {
               router.back();
             }
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-feed-bg"
+          className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-text hover:bg-border/50 active:bg-border/70"
         >
-          <IoArrowBack size={20} className="text-text" />
+          <IoArrowBack size={16} />
+          <span>{threadCommentId ? "Replies" : "Stories"}</span>
         </button>
-        <span className="text-[15px] font-bold text-text">
-          {threadCommentId ? "Replies" : "Post"}
-        </span>
       </div>
 
       <div className="px-4 pt-4">
@@ -749,7 +747,7 @@ export default function PostPageClient() {
 
             {/* ── Media — full width, carousel arrows overlaid ── */}
             {!isText && (isImage || isVideo) && (
-              <div className="relative mb-1 overflow-hidden rounded-xl">
+              <div className="relative -mx-4 mb-1 overflow-hidden sm:mx-0 sm:rounded-xl">
                 {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
