@@ -5,6 +5,7 @@ import {
   IoCloseOutline, IoHeartOutline, IoHeart,
   IoChatbubbleOutline, IoBookmarkOutline, IoBookmark,
   IoShareOutline, IoChevronUpOutline, IoPlay,
+  IoPlayBack, IoPlayForward,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { videoFeedStore } from "@/lib/videoFeedStore";
@@ -28,7 +29,14 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
   const [liked, setLiked] = useState(video.isLiked ?? false);
   const [likes, setLikes] = useState(video.likeCount ?? 0);
   const [paused, setPaused] = useState(false);
+  const [seekDir, setSeekDir] = useState<"forward" | "backward" | null>(null);
+  const [seekSecs, setSeekSecs] = useState(0);
   const isOwn = user?.id === video.userId;
+
+  const seekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const seekIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const didSeekRef = useRef(false);
 
   useEffect(() => {
     const el = videoRef.current;
@@ -37,12 +45,57 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
     else { el.pause(); el.currentTime = 0; setPaused(false); }
   }, [active]);
 
-  function togglePlay(e: React.MouseEvent) {
+  function clearSeek() {
+    if (seekTimerRef.current) clearTimeout(seekTimerRef.current);
+    if (seekIntervalRef.current) clearInterval(seekIntervalRef.current);
+    seekTimerRef.current = null;
+    seekIntervalRef.current = null;
+    setSeekDir(null);
+    setSeekSecs(0);
+  }
+
+  function handlePointerDown(e: React.PointerEvent<HTMLVideoElement>) {
     e.stopPropagation();
-    const el = videoRef.current;
-    if (!el) return;
-    if (el.paused) { el.play().catch(() => {}); setPaused(false); }
-    else { el.pause(); setPaused(true); }
+    didSeekRef.current = false;
+    const isRight = e.clientX > (e.currentTarget.clientWidth / 2);
+    pointerStartRef.current = { x: e.clientX, y: e.clientY };
+
+    seekTimerRef.current = setTimeout(() => {
+      const dir = isRight ? "forward" : "backward";
+      setSeekDir(dir);
+      didSeekRef.current = true;
+      let total = 0;
+      seekIntervalRef.current = setInterval(() => {
+        const el = videoRef.current;
+        if (!el) return;
+        const step = isRight ? 5 : -5;
+        el.currentTime = Math.max(0, Math.min(el.duration || 9999, el.currentTime + step));
+        total += 5;
+        setSeekSecs(total);
+      }, 400);
+    }, 280);
+  }
+
+  function handlePointerMove(e: React.PointerEvent) {
+    if (!pointerStartRef.current || didSeekRef.current) return;
+    const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+    if (dy > 12) clearSeek(); // cancel if swiping vertically
+  }
+
+  function handlePointerUp(e: React.PointerEvent) {
+    e.stopPropagation();
+    const wasSeeking = didSeekRef.current;
+    clearSeek();
+    pointerStartRef.current = null;
+    didSeekRef.current = false;
+
+    if (!wasSeeking) {
+      // Short tap → toggle play
+      const el = videoRef.current;
+      if (!el) return;
+      if (el.paused) { el.play().catch(() => {}); setPaused(false); }
+      else { el.pause(); setPaused(true); }
+    }
   }
 
   async function handleFollow(e: React.MouseEvent) {
@@ -71,13 +124,39 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
         poster={video.thumbnailUrl ?? undefined}
         loop playsInline
         className="absolute inset-0 h-full w-full object-cover"
-        onClick={togglePlay}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       />
       {/* Tap-to-pause indicator */}
-      {paused && (
+      {paused && !seekDir && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
             <IoPlay size={30} className="ml-1 text-white" />
+          </div>
+        </div>
+      )}
+      {/* Hold-to-seek overlay */}
+      {seekDir === "backward" && (
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-1/2 flex items-center justify-center bg-black/20">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center">
+              <IoPlayBack size={38} className="text-white drop-shadow" />
+              <IoPlayBack size={38} className="text-white drop-shadow" />
+            </div>
+            <span className="text-[13px] font-bold text-white drop-shadow">{seekSecs}s</span>
+          </div>
+        </div>
+      )}
+      {seekDir === "forward" && (
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 flex items-center justify-center bg-black/20">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center">
+              <IoPlayForward size={38} className="text-white drop-shadow" />
+              <IoPlayForward size={38} className="text-white drop-shadow" />
+            </div>
+            <span className="text-[13px] font-bold text-white drop-shadow">{seekSecs}s</span>
           </div>
         </div>
       )}
