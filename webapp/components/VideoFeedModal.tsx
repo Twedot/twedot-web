@@ -133,7 +133,18 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
 
         {/* Share */}
         <button
-          onClick={(e) => { e.stopPropagation(); notify("Share coming soon"); }}
+          onClick={async (e) => {
+            e.stopPropagation();
+            const url = window.location.origin + postUrl(video.id);
+            try {
+              if (navigator.share) {
+                await navigator.share({ url });
+              } else {
+                await navigator.clipboard.writeText(url);
+                notify("Link copied");
+              }
+            } catch { /* user cancelled */ }
+          }}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
         >
           <IoShareOutline size={22} />

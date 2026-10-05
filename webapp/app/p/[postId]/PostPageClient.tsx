@@ -817,7 +817,20 @@ export default function PostPageClient() {
                   <FaRetweet size={15} />
                 </button>
               )}
-              <button onClick={() => notify("Share is coming soon")} className="flex items-center justify-center rounded-full bg-feed-bg p-[9px] text-light-text transition-colors hover:bg-border/50">
+              <button
+                onClick={async () => {
+                  const url = window.location.href;
+                  try {
+                    if (navigator.share) {
+                      await navigator.share({ url });
+                    } else {
+                      await navigator.clipboard.writeText(url);
+                      notify("Link copied");
+                    }
+                  } catch { /* user cancelled */ }
+                }}
+                className="flex items-center justify-center rounded-full bg-feed-bg p-[9px] text-light-text transition-colors hover:bg-border/50"
+              >
                 <IoShareOutline size={16} />
               </button>
             </footer>
