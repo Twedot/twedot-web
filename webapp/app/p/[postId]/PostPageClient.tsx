@@ -767,8 +767,7 @@ export default function PostPageClient() {
                     <img
                       src={activeItem.content || activeItem.thumbnailUrl!}
                       alt=""
-                      className="relative w-full object-cover"
-                      style={{ maxHeight: 560 }}
+                      className="relative w-full"
                     />
                   </div>
                 )}

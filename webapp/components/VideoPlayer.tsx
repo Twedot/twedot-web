@@ -56,7 +56,7 @@ export default function VideoPlayer({ src, poster }: { src: string; poster?: str
           playsInline
           loop
           onEnded={() => setIsPlaying(false)}
-          className="block w-full max-h-[560px] cursor-pointer object-cover"
+          className="block w-full cursor-pointer"
         />
 
         {!isPlaying && (

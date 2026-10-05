@@ -428,145 +428,133 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         </button>
       )}
 
-      {/* ── Media — full width on mobile, indented on desktop ── */}
+      {/* ── Media (mobile: full-width stack / desktop: with right action rail) ── */}
       {!compact && hasMedia && (
-        <div className="mb-2.5 overflow-hidden rounded-xl sm:ml-[46px]">
-          {/* Single image */}
-          {items.length === 1 && active.type === "image" && (
-            <MediaBackdrop bgSrc={active.content}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={active.content}
-                alt=""
-                className="w-full cursor-pointer object-cover"
-                style={{ maxHeight: 560 }}
-                onClick={() => openDetail()}
-              />
-            </MediaBackdrop>
-          )}
-
-          {/* Single video — thumbnail + play button on mobile, inline player on desktop */}
-          {items.length === 1 && active.type === "video" && (
-            <>
-              {/* Mobile: tap thumbnail → open full-screen modal */}
-              <div className="relative cursor-pointer md:hidden" onClick={openVideo}>
-                {active.thumbnailUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
+        <div className="sm:ml-[46px]">
+          <div className="sm:flex sm:items-start sm:gap-3">
+            {/* Media column */}
+            <div className="mb-2.5 overflow-hidden rounded-xl sm:mb-0 sm:min-w-0 sm:flex-1">
+              {/* Single image */}
+              {items.length === 1 && active.type === "image" && (
+                <MediaBackdrop bgSrc={active.content}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={active.thumbnailUrl}
+                    src={active.content}
                     alt=""
-                    className="w-full object-cover"
-                    style={{ maxHeight: 520 }}
+                    className="w-full cursor-pointer"
+                    onClick={() => openDetail()}
                   />
-                ) : (
-                  <div className="h-64 w-full bg-zinc-900" />
-                )}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
-                    <IoPlay size={28} className="ml-1 text-white" />
+                </MediaBackdrop>
+              )}
+
+              {/* Single video — thumbnail on mobile, inline player on desktop */}
+              {items.length === 1 && active.type === "video" && (
+                <>
+                  <div className="relative cursor-pointer md:hidden" onClick={openVideo}>
+                    {active.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={active.thumbnailUrl} alt="" className="w-full" />
+                    ) : (
+                      <div className="h-64 w-full bg-zinc-900" />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
+                        <IoPlay size={28} className="ml-1 text-white" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hidden md:block">
+                    <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} />
+                  </div>
+                </>
+              )}
+
+              {/* Carousel */}
+              {items.length > 1 && (
+                <div className="relative">
+                  <div ref={scrollRef} onScroll={handleScroll} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto">
+                    {items.filter((it) => it.type === "image" || it.type === "video").map((it) => (
+                      <div key={it.id} className="w-full flex-shrink-0 snap-center" onPointerDown={onCarouselPointerDown} onPointerUp={(e) => onCarouselPointerUp(e, it)}>
+                        <MediaBackdrop bgSrc={it.type === "image" ? it.content : it.thumbnailUrl} isVideo={it.type === "video"}>
+                          {it.type === "image" ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={it.content} alt="" className="w-full" />
+                          ) : (
+                            <VideoPlayer src={it.content} poster={it.thumbnailUrl ?? undefined} />
+                          )}
+                        </MediaBackdrop>
+                      </div>
+                    ))}
+                  </div>
+                  {activeIndex > 0 && (
+                    <button onClick={(e) => { e.stopPropagation(); scrollToIndex(activeIndex - 1); }} className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+                      <IoChevronBack size={18} />
+                    </button>
+                  )}
+                  {activeIndex < items.length - 1 && (
+                    <button onClick={(e) => { e.stopPropagation(); scrollToIndex(activeIndex + 1); }} className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+                      <IoChevronForward size={18} />
+                    </button>
+                  )}
+                  <div className="mt-1.5 flex items-center justify-center gap-1.5">
+                    {items.map((it, i) => (
+                      <span key={it.id} className={`h-1.5 w-1.5 rounded-full ${i === activeIndex ? "bg-primary" : "bg-border"}`} />
+                    ))}
                   </div>
                 </div>
-              </div>
-              {/* Desktop: inline video player */}
-              <div className="hidden md:block">
-                <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} />
-              </div>
-            </>
-          )}
-
-          {/* Carousel */}
-          {items.length > 1 && (
-            <div className="relative">
-              <div
-                ref={scrollRef}
-                onScroll={handleScroll}
-                className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
-              >
-                {items.filter((it) => it.type === "image" || it.type === "video").map((it) => (
-                  <div
-                    key={it.id}
-                    className="w-full flex-shrink-0 snap-center"
-                    onPointerDown={onCarouselPointerDown}
-                    onPointerUp={(e) => onCarouselPointerUp(e, it)}
-                  >
-                    <MediaBackdrop bgSrc={it.type === "image" ? it.content : it.thumbnailUrl} isVideo={it.type === "video"}>
-                      {it.type === "image" ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={it.content} alt="" className="w-full object-cover" style={{ maxHeight: 520 }} />
-                      ) : (
-                        <VideoPlayer src={it.content} poster={it.thumbnailUrl ?? undefined} />
-                      )}
-                    </MediaBackdrop>
-                  </div>
-                ))}
-              </div>
-
-              {activeIndex > 0 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); scrollToIndex(activeIndex - 1); }}
-                  className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
-                >
-                  <IoChevronBack size={18} />
-                </button>
               )}
-              {activeIndex < items.length - 1 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); scrollToIndex(activeIndex + 1); }}
-                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
-                >
-                  <IoChevronForward size={18} />
-                </button>
-              )}
-              <div className="mt-1.5 flex items-center justify-center gap-1.5">
-                {items.map((it, i) => (
-                  <span key={it.id} className={`h-1.5 w-1.5 rounded-full ${i === activeIndex ? "bg-primary" : "bg-border"}`} />
-                ))}
-              </div>
             </div>
-          )}
+
+            {/* Desktop: vertical action rail to the right of media */}
+            <div className="hidden sm:flex sm:flex-shrink-0 sm:flex-col sm:items-center sm:gap-3 sm:pt-1">
+              <div className="flex flex-col items-center gap-0.5">
+                <button onClick={handleLike} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
+                  {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
+                </button>
+                <span className="text-[11px] font-bold text-light-text">{likeCount}</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5">
+                <button onClick={() => openDetail()} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
+                  <IoChatbubbleEllipsesOutline size={18} />
+                </button>
+                <span className="text-[11px] font-bold text-light-text">{active.commentCount}</span>
+              </div>
+              <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
+                {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
+              </button>
+              {!isOwnPost && (
+                <button onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
+                  <FaRetweet size={16} />
+                </button>
+              )}
+              <button onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
+                <IoShareOutline size={18} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ── Action bar — horizontal below content, for all post types ── */}
+      {/* ── Action bar — mobile: below media / desktop: below caption for text posts only ── */}
       {!compact && (
-        <footer className="flex items-center gap-1.5 pt-0.5 sm:ml-[46px]">
-          {/* Like */}
-          <button
-            onClick={handleLike}
-            className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}
-          >
+        <footer className={`flex items-center gap-1.5 pt-0.5 ${hasMedia ? "sm:hidden" : "sm:ml-[46px]"}`}>
+          <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
             {isLiked ? <IoHeart size={16} /> : <IoHeartOutline size={16} />}
             <span>{likeCount}</span>
           </button>
-          {/* Comment */}
-          <button
-            onClick={() => openDetail()}
-            className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-light-text transition-colors hover:bg-border/50"
-          >
+          <button onClick={() => openDetail()} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-light-text transition-colors hover:bg-border/50">
             <IoChatbubbleEllipsesOutline size={16} />
             <span>{active.commentCount}</span>
           </button>
-          {/* Bookmark */}
-          <button
-            onClick={(e) => { e.stopPropagation(); toggleBookmark(); }}
-            className={`flex items-center justify-center rounded-full bg-feed-bg p-[9px] transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}
-          >
+          <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex items-center justify-center rounded-full bg-feed-bg p-[9px] transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
             {isBookmarked ? <IoBookmark size={16} /> : <IoBookmarkOutline size={16} />}
           </button>
-          {/* Repost */}
           {!isOwnPost && (
-            <button
-              onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }}
-              className="flex items-center justify-center rounded-full bg-feed-bg p-[9px] text-light-text transition-colors hover:bg-border/50"
-            >
+            <button onClick={(e) => { e.stopPropagation(); notify("Repost is coming soon"); }} className="flex items-center justify-center rounded-full bg-feed-bg p-[9px] text-light-text transition-colors hover:bg-border/50">
               <FaRetweet size={15} />
             </button>
           )}
-          {/* Share */}
-          <button
-            onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }}
-            className="flex items-center justify-center rounded-full bg-feed-bg p-[9px] text-light-text transition-colors hover:bg-border/50"
-          >
+          <button onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }} className="flex items-center justify-center rounded-full bg-feed-bg p-[9px] text-light-text transition-colors hover:bg-border/50">
             <IoShareOutline size={16} />
           </button>
         </footer>
