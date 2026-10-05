@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import {
   IoNotificationsOutline,
-  IoChatbubbleOutline,
   IoSearchOutline,
   IoCloseOutline,
   IoPersonOutline,
@@ -13,7 +12,7 @@ import {
   IoConstructOutline,
   IoChevronForwardOutline,
   IoAddCircleOutline,
-  IoArrowBack,
+  IoMenuOutline,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
@@ -61,9 +60,9 @@ export default function TopBar() {
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const { notify } = useUi();
+  const isChannelPage = /^\/channels\/[^/]+/.test(pathname) || /^\/c\/[^/]+/.test(pathname);
+  const { notify, openDrawer } = useUi();
   const { unreadNotifCount } = useJobSocket();
-  const isPostPage = pathname.startsWith("/p/");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeQuery, setActiveQuery] = useState("");
@@ -296,6 +295,14 @@ export default function TopBar() {
     <header className="sticky top-0 z-20 border-b border-border bg-background">
       {/* Nav row: logo left · search center (desktop only) · actions right */}
       <div className="flex h-12 items-center gap-2 px-4 sm:h-14 sm:px-6">
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={openDrawer}
+          className="sm:hidden flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-text hover:bg-feed-bg"
+        >
+          <IoMenuOutline size={22} />
+        </button>
+
         {/* Logo */}
         <button
           onClick={() => router.push("/stories")}
@@ -303,17 +310,6 @@ export default function TopBar() {
         >
           Twedot
         </button>
-
-        {/* Back chip — shown on post detail pages, mobile only */}
-        {isPostPage && (
-          <button
-            onClick={() => router.back()}
-            className="sm:hidden flex items-center gap-1 rounded-full bg-feed-bg px-2.5 py-1.5 text-[13px] font-bold text-text hover:bg-border/50 active:bg-border/70"
-          >
-            <IoArrowBack size={14} />
-            <span>Stories</span>
-          </button>
-        )}
 
         {/* Desktop search — absolute centered, hidden on mobile */}
         <div ref={wrapperRef} className="hidden sm:block absolute left-1/2 w-full max-w-xl -translate-x-1/2 px-4">
@@ -363,8 +359,8 @@ export default function TopBar() {
         </div>
       </div>
 
-      {/* Mobile search row — sits below the nav row, hidden on sm+ */}
-      <div className="sm:hidden px-4 pb-2.5">
+      {/* Mobile search row — hidden on sm+ and on channel pages */}
+      <div className={`${isChannelPage ? "hidden" : "sm:hidden"} px-4 pb-2.5`}>
         <button
           onClick={openSearch}
           className="flex w-full items-center gap-2 rounded-full bg-feed-bg px-4 py-2.5 transition-colors hover:bg-border/30"

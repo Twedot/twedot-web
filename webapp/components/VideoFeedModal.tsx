@@ -84,7 +84,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
           {!isOwn && !following && (
             <button
               onClick={handleFollow}
-              className="absolute -bottom-2 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-[#6B4EFF] text-white"
+              className="absolute -bottom-2 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-[#22C55E] text-white"
             >
               <span className="text-[13px] font-black leading-none">+</span>
             </button>
@@ -153,8 +153,8 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
           {!isOwn && (
             <button
               onClick={handleFollow}
-              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors ${
-                following ? "border-white/40 text-white/50" : "border-white text-white hover:bg-white/10"
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold transition-colors ${
+                following ? "border border-white/30 text-white/50" : "bg-[#22C55E] text-white hover:opacity-90"
               }`}
             >
               {following ? "Following" : "Follow"}
@@ -166,7 +166,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
         )}
         {video.caption && (
           <p className="text-[13px] leading-relaxed text-white/90 line-clamp-3">
-            <LinkText text={video.caption} />
+            <LinkText text={video.caption} onTagClick={() => videoFeedStore.close()} />
           </p>
         )}
       </div>

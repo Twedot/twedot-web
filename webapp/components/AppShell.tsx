@@ -14,6 +14,7 @@ import TrendingPanel from "./TrendingPanel";
 import SearchPanel from "./SearchPanel";
 import VideoFeedModal from "./VideoFeedModal";
 import MobileBottomNav from "./MobileBottomNav";
+import MobileNavDrawer from "./MobileNavDrawer";
 
 function UploadProgress() {
   const [state, setState] = useState<UploadState | null>(uploadStore.get());
@@ -130,6 +131,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           )}
         </div>
         <MobileBottomNav />
+        <MobileNavDrawer />
         <UploadProgress />
         <VideoFeedModal />
       </div>

@@ -34,6 +34,7 @@ import {
   IoPencilOutline,
   IoAddOutline,
   IoSwapVerticalOutline,
+  IoInformationCircleOutline,
 } from "react-icons/io5";
 import { apiGet, apiPost, apiPatch, apiDelete, apiUploadFile } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
@@ -527,6 +528,7 @@ export default function ChannelDetailPage({ roomId: propRoomId }: { roomId?: str
   const [error, setError] = useState<string | null>(null);
   const [memberMap, setMemberMap] = useState<Record<string, MemberInfo>>({});
   const [replyPanel, setReplyPanel] = useState<ReplyPanel | null>(null);
+  const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showReplyEmojiPicker, setShowReplyEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -906,6 +908,7 @@ export default function ChannelDetailPage({ roomId: propRoomId }: { roomId?: str
   const openReplies = useCallback(async (msg: RoomMessage) => {
     try { sessionStorage.setItem(`twedot_reply_${roomId}`, msg.id); } catch {}
     setReplyPanel({ msg, replies: [], loading: true, replyText: "", sending: false });
+    setMobileInfoOpen(true);
     try {
       // Endpoint: GET /rooms/:roomId/messages/:messageId/thread → { parent, replies }
       const res = await apiGet<any>(`/rooms/${roomId}/messages/${msg.id}/thread`);
@@ -996,7 +999,7 @@ export default function ChannelDetailPage({ roomId: propRoomId }: { roomId?: str
 
   return (
     <>
-      <div className="flex h-[calc(100vh-3.5rem)]">
+      <div className="flex h-[calc(100vh-6.5rem)] lg:h-[calc(100vh-3.5rem)]">
         {/* ── LEFT: Chat column ── */}
         <div className="flex min-w-0 flex-1 flex-col" style={{ maxWidth: 620 }}>
         {/* Header */}
@@ -1043,6 +1046,13 @@ export default function ChannelDetailPage({ roomId: propRoomId }: { roomId?: str
                 {joining ? "…" : joinTypeLabel ?? "Join"}
               </button>
             )}
+            {/* Info button — mobile only */}
+            <button
+              onClick={() => setMobileInfoOpen(true)}
+              className="lg:hidden flex h-8 w-8 items-center justify-center rounded-full hover:bg-feed-bg text-light-text"
+            >
+              <IoInformationCircleOutline size={22} />
+            </button>
           </div>
         </div>
 
@@ -1262,12 +1272,30 @@ export default function ChannelDetailPage({ roomId: propRoomId }: { roomId?: str
         )}
         </div>{/* end chat column */}
 
-        {/* ── RIGHT: Info / Thread panel ── */}
-        <div className="flex w-[360px] flex-shrink-0 flex-col border-l border-border bg-background">
+        {/* ── RIGHT: Info / Thread panel ── desktop sidebar + mobile overlay */}
+        <div className={`${mobileInfoOpen ? "flex" : "hidden"} lg:flex fixed inset-0 z-50 flex-col bg-background lg:static lg:inset-auto lg:z-auto lg:w-[360px] lg:flex-shrink-0 lg:border-l lg:border-border`}>
+          {/* Mobile-only close header */}
+          <div className="flex flex-shrink-0 items-center gap-3 border-b border-border px-4 py-3 lg:hidden">
+            <button
+              onClick={() => {
+                if (replyPanel) {
+                  try { sessionStorage.removeItem(`twedot_reply_${roomId}`); } catch {}
+                  setReplyPanel(null);
+                }
+                setMobileInfoOpen(false);
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-feed-bg"
+            >
+              <IoCloseOutline size={20} className="text-text" />
+            </button>
+            <span className="text-[14px] font-bold text-text">
+              {replyPanel ? "Thread" : "Channel Info"}
+            </span>
+          </div>
         {replyPanel ? (
           <>
-          {/* Panel header */}
-          <div className="flex flex-shrink-0 items-center gap-3 border-b border-border px-4 py-3">
+          {/* Panel header — desktop only (mobile uses overlay header) */}
+          <div className="hidden lg:flex flex-shrink-0 items-center gap-3 border-b border-border px-4 py-3">
             <button
               onClick={() => {
                 try { sessionStorage.removeItem(`twedot_reply_${roomId}`); } catch {}

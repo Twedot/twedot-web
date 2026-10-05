@@ -528,18 +528,21 @@ export default function PostPageClient() {
   return (
     <div className="mx-auto max-w-2xl pb-20">
 
-      {/* ── Back bar — only for thread/replies view (main post uses TopBar back) ── */}
-      {threadCommentId && (
-        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-background/90 px-3 py-2.5 backdrop-blur">
-          <button
-            onClick={() => { setThreadCommentId(null); setReplyTo(null); }}
-            className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-text hover:bg-border/50 active:bg-border/70"
-          >
-            <IoArrowBack size={16} />
-            <span>Replies</span>
-          </button>
-        </div>
-      )}
+      {/* ── Back bar ── */}
+      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur">
+        <button
+          onClick={() => {
+            if (threadCommentId) { setThreadCommentId(null); setReplyTo(null); }
+            else { router.back(); }
+          }}
+          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-feed-bg"
+        >
+          <IoArrowBack size={20} className="text-text" />
+        </button>
+        <span className="text-[15px] font-bold text-text">
+          {threadCommentId ? "Replies" : "Post"}
+        </span>
+      </div>
 
         {/* ── Thread view ── */}
         {threadComment ? (
@@ -710,6 +713,9 @@ export default function PostPageClient() {
                           </button>
                           <button onClick={handleBlock} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
                             <IoBanOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Block @{post.userName}</span>
+                          </button>
+                          <button onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
+                            <IoStatsChartOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">View post activity</span>
                           </button>
                           <button onClick={handleEmbedPost} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg">
                             <IoCodeSlashOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Embed post</span>
