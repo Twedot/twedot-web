@@ -772,11 +772,9 @@ export default function PostPageClient() {
                     />
                   </div>
                 )}
-                {/* Video with dark background so letterbox bars are black */}
+                {/* Video — object-cover fills width, clips to max-height, no bars */}
                 {isVideo && activeItem.content && (
-                  <div className="bg-black">
-                    <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
-                  </div>
+                  <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
                 )}
                 {/* Carousel navigation */}
                 {groupItems.length > 1 && activeGroupIdx > 0 && (
