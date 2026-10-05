@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   IoCloseOutline, IoHeartOutline, IoHeart,
   IoChatbubbleOutline, IoBookmarkOutline, IoBookmark,
-  IoShareOutline, IoChevronUpOutline,
+  IoShareOutline, IoChevronUpOutline, IoPlay,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { videoFeedStore } from "@/lib/videoFeedStore";
@@ -27,14 +27,23 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
   const [following, setFollowing] = useState(video.isFollowingAuthor ?? false);
   const [liked, setLiked] = useState(video.isLiked ?? false);
   const [likes, setLikes] = useState(video.likeCount ?? 0);
+  const [paused, setPaused] = useState(false);
   const isOwn = user?.id === video.userId;
 
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-    if (active) { el.play().catch(() => {}); }
-    else { el.pause(); el.currentTime = 0; }
+    if (active) { el.play().catch(() => {}); setPaused(false); }
+    else { el.pause(); el.currentTime = 0; setPaused(false); }
   }, [active]);
+
+  function togglePlay(e: React.MouseEvent) {
+    e.stopPropagation();
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) { el.play().catch(() => {}); setPaused(false); }
+    else { el.pause(); setPaused(true); }
+  }
 
   async function handleFollow(e: React.MouseEvent) {
     e.stopPropagation();
@@ -62,8 +71,16 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
         poster={video.thumbnailUrl ?? undefined}
         loop playsInline
         className="absolute inset-0 h-full w-full object-cover"
-        onClick={(e) => e.stopPropagation()}
+        onClick={togglePlay}
       />
+      {/* Tap-to-pause indicator */}
+      {paused && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+            <IoPlay size={30} className="ml-1 text-white" />
+          </div>
+        </div>
+      )}
 
       {/* Gradient overlays */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent" />

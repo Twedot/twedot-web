@@ -217,7 +217,8 @@ export default function PostPageClient() {
   useEffect(() => {
     if (prevThreadId.current !== null && threadCommentId === null) {
       const y = savedScrollY.current;
-      const t = setTimeout(() => window.scrollTo({ top: y, behavior: "instant" }), 10);
+      const scroller = document.querySelector("main") as HTMLElement | null;
+      const t = setTimeout(() => { if (scroller) scroller.scrollTop = y; else window.scrollTo({ top: y, behavior: "instant" }); }, 10);
       prevThreadId.current = null;
       return () => clearTimeout(t);
     }
@@ -488,10 +489,11 @@ export default function PostPageClient() {
   }, [replyText, submitting, replyTo, threadCommentId, statusId, notify]);
 
   const startReply = useCallback((name: string, commentId: string) => {
-    savedScrollY.current = window.scrollY;
+    const scroller = document.querySelector("main") as HTMLElement | null;
+    savedScrollY.current = scroller ? scroller.scrollTop : window.scrollY;
     setThreadCommentId(commentId);
     setReplyTo({ name, commentId });
-    window.scrollTo(0, 0);
+    if (scroller) scroller.scrollTop = 0; else window.scrollTo(0, 0);
     setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
 
@@ -767,8 +769,7 @@ export default function PostPageClient() {
                     <img
                       src={activeItem.content || activeItem.thumbnailUrl!}
                       alt=""
-                      className="relative w-full object-cover"
-                      style={{ maxHeight: 480 }}
+                      className="relative w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]"
                     />
                   </div>
                 )}
