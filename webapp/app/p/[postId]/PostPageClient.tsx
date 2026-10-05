@@ -748,21 +748,37 @@ export default function PostPageClient() {
 
             </div>{/* end px-4 pt-4 header+caption block */}
 
-            {/* ── Media — true full width, no px-4 constraint ── */}
+            {/* ── Media — matches feed card: rounded-xl, blurred backdrop, dark bg ── */}
             {!isText && (isImage || isVideo) && (
-              <div className="relative mb-1 overflow-hidden">
+              <div className="relative mb-2.5 overflow-hidden rounded-xl">
+                {/* Image with blurred backdrop (same as MediaBackdrop in PostCard) */}
                 {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={activeItem.content || activeItem.thumbnailUrl!}
-                    alt=""
-                    className="w-full object-cover"
-                    style={{ maxHeight: 560 }}
-                  />
+                  <div className="relative bg-zinc-900">
+                    {/* Blurred background */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={activeItem.content || activeItem.thumbnailUrl!}
+                      alt=""
+                      aria-hidden
+                      className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+                    />
+                    {/* Main image */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={activeItem.content || activeItem.thumbnailUrl!}
+                      alt=""
+                      className="relative w-full object-cover"
+                      style={{ maxHeight: 560 }}
+                    />
+                  </div>
                 )}
+                {/* Video with dark background so letterbox bars are black */}
                 {isVideo && activeItem.content && (
-                  <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                  <div className="bg-black">
+                    <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                  </div>
                 )}
+                {/* Carousel navigation */}
                 {groupItems.length > 1 && activeGroupIdx > 0 && (
                   <button onClick={() => setActiveGroupIdx((i) => i - 1)} className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
                     <IoChevronBack size={20} />
