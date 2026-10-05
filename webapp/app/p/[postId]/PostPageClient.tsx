@@ -750,7 +750,7 @@ export default function PostPageClient() {
 
             {/* ── Media — matches feed card: rounded-xl, blurred backdrop, dark bg ── */}
             {!isText && (isImage || isVideo) && (
-              <div className="relative mb-2.5 overflow-hidden rounded-xl">
+              <div className="relative mx-4 mb-2.5 overflow-hidden rounded-xl">
                 {/* Image with blurred backdrop (same as MediaBackdrop in PostCard) */}
                 {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
                   <div className="relative bg-zinc-900">
