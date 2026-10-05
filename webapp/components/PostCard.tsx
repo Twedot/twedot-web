@@ -309,14 +309,14 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
           </p>
         </button>
 
-        {/* Follow — outlined pill */}
+        {/* Follow */}
         {!isOwnPost && (
           <button
             onClick={handleToggleFollow}
-            className={`mt-0.5 flex-shrink-0 rounded-full border px-3.5 py-1 text-[12px] font-bold transition-colors ${
+            className={`mt-0.5 flex-shrink-0 rounded-full px-3.5 py-1 text-[12px] font-bold transition-colors ${
               isFollowing
-                ? "border-border text-text hover:bg-feed-bg"
-                : "border-primary text-primary hover:bg-primary/10"
+                ? "border border-border bg-feed-bg text-text hover:bg-border/40"
+                : "bg-primary text-white hover:opacity-90"
             }`}
           >
             {isFollowing ? "Following" : "Follow"}

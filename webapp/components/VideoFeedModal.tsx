@@ -65,14 +65,34 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
         onClick={(e) => e.stopPropagation()}
       />
 
-      {/* Top + bottom gradients */}
+      {/* Gradient overlays */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/85 to-transparent" />
 
-      {/* Right action rail */}
-      <div className="absolute bottom-36 right-3 z-10 flex flex-col items-center gap-5">
+      {/* Right rail: avatar → like → comment → bookmark → repost → share */}
+      <div className="absolute bottom-24 right-3 z-10 flex flex-col items-center gap-4">
+        {/* Avatar with + follow button */}
+        <div className="relative mb-1">
+          <button onClick={() => { videoFeedStore.close(); router.push(profileUrl(video.userName, video.userId)); }}>
+            {video.userPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={video.userPhoto} alt="" className="h-12 w-12 rounded-full object-cover ring-2 ring-white/40" />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-white/20 ring-2 ring-white/40" />
+            )}
+          </button>
+          {!isOwn && !following && (
+            <button
+              onClick={handleFollow}
+              className="absolute -bottom-2 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-[#6B4EFF] text-white"
+            >
+              <span className="text-[13px] font-black leading-none">+</span>
+            </button>
+          )}
+        </div>
+
         {/* Like */}
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-0.5">
           <button
             onClick={handleLike}
             className={`flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${liked ? "text-red-400" : "text-white"}`}
@@ -81,8 +101,9 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
           </button>
           <span className="text-[12px] font-bold text-white drop-shadow">{likes}</span>
         </div>
+
         {/* Comment */}
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex flex-col items-center gap-0.5">
           <button
             onClick={() => { videoFeedStore.close(); router.push(postUrl(video.id)); }}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
@@ -91,6 +112,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
           </button>
           <span className="text-[12px] font-bold text-white drop-shadow">{video.commentCount ?? 0}</span>
         </div>
+
         {/* Bookmark */}
         <button
           onClick={(e) => { e.stopPropagation(); toggleBookmark(); }}
@@ -98,6 +120,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
         >
           {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
         </button>
+
         {/* Repost */}
         {!isOwn && (
           <button
@@ -107,6 +130,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
             <FaRetweet size={21} />
           </button>
         )}
+
         {/* Share */}
         <button
           onClick={(e) => { e.stopPropagation(); notify("Share coming soon"); }}
@@ -116,57 +140,30 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
         </button>
       </div>
 
-      {/* Bottom info */}
-      <div className="absolute bottom-8 left-0 z-10 pr-20 pl-4 w-full">
-        {/* Profile row */}
-        <div className="mb-3 flex items-center gap-3">
-          {/* Avatar with + overlay */}
-          <div className="relative flex-shrink-0">
-            <button onClick={() => { videoFeedStore.close(); router.push(profileUrl(video.userName, video.userId)); }}>
-              {video.userPhoto ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={video.userPhoto} alt="" className="h-11 w-11 rounded-full object-cover ring-2 ring-white/40" />
-              ) : (
-                <div className="h-11 w-11 rounded-full bg-white/20 ring-2 ring-white/40" />
-              )}
-            </button>
-            {!isOwn && !following && (
-              <button
-                onClick={handleFollow}
-                className="absolute -bottom-1.5 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-[#6B4EFF] text-white"
-              >
-                <span className="text-[14px] font-black leading-none">+</span>
-              </button>
-            )}
-          </div>
-
-          {/* Name + rank + occupation */}
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[14px] font-bold text-white drop-shadow">{video.userName}</span>
-              <RankBadge activityScore={video.userGlobalActivityScore ?? 0} rankVisible={video.userRankVisible} className="opacity-90" />
-            </div>
-            {video.userOccupation && (
-              <p className="text-[11px] text-white/70">{video.userOccupation}</p>
-            )}
-          </div>
-
-          {/* Follow button */}
+      {/* Bottom-left info: @username · rank · follow pill · occupation · caption */}
+      <div className="absolute bottom-8 left-4 right-20 z-10">
+        <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+          <button
+            onClick={() => { videoFeedStore.close(); router.push(profileUrl(video.userName, video.userId)); }}
+            className="text-[14px] font-bold text-white drop-shadow"
+          >
+            @{video.userName}
+          </button>
+          <RankBadge activityScore={video.userGlobalActivityScore ?? 0} rankVisible={video.userRankVisible} className="opacity-90" />
           {!isOwn && (
             <button
               onClick={handleFollow}
-              className={`flex-shrink-0 rounded-full border px-3 py-1 text-[12px] font-bold transition-colors ${
-                following
-                  ? "border-white/40 text-white/60"
-                  : "border-white text-white hover:bg-white/10"
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-colors ${
+                following ? "border-white/40 text-white/50" : "border-white text-white hover:bg-white/10"
               }`}
             >
               {following ? "Following" : "Follow"}
             </button>
           )}
         </div>
-
-        {/* Caption */}
+        {video.userOccupation && (
+          <p className="mb-1.5 text-[11px] text-white/70">{video.userOccupation}</p>
+        )}
         {video.caption && (
           <p className="text-[13px] leading-relaxed text-white/90 line-clamp-3">
             <LinkText text={video.caption} />
@@ -183,8 +180,13 @@ export default function VideoFeedModal() {
   const [startIdx, setStartIdx] = useState(0);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  const [tab, setTab] = useState<"stories" | "following">("stories");
   const scrollRef = useRef<HTMLDivElement>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const displayVideos = tab === "following"
+    ? videos.filter(v => v.isFollowingAuthor)
+    : videos;
 
   useEffect(() => {
     return videoFeedStore.subscribe(() => {
@@ -196,6 +198,7 @@ export default function VideoFeedModal() {
       if (open) {
         setStartIdx(idx);
         setCurrentIdx(idx);
+        setTab("stories");
         if (vids.length > 1) {
           setShowHint(true);
           if (hintTimer.current) clearTimeout(hintTimer.current);
@@ -205,15 +208,28 @@ export default function VideoFeedModal() {
     });
   }, []);
 
-  // Jump to start video when modal opens
+  // Jump to starting video when modal opens
   useEffect(() => {
     if (!isOpen) return;
     const el = scrollRef.current;
-    if (el) el.scrollTop = startIdx * el.clientHeight;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.scrollTop = startIdx * el.clientHeight;
+      });
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Lock body scroll
+  // When tab switches, reset scroll to top
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = 0;
+    setCurrentIdx(0);
+  }, [tab]);
+
+  // Lock body scroll while open
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -224,15 +240,15 @@ export default function VideoFeedModal() {
     const h = el.clientHeight;
     if (!h) return;
     const idx = Math.round(el.scrollTop / h);
-    setCurrentIdx(idx);
-  }, []);
+    if (idx !== currentIdx) setCurrentIdx(idx);
+  }, [currentIdx]);
 
   if (!isOpen || videos.length === 0) return null;
 
   return (
     <div className="fixed inset-0 z-[100] bg-black md:hidden">
 
-      {/* Top bar — stays above the scroller */}
+      {/* Top bar: close + Stories/Following tabs */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20">
         <div className="pointer-events-auto flex items-center gap-4 px-4 py-3">
           <button
@@ -242,30 +258,64 @@ export default function VideoFeedModal() {
             <IoCloseOutline size={22} />
           </button>
           <div className="flex items-center gap-6">
-            <span className="border-b-2 border-white pb-0.5 text-[15px] font-bold text-white">Stories</span>
-            <span className="text-[15px] text-white/50">Following</span>
+            <button
+              onClick={() => setTab("stories")}
+              className={tab === "stories"
+                ? "border-b-2 border-white pb-0.5 text-[15px] font-bold text-white"
+                : "text-[15px] text-white/50"}
+            >
+              Stories
+            </button>
+            <button
+              onClick={() => setTab("following")}
+              className={tab === "following"
+                ? "border-b-2 border-white pb-0.5 text-[15px] font-bold text-white"
+                : "text-[15px] text-white/50"}
+            >
+              Following
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Scrollable video list with snap */}
+      {/* Snap-scrollable video list */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="absolute inset-0 overflow-y-scroll snap-y snap-mandatory"
+        className="absolute inset-0"
+        style={{
+          overflowY: "scroll",
+          scrollSnapType: "y mandatory",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
+        } as React.CSSProperties}
       >
-        {videos.map((video, i) => (
-          <div key={video.id} className="relative snap-start" style={{ height: "100dvh" }}>
-            <VideoSlide video={video} active={i === currentIdx} />
+        {displayVideos.length === 0 ? (
+          <div className="flex items-center justify-center" style={{ height: "100svh" }}>
+            <p className="text-sm text-white/50">No videos from people you follow yet</p>
           </div>
-        ))}
+        ) : (
+          displayVideos.map((video, i) => (
+            <div
+              key={video.id}
+              className="relative"
+              style={{
+                height: "100svh",
+                scrollSnapAlign: "start",
+                scrollSnapStop: "always",
+              }}
+            >
+              <VideoSlide video={video} active={i === currentIdx} />
+            </div>
+          ))
+        )}
       </div>
 
-      {/* Swipe up hint */}
-      {showHint && videos.length > 1 && (
+      {/* Swipe-up hint */}
+      {showHint && displayVideos.length > 1 && (
         <div
-          className="pointer-events-none absolute bottom-28 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 transition-opacity duration-700"
-          style={{ opacity: showHint ? 1 : 0 }}
+          className="pointer-events-none absolute bottom-28 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1"
+          style={{ opacity: 1, transition: "opacity 0.7s ease" }}
         >
           <div className="animate-bounce">
             <IoChevronUpOutline size={26} className="text-white/80" />
