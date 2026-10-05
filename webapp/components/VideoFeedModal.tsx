@@ -131,41 +131,50 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
         </div>
 
         {/* Bookmark */}
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleBookmark(); }}
-          className={`flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${isBookmarked ? "text-yellow-300" : "text-white"}`}
-        >
-          {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
-        </button>
+        <div className="flex flex-col items-center gap-0.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleBookmark(); }}
+            className={`flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${isBookmarked ? "text-yellow-300" : "text-white"}`}
+          >
+            {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
+          </button>
+          <span className="text-[11px] font-bold text-white drop-shadow">Save</span>
+        </div>
 
         {/* Repost */}
         {!isOwn && (
-          <button
-            onClick={(e) => { e.stopPropagation(); notify("Repost coming soon"); }}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
-          >
-            <FaRetweet size={21} />
-          </button>
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); notify("Repost coming soon"); }}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
+            >
+              <FaRetweet size={21} />
+            </button>
+            <span className="text-[11px] font-bold text-white drop-shadow">Repost</span>
+          </div>
         )}
 
         {/* Share */}
-        <button
-          onClick={async (e) => {
-            e.stopPropagation();
-            const url = window.location.origin + postUrl(video.id);
-            try {
-              if (navigator.share) {
-                await navigator.share({ url });
-              } else {
-                await navigator.clipboard.writeText(url);
-                notify("Link copied");
-              }
-            } catch { /* user cancelled */ }
-          }}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
-        >
-          <IoShareOutline size={22} />
-        </button>
+        <div className="flex flex-col items-center gap-0.5">
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              const url = window.location.origin + postUrl(video.id);
+              try {
+                if (navigator.share) {
+                  await navigator.share({ url });
+                } else {
+                  await navigator.clipboard.writeText(url);
+                  notify("Link copied");
+                }
+              } catch { /* user cancelled */ }
+            }}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
+          >
+            <IoShareOutline size={22} />
+          </button>
+          <span className="text-[11px] font-bold text-white drop-shadow">Share</span>
+        </div>
       </div>
 
       {/* Bottom-left info: @username · rank · follow pill · occupation · caption */}

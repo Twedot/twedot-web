@@ -750,44 +750,92 @@ export default function PostPageClient() {
 
             </div>{/* end px-4 pt-4 header+caption block */}
 
-            {/* ── Media — matches feed card: rounded-xl, blurred backdrop, dark bg ── */}
+            {/* ── Media + desktop right-rail ── */}
             {!isText && (isImage || isVideo) && (
-              <div className="relative mx-4 mb-2.5 overflow-hidden rounded-xl sm:ml-[62px]">
-                {/* Image with blurred backdrop (same as MediaBackdrop in PostCard) */}
-                {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
-                  <div className="relative bg-zinc-900">
-                    {/* Blurred background */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={activeItem.content || activeItem.thumbnailUrl!}
-                      alt=""
-                      aria-hidden
-                      className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
-                    />
-                    {/* Main image */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={activeItem.content || activeItem.thumbnailUrl!}
-                      alt=""
-                      className="relative w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]"
-                    />
+              <div className="sm:flex sm:items-start sm:gap-4 sm:pl-[62px] sm:pr-4">
+                {/* Media column */}
+                <div className="relative mx-4 mb-2.5 overflow-hidden rounded-xl sm:mx-0 sm:max-w-[480px] sm:flex-shrink-0">
+                  {/* Image with blurred backdrop (same as MediaBackdrop in PostCard) */}
+                  {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
+                    <div className="relative bg-zinc-900">
+                      {/* Blurred background */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={activeItem.content || activeItem.thumbnailUrl!}
+                        alt=""
+                        aria-hidden
+                        className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+                      />
+                      {/* Main image */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={activeItem.content || activeItem.thumbnailUrl!}
+                        alt=""
+                        className="relative w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]"
+                      />
+                    </div>
+                  )}
+                  {/* Video */}
+                  {isVideo && activeItem.content && (
+                    <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                  )}
+                  {/* Carousel navigation */}
+                  {groupItems.length > 1 && activeGroupIdx > 0 && (
+                    <button onClick={() => setActiveGroupIdx((i) => i - 1)} className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+                      <IoChevronBack size={20} />
+                    </button>
+                  )}
+                  {groupItems.length > 1 && activeGroupIdx < groupItems.length - 1 && (
+                    <button onClick={() => setActiveGroupIdx((i) => i + 1)} className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+                      <IoChevronForward size={20} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Desktop right-side action rail */}
+                <div className="hidden sm:flex sm:flex-shrink-0 sm:flex-col sm:items-center sm:gap-3 sm:pt-1">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <button onClick={handleLike} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
+                      {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
+                    </button>
+                    <span className="text-[11px] font-bold text-light-text">{likeCount}</span>
                   </div>
-                )}
-                {/* Video — object-cover fills width, clips to max-height, no bars */}
-                {isVideo && activeItem.content && (
-                  <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
-                )}
-                {/* Carousel navigation */}
-                {groupItems.length > 1 && activeGroupIdx > 0 && (
-                  <button onClick={() => setActiveGroupIdx((i) => i - 1)} className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
-                    <IoChevronBack size={20} />
-                  </button>
-                )}
-                {groupItems.length > 1 && activeGroupIdx < groupItems.length - 1 && (
-                  <button onClick={() => setActiveGroupIdx((i) => i + 1)} className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
-                    <IoChevronForward size={20} />
-                  </button>
-                )}
+                  <div className="flex flex-col items-center gap-0.5">
+                    <button onClick={() => inputRef.current?.focus()} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
+                      <IoChatbubbleEllipsesOutline size={18} />
+                    </button>
+                    <span className="text-[11px] font-bold text-light-text">{commentCount}</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <button onClick={toggleBookmark} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
+                      {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
+                    </button>
+                    <span className="text-[11px] font-bold text-light-text">Save</span>
+                  </div>
+                  {user?.id !== post.userId && (
+                    <div className="flex flex-col items-center gap-0.5">
+                      <button onClick={() => notify("Repost is coming soon")} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
+                        <FaRetweet size={16} />
+                      </button>
+                      <span className="text-[11px] font-bold text-light-text">Repost</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center gap-0.5">
+                    <button
+                      onClick={async () => {
+                        const url = window.location.href;
+                        try {
+                          if (navigator.share) { await navigator.share({ url }); }
+                          else { await navigator.clipboard.writeText(url); notify("Link copied"); }
+                        } catch { /* user cancelled */ }
+                      }}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50"
+                    >
+                      <IoShareOutline size={18} />
+                    </button>
+                    <span className="text-[11px] font-bold text-light-text">Share</span>
+                  </div>
+                </div>
               </div>
             )}
             {!isText && groupItems.length > 1 && (
@@ -800,8 +848,8 @@ export default function PostPageClient() {
 
             {/* ── rest of content: padded ── */}
             <div className="px-4">
-            {/* ── Action bar — horizontal below for all post types ── */}
-            <footer className="flex items-center gap-1.5 border-b border-border pb-3 pt-1 sm:ml-[46px]">
+            {/* ── Action bar — mobile only when media present; always for text posts ── */}
+            <footer className={`flex items-center gap-1.5 border-b border-border pb-3 pt-1 sm:ml-[46px]${(!isText && (isImage || isVideo)) ? " sm:hidden" : ""}`}>
               <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
                 {isLiked ? <IoHeart size={16} /> : <IoHeartOutline size={16} />}
                 <span>{likeCount}</span>
