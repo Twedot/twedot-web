@@ -433,7 +433,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         <div className="sm:ml-[46px]">
           <div className="sm:flex sm:items-center sm:gap-3">
             {/* Media column */}
-            <div className="mb-2.5 overflow-hidden rounded-xl sm:mb-0 sm:max-w-[420px] sm:w-full">
+            <div className="mb-2.5 overflow-hidden rounded-xl sm:mb-0 sm:max-w-[480px]">
               {/* Single image */}
               {items.length === 1 && active.type === "image" && (
                 <MediaBackdrop bgSrc={active.content}>
@@ -441,8 +441,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                   <img
                     src={active.content}
                     alt=""
-                    className="w-full cursor-pointer object-cover"
-                    style={{ maxHeight: 480 }}
+                    className="w-full cursor-pointer object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]"
                     onClick={() => openDetail()}
                   />
                 </MediaBackdrop>
@@ -453,7 +452,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                 <div className="relative cursor-pointer" onClick={openVideo}>
                   {active.thumbnailUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={active.thumbnailUrl} alt="" className="w-full object-cover" style={{ maxHeight: 480 }} />
+                    <img src={active.thumbnailUrl} alt="" className="w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]" />
                   ) : (
                     <div className="h-64 w-full bg-zinc-900" />
                   )}
