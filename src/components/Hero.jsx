@@ -130,9 +130,12 @@ export default function Hero() {
         {/* ── Left: request form — plain stacked light-gray fields, same pattern as
              Uber's "Get a ride" card (icon + field, no borders, no gradients). ── */}
         <div className="hero-form-col" style={{ flex: '0 0 400px', width: 400, maxWidth: '100%' }}>
-          <h1 style={{ fontSize: 'clamp(30px, 3.2vw, 42px)', fontWeight: 800, color: 'var(--text)', lineHeight: 1.1, marginBottom: 28 }}>
-            Get a service
+          <h1 style={{ fontSize: 'clamp(30px, 3.2vw, 42px)', fontWeight: 800, color: 'var(--text)', lineHeight: 1.1, marginBottom: 10 }}>
+            Discover people near you
           </h1>
+          <p style={{ fontSize: 15, color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: 22, maxWidth: 360 }}>
+            Looking for someone nearby? Post a request and connect directly with skilled people in your area.
+          </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Field icon={<DotIcon />}>
@@ -155,7 +158,7 @@ export default function Hero() {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   onFocus={() => setShowCategoryList(true)}
-                  placeholder="What service do you need?"
+                  placeholder="What are you looking for?"
                   style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', fontSize: 15, fontWeight: 600, color: 'var(--text)', outline: 'none', fontFamily: 'inherit' }}
                 />
               </Field>
@@ -200,11 +203,11 @@ export default function Hero() {
             onMouseEnter={e => { if (canSubmit) e.currentTarget.style.background = '#6d28d9'; }}
             onMouseLeave={e => { if (canSubmit) e.currentTarget.style.background = '#7c3aed'; }}
           >
-            {canSubmit ? 'Find vendors near you' : 'Search'}
+            {canSubmit ? 'Find someone nearby' : 'Search'}
           </button>
 
           <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 14 }}>
-            Opens the Twedot app to finish sending your request.
+            Opens the Twedot app to finish your request.
           </p>
         </div>
 

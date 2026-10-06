@@ -57,10 +57,10 @@ export default function VendorParade() {
       <div ref={headerRef} className="vendor-header" style={{ textAlign: 'center', padding: '0 64px', marginBottom: 56 }}>
         <div className={`reveal ${headerInView ? 'visible' : ''}`}>
           <h2 style={{ fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 800, lineHeight: 1.1, color: 'var(--text)' }}>
-            Hundreds of vendors, one app.
+            Real people. Real skills. All nearby.
           </h2>
           <p style={{ fontSize: 16, color: 'var(--text-muted)', marginTop: 12 }}>
-            From shoe repairs to screen fixes — find and message any vendor near you, privately.
+            From shoe repairs to screen fixes — find and message anyone near you, directly.
           </p>
         </div>
       </div>

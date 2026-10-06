@@ -5,21 +5,21 @@ import { useInView } from '../hooks/useInView';
 // a tilted phone mockup with a grid of app icons on the left, and on the
 // right a small tab toggle above a headline, subtext, and a single button.
 const TABS = {
-  chat: {
-    label: 'Chat',
-    heading: 'The fast, private way to message.',
-    sub: 'Available for Android. End-to-end encrypted, always.',
+  social: {
+    label: 'Social',
+    heading: 'An open network for real people.',
+    sub: 'Share your life on a public feed, connect privately with anyone on Twedot, and discover what\'s happening in your city — all in one place.',
   },
-  book: {
-    label: 'Book',
-    heading: 'The fast, affordable way to get things done.',
-    sub: 'Post a request and get real bids from nearby vendors in minutes.',
+  local: {
+    label: 'Local',
+    heading: 'Find people nearby. Get things done.',
+    sub: 'Post a request and connect with skilled people near you in minutes — or put yourself on the map and get hired.',
   },
 };
 
 export default function CTASection() {
   const [ref, inView] = useInView(0.2);
-  const [tab, setTab] = useState('chat');
+  const [tab, setTab] = useState('social');
   const active = TABS[tab];
 
   return (
@@ -37,8 +37,8 @@ export default function CTASection() {
               {[
                 { label: 'Twedot', bg: '#7c3aed' },
                 { label: 'Chat', bg: '#4c1d95' },
-                { label: 'Vendors', bg: '#22c55e' },
-                { label: 'Requests', bg: '#3b82f6' },
+                { label: 'Feed', bg: '#22c55e' },
+                { label: 'Nearby', bg: '#3b82f6' },
               ].map(icon => (
                 <div key={icon.label} style={{ textAlign: 'center' }}>
                   <div style={{ width: '100%', aspectRatio: '1', borderRadius: 16, background: icon.bg, marginBottom: 8 }} />
