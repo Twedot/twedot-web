@@ -448,7 +448,7 @@ export default function VideoFeedModal() {
           </div>
         ) : (
           displayVideos.map((video, i) => (
-            <VideoSlide key={video.id} video={video} active={i === currentIdx} scrollRoot={scrollRef} />
+            <VideoSlide key={video.id} video={video} active={i === currentIdx} scrollRoot={scrollRef as React.RefObject<HTMLDivElement>} />
           ))
         )}
       </div>
