@@ -18,12 +18,13 @@ export default function RankingSection() {
           Your Rank grows from being active on Twedot.
         </h2>
         <p style={{ fontSize: 16, color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: 12 }}>
-          Chatting, posting, commenting, showing up — it all counts. Your Rank badge is
-          visible on your profile and grows purely from real activity, no purchases involved.
+          Posting, chatting, commenting, liking, being active in rooms — it all counts. Your Rank badge
+          is visible on your profile and grows purely from real activity, no purchases involved.
         </p>
         <p style={{ fontSize: 16, color: 'var(--text-muted)', lineHeight: 1.7 }}>
-          Reach the top tier and your videos start earning qualified views, tracked live
-          on your in-app Wallet.
+          Reach the Supreme tier and your videos start earning qualified views — a view only counts
+          when someone watches at least 60 seconds of a video that's at least 60 seconds long. Your
+          balance and withdrawal options are tracked live on your in-app Wallet.
         </p>
 
         <div style={{ marginTop: 32 }}>

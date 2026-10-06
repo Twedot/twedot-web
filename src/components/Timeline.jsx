@@ -37,11 +37,11 @@ const MILESTONES = [
     title: 'The Problem Became Personal',
     desc: (
       <>
-        <p style={{ marginBottom: 12 }}>While trying to find a way to survive financially, we started exploring ideas — a gym wear brand, a sneaker brand, selling shoes from local vendors. But we kept hitting the same wall:</p>
+        <p style={{ marginBottom: 12 }}>While trying to find a way to move forward financially, we kept running into the same wall — trying to find skilled people nearby was harder than it should be. But the deeper frustration was something else:</p>
         <ul style={{ paddingLeft: 20, margin: '0 0 12px' }}>
-          <li>finding reliable local vendors was difficult</li>
-          <li>most platforms required hours of searching</li>
-          <li>responses were slow, and vendors were often too far away</li>
+          <li>there was no real place online that felt like a community</li>
+          <li>social platforms were global noise, not local connection</li>
+          <li>talented people nearby had no easy way to be found</li>
         </ul>
         <p>That frustration planted the first seed of what would later become Twedot.</p>
       </>
@@ -54,14 +54,14 @@ const MILESTONES = [
     title: 'The Idea Expanded',
     desc: (
       <>
-        <p style={{ marginBottom: 12 }}>We started discussing a bigger problem beyond just fashion vendors. We noticed:</p>
+        <p style={{ marginBottom: 12 }}>The idea started growing beyond a single problem. We noticed:</p>
         <ul style={{ paddingLeft: 20, margin: '0 0 12px' }}>
-          <li>local businesses struggled to get visibility</li>
-          <li>skilled service providers weren't getting enough gigs</li>
-          <li>platforms like Upwork focused mostly on tech</li>
-          <li>LinkedIn felt too corporate for everyday local services</li>
+          <li>people nearby had no shared space to connect and discover each other</li>
+          <li>talented people had no way to be found outside of corporate job boards</li>
+          <li>platforms like Upwork focused mostly on tech; LinkedIn felt too corporate</li>
+          <li>social media was global noise — nothing felt genuinely local</li>
         </ul>
-        <p>We believed there was a huge untapped market for local commerce — if visibility could be simplified. That month, we officially started building.</p>
+        <p>We believed there was room for a platform that brought real people together — socially and practically. That month, we officially started building.</p>
       </>
     ),
     color: '#7c3aed',
@@ -157,9 +157,9 @@ const MILESTONES = [
       <>
         <p style={{ marginBottom: 12 }}>We're actively building. Right now the team is focused on:</p>
         <ul style={{ paddingLeft: 20, margin: '0 0 12px' }}>
-          <li>expanding vendor discovery features</li>
-          <li>refining the messaging experience</li>
-          <li>growing our early user community</li>
+          <li>expanding discovery — people, places, content</li>
+          <li>refining the messaging and feed experience</li>
+          <li>growing the community and bringing more people in</li>
           <li>preparing for a wider public launch</li>
         </ul>
         <p>The next chapter isn't written yet — check back as we hit new milestones.</p>
@@ -389,8 +389,8 @@ export default function Timeline() {
                   The Team Behind Twedot
                 </div>
                 <p style={{ fontSize: 15, color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: 0 }}>
-                  What started as a personal struggle to find local vendors turned into a mission. A small team united by one frustration —
-                  and one vision: make local commerce as easy as sending a message.
+                  What started as a personal frustration turned into a mission. A small team united by one belief —
+                  that real connection, real community, and real opportunity should all live in the same place.
                 </p>
               </div>
             </div>

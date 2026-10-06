@@ -9,24 +9,24 @@ import freelancePhoto from '../assets/images/service-hair.jpg';
 const PANELS = [
   {
     id: 'vendor',
-    eyebrow: 'Earn money as a Twedot vendor',
-    title: 'List your service, get paid',
-    desc: 'Our growing base of local customers will send you plenty of service requests. Appear on the map for your area, respond in real time, and chat with every customer directly.',
-    cta: 'Start listing today',
+    eyebrow: 'Share what you do, get hired',
+    title: 'Your skills, on the map',
+    desc: 'Put what you do in front of people nearby. Show up on the map, respond to requests in real time, and talk directly with the people who need you — no middleman between you and your next job.',
+    cta: 'Get on the app',
     href: '/#download',
     photo: vendorPhoto,
-    photoAlt: 'Vendor providing a service',
+    photoAlt: 'Person showcasing their work on Twedot',
     imgSide: 'right',
   },
   {
     id: 'freelance',
-    eyebrow: 'Earn with every request',
-    title: 'Work on your own time',
-    desc: "You decide when and how often you take jobs — weekdays, evenings, weekends, or just the occasional hour. It's entirely up to you.",
-    cta: 'Get Twedot',
-    href: '/#download',
+    eyebrow: 'Earn as a content creator',
+    title: 'Your videos, your income',
+    desc: "Build your Rank through real activity on Twedot. Reach Supreme and every qualifying video you post starts earning — tracked live on your in-app Wallet.",
+    cta: 'See how ranking & earning works',
+    href: '/withdraw-earnings',
     photo: freelancePhoto,
-    photoAlt: 'Vendor providing a service on their own schedule',
+    photoAlt: 'Content creator sharing videos on Twedot',
     imgSide: 'left',
   },
 ];
@@ -81,10 +81,10 @@ export default function StickyScroll() {
       <div ref={headerRef} className="section-header-pad" style={{ maxWidth: 1100, margin: '0 auto clamp(72px, 9vw, 110px)', padding: '0 64px' }}>
         <div className={`reveal ${headerInView ? 'visible' : ''}`}>
           <h2 style={{ fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 800, color: 'var(--text)', lineHeight: 1.1 }}>
-            Earn money with Twedot
+            Twedot pays you back
           </h2>
           <p style={{ fontSize: 16, color: 'var(--text-muted)', marginTop: 10, maxWidth: 480 }}>
-            Join our growing community of vendors and freelancers earning through the app.
+            Two ways to earn: offer your skills and get hired by people near you, or post videos and earn as your audience grows.
           </p>
         </div>
       </div>

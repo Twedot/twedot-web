@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 export default function WithdrawEarningsPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = 'Ranking & Earnings — Twedot';
+    document.title = 'Content Monetisation & Withdrawal — Twedot';
     return () => { document.title = 'Twedot'; };
   }, []);
 
@@ -19,24 +19,23 @@ export default function WithdrawEarningsPage() {
           <div style={{ marginBottom: 64 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <div style={{ width: 20, height: 2, background: 'var(--purple)', borderRadius: 2 }} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>Rankings & Earnings</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>Content Monetisation</span>
             </div>
             <h1 style={{
               fontSize: 'clamp(32px, 6vw, 68px)', fontWeight: 800,
               letterSpacing: '0px', color: 'var(--text)',
               lineHeight: 1.05, textTransform: 'uppercase', marginBottom: 24,
             }}>
-              HOW YOUR RANK<br /><span style={{ color: 'var(--purple)' }}>BUILDS TOWARD EARNING.</span>
+              CREATE CONTENT.<br /><span style={{ color: 'var(--purple)' }}>GET PAID.</span>
             </h1>
             <p style={{ fontSize: 17, color: 'var(--text-muted)', lineHeight: 1.8, maxWidth: 620 }}>
-              Every real thing you do on Twedot — chatting, posting, commenting, liking,
-              being active in rooms, completing jobs, watching videos — feeds one running
-              Rank. Here's exactly how it works, and how it connects to earning money on
-              the platform.
+              Twedot's earning system rewards real creators with real money. Build your Rank,
+              post videos, accumulate qualified views, and withdraw your balance directly to
+              your bank account or mobile money wallet.
             </p>
           </div>
 
-          {/* Rank tiers card */}
+          {/* How it works — steps */}
           <div style={{
             border: '1px solid var(--border)',
             borderRadius: 20,
@@ -45,31 +44,34 @@ export default function WithdrawEarningsPage() {
             marginBottom: 40,
           }}>
             <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginBottom: 16, letterSpacing: '-0.3px' }}>
-              Your Rank grows with real activity
+              How content monetisation works
             </h2>
-            <p style={{ fontSize: 14.5, color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: 28 }}>
-              Everyone starts at <strong style={{ color: 'var(--text)' }}>Unknown</strong> and climbs through named
-              tiers — Known, Noticed, Veteran, Influential, Elite, and beyond, all the way
-              to <strong style={{ color: 'var(--text)' }}>Supreme</strong> — purely from being genuinely active. There's
-              nothing to buy: your score is built from your own messages, posts, comments,
-              likes given, room activity, completed service jobs, and time spent watching
-              other people's videos. You can hide your rank badge from other users in
-              Settings at any time — hiding it never stops it from growing.
+            <p style={{ fontSize: 14.5, color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: 32 }}>
+              Earning on Twedot is tied to your Rank. Everyone starts at{' '}
+              <strong style={{ color: 'var(--text)' }}>Unknown</strong> and climbs through
+              named tiers — Known, Noticed, Veteran, Influential, Elite — all the way to{' '}
+              <strong style={{ color: 'var(--text)' }}>Supreme</strong> — purely from genuine
+              activity: posting, chatting, commenting, liking, watching videos, completing jobs.
+              Nothing is purchased.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
               {[
                 {
-                  title: 'Reach Supreme, the top tier',
-                  desc: 'The moment your account crosses into Supreme, you unlock a one-time welcome credit and earning eligibility switches on.',
+                  title: 'Reach Supreme — the top tier',
+                  desc: 'The moment your account crosses into Supreme, earning eligibility switches on and you receive a one-time welcome credit in your Wallet.',
                 },
                 {
-                  title: 'Your videos start earning qualified views',
-                  desc: 'From then on, every video you post can earn "qualified views" — a view only counts once someone has genuinely watched at least 60 seconds of a video that\'s itself at least 60 seconds long. A quick skim or a short clip doesn\'t qualify.',
+                  title: 'Post videos and earn qualified views',
+                  desc: 'From then on, every video you post can earn "qualified views." A view only counts once someone has genuinely watched at least 60 seconds of a video that is itself at least 60 seconds long. Quick skims and short clips do not qualify.',
                 },
                 {
-                  title: 'Your balance grows on your Wallet page',
-                  desc: 'Qualified views and your welcome credit are tracked on your in-app Wallet, right alongside your Rank progress — so you always know exactly where you stand.',
+                  title: 'Watch your Wallet grow',
+                  desc: 'Qualified views and bonuses are tracked in real time on your in-app Wallet page, alongside your Rank progress. You always know exactly where you stand.',
+                },
+                {
+                  title: 'Withdraw when you\'re ready',
+                  desc: 'Once your balance reaches the minimum threshold, you can request a withdrawal directly to your Nigerian bank account or mobile money wallet. Withdrawals are processed within 1–3 business days.',
                 },
               ].map((step, i) => (
                 <div key={i} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
@@ -92,7 +94,35 @@ export default function WithdrawEarningsPage() {
             </div>
           </div>
 
-          {/* Honesty note about payouts */}
+          {/* Withdrawal details */}
+          <div style={{
+            border: '1px solid var(--border)',
+            borderRadius: 20,
+            padding: '40px 48px',
+            background: 'var(--bg-card)',
+            marginBottom: 40,
+          }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginBottom: 24, letterSpacing: '-0.3px' }}>
+              Withdrawal details
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {[
+                { label: 'Minimum withdrawal', value: 'Check your Wallet page in-app for the current minimum threshold.' },
+                { label: 'Supported methods', value: 'Nigerian bank account transfer · Mobile money wallet' },
+                { label: 'Processing time', value: '1–3 business days after a successful withdrawal request.' },
+                { label: 'Fees', value: 'No withdrawal fees charged by Twedot. Standard bank or mobile money network charges may apply.' },
+                { label: 'Eligibility', value: 'Supreme rank required. Your account must be in good standing with no active policy violations.' },
+                { label: 'Identity verification', value: 'A verified phone number and completed profile are required before your first withdrawal.' },
+              ].map((row, i) => (
+                <div key={i} style={{ display: 'flex', gap: 24, alignItems: 'flex-start', paddingBottom: 18, borderBottom: i < 5 ? '1px solid var(--border-sub)' : 'none' }}>
+                  <div style={{ width: 180, flexShrink: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--text)', paddingTop: 1 }}>{row.label}</div>
+                  <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.75 }}>{row.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Qualified view rules */}
           <div style={{
             border: '1px solid var(--border)',
             borderRadius: 20,
@@ -100,19 +130,22 @@ export default function WithdrawEarningsPage() {
             marginBottom: 40,
           }}>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', marginBottom: 10 }}>
-              A straight answer on payouts
+              What counts as a qualified view?
             </div>
-            <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.8, margin: 0 }}>
-              Your Rank and Wallet balance are real, and they're yours. We don't yet run a
-              general cash-withdrawal facility for every user's balance — when one opens up,
-              we'll announce it in-app first, the same way you'll hear about anything else
-              new on Twedot. Building your Rank now is never wasted: it's the thing any future
-              payout will be based on.
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: 12 }}>
+              To protect the integrity of the earning system and ensure creators are rewarded for real engagement:
             </p>
+            <ul style={{ paddingLeft: 20, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <li style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.75 }}>The video must be <strong style={{ color: 'var(--text)' }}>at least 60 seconds long</strong>.</li>
+              <li style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.75 }}>The viewer must watch <strong style={{ color: 'var(--text)' }}>at least 60 seconds</strong> of the video continuously.</li>
+              <li style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.75 }}>Each viewer counts <strong style={{ color: 'var(--text)' }}>once per video</strong> — repeated views from the same account do not stack.</li>
+              <li style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.75 }}>Views from automated tools, bots, or coordinated inauthentic behaviour are detected and excluded.</li>
+              <li style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.75 }}>Only videos posted after you reach Supreme rank are eligible for earning.</li>
+            </ul>
           </div>
 
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.8, maxWidth: 560 }}>
-            Questions about your Rank or Wallet? Message the Twedot account in the
+            Questions about your Rank, Wallet, or a withdrawal? Message the Twedot account in the
             app, or reach out at <a href="mailto:support@twedot.com" style={{ color: 'var(--purple)', fontWeight: 700 }}>support@twedot.com</a>.
           </p>
 

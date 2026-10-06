@@ -16,7 +16,7 @@ const SERVICES = [
   {
     id: 'chat',
     title: 'Chat, privately',
-    desc: 'Message vendors and friends. End-to-end encrypted.',
+    desc: 'Message anyone on Twedot. Fully end-to-end encrypted — only you and the other person can read it.',
     cta: 'Start chatting',
     ctaBg: '#7c3aed',
     ctaFg: '#fff',
@@ -25,9 +25,9 @@ const SERVICES = [
   },
   {
     id: 'discover',
-    title: 'Find vendors nearby',
-    desc: 'See real vendors live on the map, sorted by distance.',
-    cta: 'See the map',
+    title: 'Discover people nearby',
+    desc: 'See who and what is active around you — sorted by proximity, updated in real time.',
+    cta: 'Explore the map',
     ctaBg: '#e9fbee',
     ctaFg: '#0a0010',
     photo: discoverPhoto,
@@ -36,7 +36,7 @@ const SERVICES = [
   {
     id: 'book',
     title: 'Book a service',
-    desc: 'Post what you need, get real bids in minutes.',
+    desc: 'Need something done? Post your request and let people nearby respond with offers.',
     cta: 'Get started',
     ctaBg: '#fff',
     ctaFg: '#0a0010',
@@ -45,9 +45,9 @@ const SERVICES = [
   },
   {
     id: 'business',
-    title: 'Grow your business',
-    desc: 'Get discovered by location. Zero commission, ever.',
-    cta: 'List your service',
+    title: 'Get seen. Get hired.',
+    desc: 'Showcase what you do, put yourself on the map, and let people near you find you — no commission, ever.',
+    cta: 'Get discovered',
     ctaBg: '#0a0010',
     ctaFg: '#fff',
     photo: tailorPhoto,
@@ -55,9 +55,9 @@ const SERVICES = [
   },
   {
     id: 'video',
-    title: 'Video Stories',
-    desc: 'Watch vendors show their work before you book.',
-    cta: 'Explore videos',
+    title: 'Public Feed & Stories',
+    desc: 'Post photos, videos and text for everyone on Twedot to see. Your life, your work, your story — publicly shared.',
+    cta: 'Browse the feed',
     ctaBg: '#fff',
     ctaFg: '#0a0010',
     photo: artistPhoto,
@@ -65,13 +65,13 @@ const SERVICES = [
   },
   {
     id: 'requests',
-    title: 'Manage requests',
-    desc: 'Track every booking and message from one place.',
+    title: 'Earn from your content',
+    desc: 'Reach Supreme rank and your videos start earning qualified views, tracked live on your in-app Wallet.',
     cta: 'See how it works',
     ctaBg: '#0a0010',
     ctaFg: '#fff',
     photo: workPhoto,
-    href: '/#how-it-works',
+    href: '/withdraw-earnings',
   },
 ];
 
@@ -99,10 +99,10 @@ export default function ProblemSection() {
       <div ref={headerRef} className="obolt-header" style={{ maxWidth: 1280, margin: '0 auto 40px', padding: '0 64px' }}>
         <div className={`reveal ${headerInView ? 'visible' : ''}`}>
           <h2 style={{ fontSize: 'clamp(30px, 4.5vw, 52px)', fontWeight: 800, color: 'var(--text)', lineHeight: 1.05 }}>
-            Our services
+            Everything in one place
           </h2>
           <p style={{ fontSize: 15.5, color: 'var(--text-muted)', marginTop: 10, maxWidth: 460 }}>
-            Everything local, in one app. Some features are rolling out — check back as we grow.
+            Social life, private conversations, local discovery, and business — all on one platform built for real people.
           </p>
         </div>
       </div>

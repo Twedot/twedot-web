@@ -21,11 +21,12 @@ export default function FeaturesSection() {
           About us
         </div>
         <h2 style={{ fontSize: 'clamp(32px, 6vw, 68px)', fontWeight: 800, color: '#fff', lineHeight: 1.05, marginBottom: 26 }}>
-          Twedot is the first hyperlocal super-app for everyday services.
+          Twedot is an open network where real people connect, share, and thrive.
         </h2>
         <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, maxWidth: 620, margin: '0 auto 36px' }}>
-          We're making local commerce effortless, offering better alternatives for every errand a
-          private message serves — including vendor discovery, service bookings, and everyday chat.
+          Share your life on a public feed, connect privately with the people you trust, discover
+          what's happening in your city — and for those who want it, a platform to showcase their
+          work, offer services, and get paid. All of it, in one place.
         </p>
         <a
           href="/about"

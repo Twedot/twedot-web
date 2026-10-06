@@ -93,6 +93,17 @@ function autoGrow(el: HTMLTextAreaElement) {
   el.style.height = el.scrollHeight + "px";
 }
 
+function isStickerUrl(content: string): boolean {
+  const s = content.trim();
+  if (!s || s.includes(" ") || s.includes("\n")) return false;
+  try {
+    const { pathname } = new URL(s);
+    return /\.(png|jpg|jpeg|gif|webp|avif)$/i.test(pathname);
+  } catch {
+    return false;
+  }
+}
+
 function CommentItem({
   comment,
   statusId,
@@ -164,7 +175,12 @@ function CommentItem({
           <RankBadge activityScore={comment.userGlobalActivityScore ?? 0} rankVisible={comment.userRankVisible !== false} plain className="" />
           <span className="text-[11px] text-light-text">{timeAgo(comment.createdAt)}</span>
         </div>
-        <p className="mt-0.5 text-[13px] leading-[18px] text-text">{comment.content}</p>
+        {isStickerUrl(comment.content) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={comment.content} alt="sticker" className="mt-1.5 h-20 w-20 object-contain" />
+        ) : (
+          <p className="mt-0.5 text-[13px] leading-[18px] text-text">{comment.content}</p>
+        )}
         <div className="mt-1.5 flex items-center gap-3">
           <button onClick={() => handleReact("agree")} className={`flex items-center gap-1 text-[11px] font-semibold ${myReaction === "agree" ? "text-primary" : "text-light-text"}`}>
             {myReaction === "agree" ? <IoThumbsUp size={13} /> : <IoThumbsUpOutline size={13} />}
@@ -213,6 +229,9 @@ export default function PostPageClient() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const savedScrollY = useRef(0);
   const prevThreadId = useRef<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const swipeStartX = useRef(0);
+  const swipeStartY = useRef(0);
 
   useEffect(() => {
     if (prevThreadId.current !== null && threadCommentId === null) {
@@ -754,11 +773,24 @@ export default function PostPageClient() {
             {!isText && (isImage || isVideo) && (
               <div className="sm:flex sm:items-center sm:gap-4 sm:pl-[62px] sm:pr-4">
                 {/* Media column */}
-                <div className="relative mx-4 mb-2.5 overflow-hidden rounded-xl sm:mx-0 sm:max-w-[480px] sm:flex-shrink-0">
-                  {/* Image with blurred backdrop (same as MediaBackdrop in PostCard) */}
+                <div
+                  className="relative mx-4 mb-2.5 overflow-hidden rounded-xl sm:mx-0 sm:max-w-[480px] sm:flex-shrink-0"
+                  onPointerDown={(e) => { swipeStartX.current = e.clientX; swipeStartY.current = e.clientY; }}
+                  onPointerUp={(e) => {
+                    const dx = e.clientX - swipeStartX.current;
+                    const dy = e.clientY - swipeStartY.current;
+                    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+                      if (dx < 0 && activeGroupIdx < groupItems.length - 1) setActiveGroupIdx((i) => i + 1);
+                      else if (dx > 0 && activeGroupIdx > 0) setActiveGroupIdx((i) => i - 1);
+                    }
+                  }}
+                >
+                  {/* Image with blurred backdrop */}
                   {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
-                    <div className="relative bg-zinc-900">
-                      {/* Blurred background */}
+                    <div
+                      className="relative cursor-zoom-in bg-zinc-900"
+                      onClick={() => setLightboxOpen(true)}
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={activeItem.content || activeItem.thumbnailUrl!}
@@ -766,7 +798,6 @@ export default function PostPageClient() {
                         aria-hidden
                         className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
                       />
-                      {/* Main image */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={activeItem.content || activeItem.thumbnailUrl!}
@@ -953,6 +984,64 @@ export default function PostPageClient() {
             </div>{/* end px-4 rest-of-content block */}
           </>
         )}
+
+      {/* ── Full-screen image lightbox ── */}
+      {lightboxOpen && isImage && (activeItem.content || activeItem.thumbnailUrl) && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
+          onClick={() => setLightboxOpen(false)}
+          onPointerDown={(e) => { swipeStartX.current = e.clientX; swipeStartY.current = e.clientY; }}
+          onPointerUp={(e) => {
+            const dx = e.clientX - swipeStartX.current;
+            const dy = e.clientY - swipeStartY.current;
+            if (Math.abs(dy) > Math.abs(dx) && dy > 60) { setLightboxOpen(false); return; }
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+              if (dx < 0 && activeGroupIdx < groupItems.length - 1) setActiveGroupIdx((i) => i + 1);
+              else if (dx > 0 && activeGroupIdx > 0) setActiveGroupIdx((i) => i - 1);
+            }
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={activeItem.content || activeItem.thumbnailUrl!}
+            alt=""
+            className="max-h-full max-w-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          {/* Close */}
+          <button
+            onClick={() => setLightboxOpen(false)}
+            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            ✕
+          </button>
+          {/* Prev/next for group */}
+          {groupItems.length > 1 && activeGroupIdx > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setActiveGroupIdx((i) => i - 1); }}
+              className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+            >
+              <IoChevronBack size={22} />
+            </button>
+          )}
+          {groupItems.length > 1 && activeGroupIdx < groupItems.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setActiveGroupIdx((i) => i + 1); }}
+              className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+            >
+              <IoChevronForward size={22} />
+            </button>
+          )}
+          {/* Dot indicators */}
+          {groupItems.length > 1 && (
+            <div className="absolute bottom-6 flex gap-2">
+              {groupItems.map((_, i) => (
+                <div key={i} className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeGroupIdx ? "bg-white" : "bg-white/35"}`} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
     </div>
   );

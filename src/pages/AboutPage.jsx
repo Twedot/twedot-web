@@ -31,7 +31,7 @@ const VALUES = [
       </svg>
     ),
     title: 'Privacy First',
-    body: "Your conversations are yours. End-to-end encrypted, always. We don't read, sell, or share your data.",
+    body: "Your private conversations are yours alone — end-to-end encrypted, always. We don't read, sell, or share your data.",
   },
   {
     icon: (
@@ -39,8 +39,8 @@ const VALUES = [
         <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
       </svg>
     ),
-    title: 'Local First',
-    body: 'Built for every street and every neighbourhood, anywhere in the world. Real people, real commerce, real connections.',
+    title: 'Open to Everyone',
+    body: 'Twedot is for everyone — whether you want to share your day, show off your work, book a service, or simply see what\'s happening in your community.',
   },
   {
     icon: (
@@ -49,8 +49,8 @@ const VALUES = [
         <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
-    title: 'Community Driven',
-    body: 'Every feature we build comes from listening to our users — vendors, buyers, and everyday people.',
+    title: 'Rewarding by Design',
+    body: 'The more real your presence on Twedot, the more it gives back. Post content, grow your Rank, and earn money from your videos — your activity has actual value here.',
   },
 ];
 
@@ -73,12 +73,12 @@ export default function AboutPage() {
           lineHeight: 1.05, letterSpacing: '0px', textTransform: 'uppercase',
           color: 'var(--text)', maxWidth: 800,
         }}>
-          BUILDING THE<br />
-          <span style={{ color: 'var(--purple)' }}>FUTURE OF LOCAL.</span>
+          BUILT FOR<br />
+          <span style={{ color: 'var(--purple)' }}>REAL PEOPLE.</span>
         </h1>
 
         <p style={{ fontSize: 17, color: 'var(--text-muted)', marginTop: 24, maxWidth: 520, lineHeight: 1.8 }}>
-          Twedot was built by people who believe your neighbourhood is your greatest untapped network.
+          Twedot was built on one belief: that people in the same city, neighbourhood, or street deserve a real place to connect — share moments, showcase what they do, and experience life together.
         </p>
       </section>
 

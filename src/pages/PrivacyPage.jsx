@@ -7,7 +7,7 @@ const sections = [
     title: 'Our Commitment to Privacy',
     content: (
       <>
-        <p>Twedot Limited is committed to protecting the personal information of everyone who uses our app. This Privacy Policy explains what data we collect, why we collect it, how we use it, and your rights over it.</p>
+        <p>Twedot Limited is committed to protecting the personal information of everyone who uses our app. Twedot is a social network built around local commerce and content — it combines a public feed, private encrypted messaging, nearby vendor discovery, and content monetisation in one platform. This Privacy Policy explains what data we collect across all of these features, why we collect it, how we use it, and your rights over it.</p>
         <p>By using Twedot, you agree to the practices described here. This policy is incorporated by reference into our <a href="/terms">Terms and Conditions</a>. In the event of any conflict between these two documents, this Privacy Policy governs. <strong>We do not sell your personal data — ever.</strong> Questions? Email us at <a href="mailto:privacy@twedot.com">privacy@twedot.com</a>.</p>
       </>
     ),
@@ -18,13 +18,15 @@ const sections = [
       <>
         <p>When you use Twedot we collect the following categories of data:</p>
         <ul>
-          <li><strong>Identity Data</strong> — Phone number, name, occupation, profile photo</li>
+          <li><strong>Identity Data</strong> — Phone number, name, handle, occupation, profile photo</li>
           <li><strong>Location Data</strong> — GPS coordinates (foreground only), city, state, country</li>
           <li><strong>Device Data</strong> — OS version, App version, push notification token</li>
-          <li><strong>Usage Data</strong> — Status views, contacts synced, listings viewed (aggregated and anonymised — never linked to individual messages)</li>
+          <li><strong>Usage Data</strong> — Feed views, post impressions, contacts synced, listings viewed (aggregated and anonymised — never linked to individual private messages)</li>
           <li><strong>Contact Data</strong> — Phone numbers from your device address book, used for contact matching only</li>
-          <li><strong>Content Data</strong> — Status photos/videos/text, inventory images and captions, media files attached to messages</li>
-          <li><strong>Transaction Metadata</strong> — Pickup requests and item reference interactions</li>
+          <li><strong>Public Content Data</strong> — Posts (text, photos, videos), status/stories, hashtags, mentions, tagged locations, and any content you choose to share to the public feed. This content is visible to all Twedot users and is not encrypted.</li>
+          <li><strong>Engagement Data</strong> — Likes, comments, reposts, saves, and video view durations on public content (used for feed ranking and content monetisation)</li>
+          <li><strong>Wallet & Earnings Data</strong> — Rank score, qualified video view counts, wallet balance, and withdrawal transaction records</li>
+          <li><strong>Service Request Data</strong> — Job requests, service bookings, and vendor interactions</li>
         </ul>
       </>
     ),
@@ -35,27 +37,33 @@ const sections = [
       <>
         <p>The following data is <strong>never collected or stored by Twedot</strong>:</p>
         <ul>
-          <li><strong>Message text content</strong> — All chat messages are end-to-end encrypted on your device before they leave it. The Twedot server only ever handles the encrypted payload and cannot read, access, or process the content of any message.</li>
+          <li><strong>Private message text content</strong> — All private chat messages are end-to-end encrypted on your device before they leave it. The Twedot server only ever handles the encrypted payload and cannot read, access, or process the content of any private message.</li>
           <li><strong>Voice note content</strong> — Voice messages are transmitted as encrypted media files and deleted from our servers once delivered. They are not stored, archived, or indexed.</li>
           <li><strong>Exact GPS coordinates</strong> — We collect approximate location for Nearby Discovery but do not store or share precise coordinates beyond what is necessary for proximity matching.</li>
           <li><strong>Browsing behaviour outside the App</strong> — We do not track you across third-party websites or apps.</li>
+          <li><strong>Private post drafts</strong> — Content you type but do not publish is never sent to our servers.</li>
         </ul>
+        <p><strong>Note:</strong> Public feed posts, stories, and status content you choose to publish are collected and stored on our servers, as they are intended to be visible to other users.</p>
       </>
     ),
   },
   {
-    title: 'End-to-End Encryption & Message Privacy',
+    title: 'Public Feed vs. Private Messages',
     content: (
       <>
-        <p><strong>How It Works.</strong> All chat messages are <strong>end-to-end encrypted (E2EE)</strong>. Your device encrypts message content using the recipient's public key before transmission. Only the recipient's device — holding the matching private key — can decrypt and read the content. Twedot's server handles only the encrypted payload and is technically unable to read your messages.</p>
-        <p><strong>Relay Architecture — Not a Storage System.</strong> The Twedot server is a relay, not a message store:</p>
+        <p><strong>Two distinct content surfaces.</strong> Twedot has a public feed and a private messaging system. These are governed by entirely different privacy rules:</p>
+        <ul>
+          <li><strong>Public feed posts</strong> (photos, videos, text, stories/status) are <em>not</em> encrypted and are visible to all Twedot users. Anything you post to the feed is public. Do not post content you wish to keep private.</li>
+          <li><strong>Private chat messages</strong> are end-to-end encrypted (E2EE) before they leave your device. The Twedot server handles only the encrypted payload and cannot read your messages.</li>
+        </ul>
+        <p><strong>How E2EE Works.</strong> Your device encrypts each private message using the recipient's public key before transmission. Only the recipient's device — holding the matching private key — can decrypt and read the content. Twedot is technically unable to access private message content.</p>
+        <p><strong>Message Relay Architecture.</strong> The Twedot server is a relay, not a message store:</p>
         <ul>
           <li>When a recipient is <strong>online</strong>, the encrypted message is delivered in real-time and the server retains no copy.</li>
-          <li>When a recipient is <strong>offline</strong>, the encrypted message is held in a temporary delivery queue for up to <strong>7 days</strong>. It is permanently and automatically deleted from our infrastructure the moment the recipient's device acknowledges receipt.</li>
-          <li><strong>No message content is ever written to a permanent database.</strong></li>
+          <li>When a recipient is <strong>offline</strong>, the encrypted message is held in a temporary delivery queue for up to <strong>7 days</strong> and permanently deleted once the recipient's device acknowledges receipt.</li>
+          <li><strong>No private message content is ever written to a permanent database.</strong></li>
         </ul>
-        <p><strong>Local Device Storage.</strong> Your entire chat history — messages you send and receive — is stored exclusively on your own device in an encrypted local database. If you lose your device, factory-reset it, uninstall the App, or delete your account, your message history <strong>cannot be recovered from our servers</strong> because we do not have it.</p>
-        <p><strong>No Server Access.</strong> Twedot Limited, its employees, contractors, and partners cannot read, access, or disclose the content of your messages under any circumstances. We do not use message content for advertising, profiling, AI training, or any other purpose.</p>
+        <p><strong>Local Device Storage.</strong> Your private chat history is stored exclusively on your own device in an encrypted local database. It cannot be recovered from our servers if you lose your device, uninstall the App, or delete your account.</p>
       </>
     ),
   },
@@ -103,9 +111,13 @@ const sections = [
       <>
         <p>We use the data we collect to:</p>
         <ul>
-          <li>Operate and deliver all platform services;</li>
+          <li>Operate and deliver all platform services, including the public feed, private messaging, Nearby Discovery, and service bookings;</li>
           <li>Match you with contacts already on Twedot;</li>
           <li>Power the Nearby Discovery and status features;</li>
+          <li>Rank and surface content in the public feed;</li>
+          <li>Calculate your Rank score from genuine platform activity;</li>
+          <li>Count and validate qualified video views for content monetisation;</li>
+          <li>Process wallet balances and withdrawal transactions;</li>
           <li>Send push and in-app notifications;</li>
           <li>Detect and prevent fraud, abuse, and illegal activity;</li>
           <li>Improve the platform through anonymised, aggregated analytics;</li>
@@ -134,9 +146,11 @@ const sections = [
     title: 'Data Retention & Deletion',
     content: (
       <>
-        <p><strong>Account data</strong> is retained while your account is active. Upon permanent account deletion, your personal data is purged from our active systems within <strong>30 days</strong>. Certain metadata may be retained longer where required by law (e.g., fraud investigation records).</p>
-        <p><strong>Message content</strong> is never retained on our servers beyond the 7-day temporary offline delivery queue, and is automatically deleted upon delivery acknowledgment. We hold no long-term copy of any message.</p>
-        <p><strong>Status content</strong> is deleted from our servers and CDN caches within a short period of the 24-hour expiry.</p>
+        <p><strong>Account data</strong> is retained while your account is active. Upon permanent account deletion, your personal data is purged from our active systems within <strong>30 days</strong>. Certain metadata may be retained longer where required by law (e.g., fraud investigation records, financial transaction logs).</p>
+        <p><strong>Public feed posts</strong> remain on our servers until you delete them or your account is deleted. Deleting a post removes it from the feed immediately; it is removed from CDN caches within a short period afterward.</p>
+        <p><strong>Private message content</strong> is never retained on our servers beyond the 7-day temporary offline delivery queue, and is automatically deleted upon delivery acknowledgment. We hold no long-term copy of any private message.</p>
+        <p><strong>Status/stories content</strong> is deleted from our servers and CDN caches within a short period of the 24-hour expiry.</p>
+        <p><strong>Wallet and earnings data</strong> (transaction records, qualified view counts) is retained for financial compliance purposes for up to <strong>7 years</strong> after account deletion, as required by applicable law.</p>
         <p><strong>Contact matching data</strong> (non-Twedot phone numbers) is discarded immediately after the matching operation.</p>
         <p>You can delete your account at any time through Settings → Account → Delete account. This action is irreversible — deleted accounts and their data cannot be recovered.</p>
       </>
@@ -242,7 +256,7 @@ export default function PrivacyPage() {
               Privacy<br /><span style={{ color: 'var(--purple)' }}>Policy</span>
             </h1>
             <p style={{ fontSize: 14, color: 'var(--text-muted)', opacity: 0.7 }}>
-              Effective Date: 1 June 2025 · Last Updated: 5 August 2026 · Version 2.1
+              Effective Date: 1 June 2025 · Last Updated: 6 October 2026 · Version 2.2
             </p>
           </div>
 

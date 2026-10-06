@@ -41,13 +41,13 @@ export default function LatestFeature() {
           Latest features
         </div>
         <h2 style={{ fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 800, color: 'var(--text)', lineHeight: 1.05, marginBottom: 20 }}>
-          Video Stories
+          The Public Feed
         </h2>
         <p style={{ fontSize: 16, color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: 12 }}>
-          Watch vendors show their work before you book. See a haircut, a repair, a finished dress — real footage from real vendors near you.
+          Post photos, videos and text to a public feed — seen by everyone on Twedot. Vendors show their work, creators share content, and your community stays connected.
         </p>
         <p style={{ fontSize: 14, color: 'var(--text-muted)', opacity: 0.75 }}>
-          Check the Nearby tab in-app for available videos.
+          Posts support hashtags, mentions, and tagged locations — fully discoverable through Search.
         </p>
       </div>
 

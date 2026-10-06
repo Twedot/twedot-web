@@ -128,7 +128,7 @@ export default function Footer() {
             </div>
 
             <p style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.85, marginBottom: 24 }}>
-              Private. Local. Powerful. Connect with vendors and people around you — securely.
+              Social. Local. Rewarding. Post content, connect with people, discover local vendors, and earn from your videos.
             </p>
 
             {/* Download badges */}
