@@ -122,10 +122,24 @@ export default function AnalyticsPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
+    <div className="flex flex-col sm:flex-row sm:h-[calc(100vh-3.5rem)] sm:overflow-hidden">
 
-      {/* ── Left ── */}
-      <div className="flex w-[330px] flex-shrink-0 flex-col border-r border-border">
+      {/* ── Mobile header row (hidden on sm+) ── */}
+      <div className="sm:hidden flex items-center gap-2 border-b border-border px-4 py-2.5 flex-wrap">
+        <h1 className="mr-2 text-[15px] font-bold text-text">Analytics</h1>
+        {DAY_OPTIONS.map((d) => (
+          <button
+            key={d}
+            onClick={() => handleDays(d)}
+            className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${days === d ? "bg-primary/15 text-primary" : "text-light-text hover:bg-feed-bg"}`}
+          >
+            {d}d
+          </button>
+        ))}
+      </div>
+
+      {/* ── Desktop left sidebar (hidden on mobile) ── */}
+      <div className="hidden sm:flex w-[330px] flex-shrink-0 flex-col border-r border-border">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Analytics</h1>
         </div>
@@ -156,11 +170,11 @@ export default function AnalyticsPage() {
       </div>
 
       {/* ── Right ── */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b border-border px-5 py-4">
+      <div className="flex flex-1 flex-col sm:overflow-hidden">
+        <div className="hidden sm:block border-b border-border px-5 py-4">
           <h2 className="text-[17px] font-bold text-text">Key metrics</h2>
         </div>
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-4 py-4">
           {loading ? (
             <div className="flex flex-wrap gap-[4%]">
               {Array.from({ length: 6 }).map((_, i) => (

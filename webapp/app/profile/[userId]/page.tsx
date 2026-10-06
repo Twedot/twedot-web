@@ -298,6 +298,12 @@ export default function OtherUserProfilePage() {
               key={post.id}
               post={post}
               onClick={() => {
+                if (post.groupId) {
+                  const group = posts
+                    .filter((p) => p.groupId === post.groupId)
+                    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                  if (group.length > 1) postDetailStore.setGroup(group);
+                }
                 postDetailStore.set(post);
                 router.push(postUrl(post.id));
               }}

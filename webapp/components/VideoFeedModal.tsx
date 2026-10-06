@@ -57,6 +57,9 @@ function VideoSlide({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.intersectionRatio >= 0.85) {
+          document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+            if (v !== vid && !v.paused) v.pause();
+          });
           vid.play().catch(() => {});
           setPaused(false);
         } else {
