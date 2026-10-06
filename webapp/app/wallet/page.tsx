@@ -47,10 +47,24 @@ export default function WalletPage() {
   const userName = (user as any)?.name ?? "YOUR NAME";
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
+    <div className="flex flex-col sm:flex-row sm:h-[calc(100vh-3.5rem)] sm:overflow-hidden">
 
-      {/* ── Left ── */}
-      <div className="flex w-[330px] flex-shrink-0 flex-col border-r border-border">
+      {/* ── Mobile tab row (hidden on sm+) ── */}
+      <div className="sm:hidden flex items-center gap-1 border-b border-border px-4 py-2.5">
+        <h1 className="mr-3 text-[15px] font-bold text-text">Wallet</h1>
+        {(["earnings", "credits"] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`rounded-full px-4 py-1.5 text-[12px] font-semibold transition-colors ${tab === t ? "bg-primary/15 text-primary" : "text-light-text hover:bg-feed-bg"}`}
+          >
+            {t === "earnings" ? "Earnings" : "Credits"}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Desktop left sidebar (hidden on mobile) ── */}
+      <div className="hidden sm:flex w-[330px] flex-shrink-0 flex-col border-r border-border">
         <div className="border-b border-border px-5 py-4">
           <h1 className="text-[20px] font-bold text-text">Wallet</h1>
         </div>
@@ -67,15 +81,15 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* ── Right ── */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b border-border px-5 py-4">
+      {/* ── Content panel ── */}
+      <div className="flex flex-1 flex-col sm:overflow-hidden">
+        <div className="hidden sm:block border-b border-border px-5 py-4">
           <h2 className="text-[13px] font-bold text-text">
             {tab === "earnings" ? "Earnings" : "Twedot Credits"}
           </h2>
         </div>
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-[18px]">
+        <div className="flex flex-1 flex-col sm:overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-5 space-y-[18px]">
 
             {tab === "earnings" ? (
               <>

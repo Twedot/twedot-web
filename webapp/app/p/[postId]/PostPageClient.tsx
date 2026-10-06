@@ -266,6 +266,13 @@ export default function PostPageClient() {
         if (found) {
           setPost(found);
           postDetailStore.set(found);
+          // Populate group so the image carousel works on direct URL navigation
+          if (found.groupId) {
+            const groupPosts = (feed as StatusPost[])
+              .filter((p) => p.groupId === found.groupId)
+              .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            if (groupPosts.length > 1) postDetailStore.setGroup(groupPosts);
+          }
         } else {
           setPost({
             id: preview.id,

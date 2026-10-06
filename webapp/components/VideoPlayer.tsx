@@ -36,9 +36,12 @@ export default function VideoPlayer({
     return () => observer.disconnect();
   }, []);
 
-  // Auto-play for desktop inline player
+  // Auto-play for desktop inline player — pause all others first
   useEffect(() => {
     if (!autoPlay) return;
+    document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+      if (v !== videoRef.current && !v.paused) v.pause();
+    });
     videoRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
   }, [autoPlay]);
 
@@ -57,8 +60,13 @@ export default function VideoPlayer({
   function handleVideoClick() {
     const el = videoRef.current;
     if (!el) return;
-    if (el.paused) { el.play(); setIsPlaying(true); triggerFlash("play"); }
-    else { el.pause(); setIsPlaying(false); triggerFlash("pause"); }
+    if (el.paused) {
+      // Pause every other video on the page before playing this one
+      document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+        if (v !== el && !v.paused) v.pause();
+      });
+      el.play(); setIsPlaying(true); triggerFlash("play");
+    } else { el.pause(); setIsPlaying(false); triggerFlash("pause"); }
     revealControls();
   }
 

@@ -74,6 +74,7 @@ export default function TopBar() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const mobileOverlayRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // activeQuery / activeType are set by the SearchSync child (see bottom of this file)
@@ -81,9 +82,9 @@ export default function TopBar() {
 
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const inDesktop = wrapperRef.current?.contains(e.target as Node);
+      const inMobile = mobileOverlayRef.current?.contains(e.target as Node);
+      if (!inDesktop && !inMobile) setOpen(false);
     }
     document.addEventListener("mousedown", onMouseDown);
     return () => document.removeEventListener("mousedown", onMouseDown);
@@ -287,7 +288,7 @@ export default function TopBar() {
 
     {/* Mobile full-screen search overlay */}
     {open && (
-      <div className="fixed inset-0 z-50 flex flex-col bg-background sm:hidden">
+      <div ref={mobileOverlayRef} className="fixed inset-0 z-50 flex flex-col bg-background sm:hidden">
         {searchResultsContent}
       </div>
     )}
