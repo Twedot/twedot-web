@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   IoCloseOutline, IoHeartOutline, IoHeart,
   IoChatbubbleOutline, IoBookmarkOutline, IoBookmark,
@@ -49,7 +49,9 @@ function VideoSlide({
 
   // Drive play/pause from the `active` prop so only the correct slide plays
   // from the moment the modal opens (no slide-0 flash-play on open).
-  useEffect(() => {
+  // useLayoutEffect fires before paint so play() is still within the browser's
+  // user-gesture activation window (avoids mobile autoplay block).
+  useLayoutEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
     if (active) {
@@ -339,6 +341,7 @@ export default function VideoFeedModal() {
   const [tab, setTab] = useState<"stories" | "following">("stories");
   const scrollRef = useRef<HTMLDivElement>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didPushHistoryRef = useRef(false);
   const pathname = usePathname();
 
   // Auto-hide when navigating away (e.g. to post detail or profile).
@@ -396,6 +399,30 @@ export default function VideoFeedModal() {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
+
+  // Push a history entry when the modal opens so the back button closes it
+  // instead of navigating to the previous page (e.g. wallet).
+  useEffect(() => {
+    if (!isOpen || !isFeedPage) {
+      // Modal explicitly closed while still on the feed — pop the pushed entry
+      if (!isOpen && didPushHistoryRef.current) {
+        didPushHistoryRef.current = false;
+        window.history.back();
+      }
+      return;
+    }
+    // Push only once per open (guard against re-registration on tab/scroll changes)
+    if (!didPushHistoryRef.current) {
+      didPushHistoryRef.current = true;
+      window.history.pushState({ videoModal: true }, "");
+    }
+    function onPop() {
+      didPushHistoryRef.current = false;
+      videoFeedStore.close();
+    }
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [isOpen, isFeedPage]);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
