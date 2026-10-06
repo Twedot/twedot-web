@@ -19,7 +19,16 @@ import type { StatusPost } from "@/lib/types";
 import LinkText from "./LinkText";
 import RankBadge from "./RankBadge";
 
-function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
+function VideoSlide({
+  video,
+  active,
+  scrollRoot,
+}: {
+  video: StatusPost;
+  active: boolean;
+  scrollRoot: React.RefObject<HTMLDivElement>;
+}) {
+  const slideRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAuth();
   const { notify } = useUi();
@@ -38,26 +47,30 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const didSeekRef = useRef(false);
 
-  // IntersectionObserver drives play/pause — more reliable than prop on fast swipes
+  // Observe the slide div (not absolute video) against the scroll container root
+  // — fires correctly whenever this slide enters/leaves the scroll viewport
   useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
+    const slide = slideRef.current;
+    const vid = videoRef.current;
+    const root = scrollRoot.current;
+    if (!slide || !vid || !root) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.intersectionRatio >= 0.85) {
-          el.play().catch(() => {});
+          vid.play().catch(() => {});
           setPaused(false);
         } else {
-          el.pause();
-          if (entry.intersectionRatio < 0.15) {
-            el.currentTime = 0;
+          // Pause immediately — don't wait until nearly off-screen
+          vid.pause();
+          if (entry.intersectionRatio < 0.1) {
+            vid.currentTime = 0;
             setPaused(false);
           }
         }
       },
-      { threshold: [0.15, 0.85] }
+      { root, threshold: [0.1, 0.85] }
     );
-    observer.observe(el);
+    observer.observe(slide);
     return () => observer.disconnect();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -132,7 +145,11 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
   }
 
   return (
-    <>
+    <div
+      ref={slideRef}
+      className="relative"
+      style={{ height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always" }}
+    >
       {/* Video */}
       <video
         ref={videoRef}
@@ -300,7 +317,7 @@ function VideoSlide({ video, active }: { video: StatusPost; active: boolean }) {
           </p>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -431,17 +448,7 @@ export default function VideoFeedModal() {
           </div>
         ) : (
           displayVideos.map((video, i) => (
-            <div
-              key={video.id}
-              className="relative"
-              style={{
-                height: "100%",
-                scrollSnapAlign: "start",
-                scrollSnapStop: "always",
-              }}
-            >
-              <VideoSlide video={video} active={i === currentIdx} />
-            </div>
+            <VideoSlide key={video.id} video={video} active={i === currentIdx} scrollRoot={scrollRef} />
           ))
         )}
       </div>
