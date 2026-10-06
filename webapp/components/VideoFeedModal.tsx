@@ -47,8 +47,24 @@ function VideoSlide({
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const didSeekRef = useRef(false);
 
-  // Observe the slide div (not absolute video) against the scroll container root
-  // — fires correctly whenever this slide enters/leaves the scroll viewport
+  // Drive play/pause from the `active` prop so only the correct slide plays
+  // from the moment the modal opens (no slide-0 flash-play on open).
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    if (active) {
+      document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+        if (v !== vid && !v.paused) v.pause();
+      });
+      vid.play().catch(() => {});
+      setPaused(false);
+    } else {
+      vid.pause();
+    }
+  }, [active]);
+
+  // Reset currentTime when fully scrolled off-screen so returning always
+  // starts from the beginning (mirrors TikTok behaviour).
   useEffect(() => {
     const slide = slideRef.current;
     const vid = videoRef.current;
@@ -56,22 +72,12 @@ function VideoSlide({
     if (!slide || !vid || !root) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.intersectionRatio >= 0.85) {
-          document.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
-            if (v !== vid && !v.paused) v.pause();
-          });
-          vid.play().catch(() => {});
-          setPaused(false);
-        } else {
-          // Pause immediately — don't wait until nearly off-screen
+        if (entry.intersectionRatio < 0.1) {
           vid.pause();
-          if (entry.intersectionRatio < 0.1) {
-            vid.currentTime = 0;
-            setPaused(false);
-          }
+          vid.currentTime = 0;
         }
       },
-      { root, threshold: [0.1, 0.85] }
+      { root, threshold: [0.1] }
     );
     observer.observe(slide);
     return () => observer.disconnect();
