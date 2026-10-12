@@ -20,7 +20,6 @@ import {
 import { useAuth } from "@/lib/AuthContext";
 import { apiPost, apiUploadFile } from "@/lib/api";
 import { uploadStore } from "@/lib/uploadStore";
-import VideoPlayer from "@/components/VideoPlayer";
 
 type Mode = "text" | "image" | "video";
 type MediaItem = { file: File; preview: string; thumb: string; type: "image" | "video" };
@@ -307,19 +306,25 @@ export default function CreatePostPage() {
           ) : (
             /* Preview + horizontal thumbnail strip below */
             <div className="flex flex-col gap-3">
-              {/* Main preview — full width, fixed height */}
-              <div className="relative w-full h-[280px] overflow-hidden rounded-2xl bg-black">
+              {/* Main preview — full width, aspect-ratio preserved */}
+              <div className="relative w-full overflow-hidden rounded-2xl">
                 {current?.type === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={current.preview}
                     alt=""
-                    className="absolute inset-0 h-full w-full object-contain"
+                    className="w-full max-h-[400px] object-cover rounded-2xl"
                   />
                 ) : current?.type === "video" ? (
-                  <div key={current.preview} className="absolute inset-0">
-                    <VideoPlayer src={current.preview} poster={current.thumb} />
-                  </div>
+                  // eslint-disable-next-line jsx-a11y/media-has-caption
+                  <video
+                    key={current.preview}
+                    src={current.preview}
+                    poster={current.thumb}
+                    controls
+                    playsInline
+                    className="w-full max-h-[400px] rounded-2xl"
+                  />
                 ) : null}
 
                 <span className="absolute bottom-2.5 left-3 text-[11px] font-bold text-white drop-shadow">
