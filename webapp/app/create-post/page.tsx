@@ -203,6 +203,7 @@ export default function CreatePostPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addMoreRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const pickingRef = useRef(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -420,16 +421,21 @@ export default function CreatePostPage() {
             type="file"
             accept={mode === "image" ? "image/*" : "video/*"}
             multiple={mode === "image"}
-            onChange={handleInitialPick}
+            onChange={(e) => { pickingRef.current = false; handleInitialPick(e); }}
             onClick={(e) => e.stopPropagation()}
-            className="hidden"
+            style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
           />
           {mediaItems.length === 0 ? (
             /* Empty drop zone */
             <div
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                if (pickingRef.current) return;
+                pickingRef.current = true;
+                fileInputRef.current?.click();
+                setTimeout(() => { pickingRef.current = false; }, 1000);
+              }}
               className="flex min-h-[300px] cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-feed-bg hover:bg-border/30 transition-colors"
             >
               {mode === "image" ? (
