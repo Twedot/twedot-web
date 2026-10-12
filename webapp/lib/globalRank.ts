@@ -9,7 +9,7 @@ export const GLOBAL_RANK_THRESHOLDS: { tier: GlobalRankTier; min: number }[] = [
   { tier: "unknown", min: 0 },
   { tier: "known", min: 40 },
   { tier: "noticed", min: 100 },
-  { tier: "recognized", min: 220 },
+  { tier: "recognized", min: 160 },
   { tier: "influential", min: 450 },
   { tier: "elite", min: 900 },
   { tier: "warlord", min: 1800 },
