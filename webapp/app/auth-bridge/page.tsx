@@ -42,13 +42,14 @@ export default function AuthBridgePage() {
       .then((r) => r.json())
       .then((json) => {
         if (json.success && json.data?.code) {
+          const msg = { type: "twedot-bridge", code: json.data.code };
           if (window.opener) {
-            window.opener.postMessage(
-              { type: "twedot-bridge", code: json.data.code },
-              origin
-            );
+            window.opener.postMessage(msg, origin);
             setStatus("success");
             setTimeout(() => window.close(), 400);
+          } else if (window.parent !== window) {
+            window.parent.postMessage(msg, origin);
+            setStatus("success");
           } else {
             setStatus("success");
           }
