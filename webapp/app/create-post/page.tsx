@@ -31,22 +31,28 @@ type MediaItem = { file: File; preview: string; thumb: string; type: "image" | "
 function grabVideoThumb(url: string): Promise<string> {
   return new Promise((resolve) => {
     const video = document.createElement("video");
-    video.crossOrigin = "anonymous";
     video.muted = true;
     video.playsInline = true;
     video.preload = "auto";
     video.src = url;
+    let resolved = false;
+    const done = (val: string) => { if (!resolved) { resolved = true; resolve(val); } };
     video.addEventListener("loadeddata", () => {
       video.currentTime = 0.1;
     });
     video.addEventListener("seeked", () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d")!.drawImage(video, 0, 0);
-      resolve(canvas.toDataURL("image/jpeg", 0.7));
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth || 320;
+        canvas.height = video.videoHeight || 240;
+        canvas.getContext("2d")!.drawImage(video, 0, 0);
+        done(canvas.toDataURL("image/jpeg", 0.7));
+      } catch {
+        done(url);
+      }
     });
-    video.addEventListener("error", () => resolve(url));
+    video.addEventListener("error", () => done(url));
+    setTimeout(() => done(url), 4000);
   });
 }
 
@@ -229,6 +235,7 @@ export default function CreatePostPage() {
     setMediaItems([]);
     setCurrentIndex(0);
     addFiles(files);
+    e.target.value = "";
   }, [addFiles]);
 
   const handleAddMore = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
