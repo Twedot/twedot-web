@@ -83,6 +83,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
   const isOwnPost = user?.id === head.userId;
   const hasMedia = items.some((it) => it.type === "image" || it.type === "video");
   const isVideoPost = items.length === 1 && active.type === "video";
+  const hasUsableThumb = (url?: string | null) => !!url && !/\.(mp4|mov|webm|avi|mkv)(\?|$)/i.test(url);
 
   const [isFollowing, setIsFollowing] = useState(head.isFollowingAuthor ?? false);
   const followLoadingRef = useRef(false);
@@ -453,16 +454,12 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
 
               {/* Single video */}
               {items.length === 1 && active.type === "video" && (
-                desktopPlaying ? (
-                  <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
+                desktopPlaying || !hasUsableThumb(active.thumbnailUrl) ? (
+                  <VideoPlayer src={active.content} poster={hasUsableThumb(active.thumbnailUrl) ? active.thumbnailUrl! : undefined} autoPlay />
                 ) : (
                   <div className="relative cursor-pointer sm:w-fit" onClick={openVideo}>
-                    {active.thumbnailUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={active.thumbnailUrl} alt="" className="w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]" />
-                    ) : (
-                      <div className="h-64 w-full bg-zinc-900" />
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={active.thumbnailUrl!} alt="" className="w-full object-cover max-h-[480px] sm:w-auto sm:max-h-[460px]" />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/25">
                       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
                         <IoPlay size={28} className="ml-1 text-white" />
@@ -482,20 +479,18 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                           {it.type === "image" ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={it.content} alt="" className="w-full object-cover" style={{ maxHeight: 480 }} />
-                          ) : (
+                          ) : hasUsableThumb(it.thumbnailUrl) ? (
                             <div className="relative cursor-pointer" onClick={openVideo}>
-                              {it.thumbnailUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={it.thumbnailUrl} alt="" className="w-full object-cover" style={{ maxHeight: 480 }} />
-                              ) : (
-                                <div className="h-64 w-full bg-zinc-900" />
-                              )}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={it.thumbnailUrl!} alt="" className="w-full object-cover" style={{ maxHeight: 480 }} />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/25">
                                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm">
                                   <IoPlay size={28} className="ml-1 text-white" />
                                 </div>
                               </div>
                             </div>
+                          ) : (
+                            <VideoPlayer src={it.content} autoPlay />
                           )}
                         </MediaBackdrop>
                       </div>
