@@ -20,9 +20,32 @@ import {
 import { useAuth } from "@/lib/AuthContext";
 import { apiPost, apiUploadFile } from "@/lib/api";
 import { uploadStore } from "@/lib/uploadStore";
+import VideoPlayer from "@/components/VideoPlayer";
 
 type Mode = "text" | "image" | "video";
-type MediaItem = { file: File; preview: string; type: "image" | "video" };
+type MediaItem = { file: File; preview: string; thumb: string; type: "image" | "video" };
+
+function grabVideoThumb(url: string): Promise<string> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    video.src = url;
+    video.addEventListener("loadeddata", () => {
+      video.currentTime = 0.1;
+    });
+    video.addEventListener("seeked", () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d")!.drawImage(video, 0, 0);
+      resolve(canvas.toDataURL("image/jpeg", 0.7));
+    });
+    video.addEventListener("error", () => resolve(url));
+  });
+}
 
 function generateId() {
   return (typeof crypto !== "undefined" && crypto.randomUUID)
@@ -61,22 +84,17 @@ export default function CreatePostPage() {
     el.style.height = `${el.scrollHeight}px`;
   }, [textContent]);
 
-  const addFiles = useCallback((files: FileList | File[]) => {
+  const addFiles = useCallback(async (files: FileList | File[]) => {
     const arr = Array.from(files).slice(0, 10);
-    const newItems: MediaItem[] = arr.map((f) => ({
-      file: f,
-      preview: URL.createObjectURL(f),
-      type: f.type.startsWith("video/") ? "video" : "image",
-    }));
-    setMediaItems((prev) => {
-      const combined = [...prev, ...newItems].slice(0, 10);
-      return combined;
-    });
-    setCurrentIndex((prev) => {
-      const existing = prev; // keep on current unless first pick
-      return existing;
-    });
-    // Set mode based on first file if just picking
+    const newItems: MediaItem[] = await Promise.all(
+      arr.map(async (f) => {
+        const preview = URL.createObjectURL(f);
+        const isVideo = f.type.startsWith("video/");
+        const thumb = isVideo ? await grabVideoThumb(preview) : preview;
+        return { file: f, preview, thumb, type: isVideo ? "video" as const : "image" as const };
+      })
+    );
+    setMediaItems((prev) => [...prev, ...newItems].slice(0, 10));
     if (arr[0]) setMode(arr[0].type.startsWith("video/") ? "video" : "image");
   }, []);
 
@@ -299,13 +317,9 @@ export default function CreatePostPage() {
                     className="absolute inset-0 h-full w-full object-contain"
                   />
                 ) : current?.type === "video" ? (
-                  // eslint-disable-next-line jsx-a11y/media-has-caption
-                  <video
-                    key={current.preview}
-                    src={current.preview}
-                    controls
-                    className="absolute inset-0 h-full w-full object-contain"
-                  />
+                  <div key={current.preview} className="absolute inset-0">
+                    <VideoPlayer src={current.preview} poster={current.thumb} />
+                  </div>
                 ) : null}
 
                 <span className="absolute bottom-2.5 left-3 text-[11px] font-bold text-white drop-shadow">
@@ -330,7 +344,7 @@ export default function CreatePostPage() {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={item.preview}
+                      src={item.thumb}
                       alt=""
                       className="h-full w-full object-cover"
                     />
