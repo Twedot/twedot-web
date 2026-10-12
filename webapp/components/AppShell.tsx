@@ -67,10 +67,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   const isLoginOrVerify = pathname === "/login" || pathname === "/verify";
   const isCompleteProfile = pathname === "/complete-profile";
+  const isAuthBridge = pathname === "/auth-bridge";
   const profileComplete = !!user?.profileComplete;
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isAuthBridge) return;
 
     if (!isAuthenticated) {
       // Unauthenticated: only /login and /verify are allowed
@@ -86,7 +87,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
     // Fully authenticated: redirect away from auth pages
     if (isLoginOrVerify || isCompleteProfile) router.replace("/stories");
-  }, [isLoading, isAuthenticated, profileComplete, isLoginOrVerify, isCompleteProfile, router]);
+  }, [isLoading, isAuthenticated, profileComplete, isLoginOrVerify, isCompleteProfile, isAuthBridge, router]);
+
+  // Auth-bridge page handles its own auth flow (popup postMessage)
+  if (isAuthBridge) return <>{children}</>;
 
   // Hold render while auth state resolves to avoid flash
   if (isLoading) return null;
