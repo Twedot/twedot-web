@@ -11,7 +11,9 @@ export default function AuthBridgeContent() {
   const params = useSearchParams();
   const origin = params.get("origin");
   const mode = params.get("mode");
-  const [status, setStatus] = useState<"loading" | "success" | "expired" | "error" | "invalid">("loading");
+  const [status, setStatus] = useState<
+    "loading" | "need_login" | "success" | "error" | "invalid"
+  >("loading");
 
   const attemptBridge = useCallback(() => {
     if (!origin || !/^https?:\/\/localhost[:/]/.test(origin)) {
@@ -23,11 +25,7 @@ export default function AuthBridgeContent() {
     const deviceId = localStorage.getItem(DEVICE_ID_KEY);
 
     if (!token || !deviceId) {
-      try {
-        const returnPath = `/auth-bridge?origin=${encodeURIComponent(origin)}${mode ? `&mode=${mode}` : ""}`;
-        sessionStorage.setItem("bridge_pending", returnPath);
-      } catch {}
-      window.location.href = "/login";
+      setStatus("need_login");
       return;
     }
 
@@ -63,19 +61,13 @@ export default function AuthBridgeContent() {
             setStatus("success");
           }
         } else {
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(DEVICE_ID_KEY);
-          try {
-            const returnPath = `/auth-bridge?origin=${encodeURIComponent(origin)}${mode ? `&mode=${mode}` : ""}`;
-            sessionStorage.setItem("bridge_pending", returnPath);
-          } catch {}
-          window.location.href = "/login";
+          setStatus("need_login");
         }
       })
       .catch(() => {
         setStatus("error");
       });
-  }, [origin]);
+  }, [origin, mode]);
 
   useEffect(() => {
     attemptBridge();
@@ -89,6 +81,28 @@ export default function AuthBridgeContent() {
         </div>
       )}
 
+      {status === "need_login" && (
+        <div style={cardStyle}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🔑</div>
+          <h2 style={headingStyle}>Sign in to continue</h2>
+          <p style={subtextStyle}>
+            Log in to twedot.com first, then tap Connect.
+          </p>
+          <a
+            href="https://twedot.com/login"
+            target="_blank"
+            rel="noopener"
+            style={{ ...btnStyle, display: "inline-block", textDecoration: "none", marginBottom: 12 }}
+          >
+            Log in to Twedot
+          </a>
+          <br />
+          <button onClick={attemptBridge} style={{ ...btnStyle, background: "#2a2e3e" }}>
+            Connect
+          </button>
+        </div>
+      )}
+
       {status === "success" && (
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>✓</div>
@@ -98,12 +112,10 @@ export default function AuthBridgeContent() {
         </div>
       )}
 
-      {(status === "expired" || status === "error") && (
+      {status === "error" && (
         <div style={cardStyle}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-          <h2 style={headingStyle}>
-            {status === "expired" ? "Session expired" : "Connection failed"}
-          </h2>
+          <h2 style={headingStyle}>Connection failed</h2>
           <p style={subtextStyle}>Please try again.</p>
           <button onClick={attemptBridge} style={btnStyle}>
             Retry
