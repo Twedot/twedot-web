@@ -3,6 +3,7 @@ export interface UploadState {
   done: number;
   failed: boolean;
   label?: string; // "text" | "media"
+  progress?: number; // 0-100 byte-level progress for current file
 }
 
 type Listener = (state: UploadState | null) => void;

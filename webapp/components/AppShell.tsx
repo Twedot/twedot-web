@@ -20,28 +20,40 @@ function UploadProgress() {
   const [state, setState] = useState<UploadState | null>(uploadStore.get());
   useEffect(() => uploadStore.subscribe(setState), []);
   if (!state) return null;
+  const pct = state.progress ?? 0;
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-[#111] px-4 py-2.5 shadow-xl">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-[#111] px-4 py-2.5 shadow-xl min-w-[180px]">
       {state.failed ? (
         <>
-          <IoCloseCircle size={16} className="text-red-400" />
+          <IoCloseCircle size={16} className="text-red-400 shrink-0" />
           <span className="text-[13px] font-semibold text-white">Upload failed</span>
         </>
       ) : state.done >= state.total ? (
         <>
-          <IoCheckmarkCircle size={16} className="text-green-400" />
+          <IoCheckmarkCircle size={16} className="text-green-400 shrink-0" />
           <span className="text-[13px] font-semibold text-white">
             {state.label === "text" ? "Posted!" : "Upload complete!"}
           </span>
         </>
       ) : (
         <>
-          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-          <span className="text-[13px] font-semibold text-white">
-            {state.label === "text"
-              ? "Posting…"
-              : `Uploading ${state.done + 1} / ${state.total}…`}
-          </span>
+          <svg width={16} height={16} viewBox="0 0 16 16" className="shrink-0 text-[#6B4EFF]">
+            <path d="M8 1.5v5l3-3M8 1.5L5 4.5M2.5 9.5v2a2 2 0 002 2h7a2 2 0 002-2v-2" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          </svg>
+          <div className="flex-1 flex flex-col gap-1">
+            <span className="text-[12px] font-semibold text-white leading-none">
+              {state.label === "text"
+                ? "Posting…"
+                : `Uploading ${state.done + 1} / ${state.total}`}
+            </span>
+            <div className="h-[5px] w-full rounded-full bg-white/15 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-[#6B4EFF] transition-[width] duration-200"
+                style={{ width: `${Math.max(pct, 2)}%` }}
+              />
+            </div>
+          </div>
+          <span className="text-[11px] font-semibold text-white/70 tabular-nums shrink-0">{pct}%</span>
         </>
       )}
     </div>

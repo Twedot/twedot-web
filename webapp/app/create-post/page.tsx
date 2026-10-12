@@ -178,8 +178,10 @@ export default function CreatePostPage() {
           fd.append("isPrivate", "false");
           fd.append("allowComments", allowComments ? "true" : "false");
           if (groupId) fd.append("groupId", groupId);
-          await apiUploadFile("/media/upload/direct", fd);
-          uploadStore.set({ total: items.length, done: i + 1, failed: false, label: "media" });
+          await apiUploadFile("/media/upload/direct", fd, (pct) => {
+            uploadStore.set({ total: items.length, done: i, failed: false, label: "media", progress: pct });
+          });
+          uploadStore.set({ total: items.length, done: i + 1, failed: false, label: "media", progress: 0 });
         } catch {
           uploadStore.set({ total: items.length, done: i, failed: true, label: "media" });
           setTimeout(() => uploadStore.set(null), 3000);
