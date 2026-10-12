@@ -63,7 +63,13 @@ export default function AuthBridgeContent() {
             setStatus("success");
           }
         } else {
-          setStatus("expired");
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(DEVICE_ID_KEY);
+          try {
+            const returnPath = `/auth-bridge?origin=${encodeURIComponent(origin)}${mode ? `&mode=${mode}` : ""}`;
+            sessionStorage.setItem("bridge_pending", returnPath);
+          } catch {}
+          window.location.href = "/login";
         }
       })
       .catch(() => {
