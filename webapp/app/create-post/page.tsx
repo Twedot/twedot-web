@@ -415,6 +415,15 @@ export default function CreatePostPage() {
       {/* ── IMAGE / VIDEO MODE ── */}
       {(mode === "image" || mode === "video") && (
         <>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={mode === "image" ? "image/*" : "video/*"}
+            multiple={mode === "image"}
+            onChange={handleInitialPick}
+            onClick={(e) => e.stopPropagation()}
+            className="hidden"
+          />
           {mediaItems.length === 0 ? (
             /* Empty drop zone */
             <div
@@ -432,14 +441,6 @@ export default function CreatePostPage() {
                 {mode === "image" ? "Pick images" : "Pick a video"}
               </p>
               <p className="text-[12px] text-light-text">Click to browse · drag & drop · up to 10 files</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={mode === "image" ? "image/*" : "video/*"}
-                multiple={mode === "image"}
-                onChange={handleInitialPick}
-                className="hidden"
-              />
             </div>
           ) : (
             /* Preview + horizontal thumbnail strip below */
