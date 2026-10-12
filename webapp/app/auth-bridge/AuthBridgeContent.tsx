@@ -10,6 +10,7 @@ const DEVICE_ID_KEY = "twedot_device_id";
 export default function AuthBridgeContent() {
   const params = useSearchParams();
   const origin = params.get("origin");
+  const mode = params.get("mode");
   const [status, setStatus] = useState<"loading" | "success" | "expired" | "error" | "invalid">("loading");
 
   const attemptBridge = useCallback(() => {
@@ -23,7 +24,8 @@ export default function AuthBridgeContent() {
 
     if (!token || !deviceId) {
       try {
-        sessionStorage.setItem("bridge_pending", `/auth-bridge?origin=${encodeURIComponent(origin)}`);
+        const returnPath = `/auth-bridge?origin=${encodeURIComponent(origin)}${mode ? `&mode=${mode}` : ""}`;
+        sessionStorage.setItem("bridge_pending", returnPath);
       } catch {}
       window.location.href = "/login";
       return;
@@ -45,6 +47,10 @@ export default function AuthBridgeContent() {
       .then((r) => r.json())
       .then((json) => {
         if (json.success && json.data?.code) {
+          if (mode === "redirect") {
+            window.location.href = `${origin}?bridge_code=${json.data.code}`;
+            return;
+          }
           const msg = { type: "twedot-bridge", code: json.data.code };
           if (window.opener) {
             window.opener.postMessage(msg, origin);
