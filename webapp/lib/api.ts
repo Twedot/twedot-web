@@ -38,6 +38,7 @@ async function request<T>(
     res = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers,
+      credentials: 'include',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
@@ -67,6 +68,8 @@ export const apiPatch = <T>(path: string, body?: unknown, opts?: { auth?: boolea
 export const apiDelete = <T>(path: string, opts?: { auth?: boolean }) =>
   request<T>("DELETE", path, undefined, opts);
 
+const UPLOAD_BASE_URL = process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || "https://upload.twedot.com";
+
 export async function apiUploadFile<T>(
   path: string,
   formData: FormData
@@ -78,9 +81,14 @@ export async function apiUploadFile<T>(
   const token = AuthStorage.getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  const isDirectUpload = path.includes("upload/direct");
+  const url = isDirectUpload
+    ? `${UPLOAD_BASE_URL}/upload/direct`
+    : `${API_BASE_URL}${path}`;
+
   let res: Response;
   try {
-    res = await fetch(`${API_BASE_URL}${path}`, {
+    res = await fetch(url, {
       method: "POST",
       headers,
       body: formData,
