@@ -86,7 +86,17 @@ export default function AppShell({ children }: { children: ReactNode }) {
     }
 
     // Fully authenticated: redirect away from auth pages
-    if (isLoginOrVerify || isCompleteProfile) router.replace("/stories");
+    if (isLoginOrVerify || isCompleteProfile) {
+      let dest = "/stories";
+      try {
+        const pending = sessionStorage.getItem("bridge_pending");
+        if (pending && pending.startsWith("/auth-bridge")) {
+          sessionStorage.removeItem("bridge_pending");
+          dest = pending;
+        }
+      } catch {}
+      router.replace(dest);
+    }
   }, [isLoading, isAuthenticated, profileComplete, isLoginOrVerify, isCompleteProfile, isAuthBridge, router]);
 
   // Auth-bridge page handles its own auth flow (popup postMessage)

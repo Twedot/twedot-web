@@ -10,7 +10,7 @@ const DEVICE_ID_KEY = "twedot_device_id";
 export default function AuthBridgeContent() {
   const params = useSearchParams();
   const origin = params.get("origin");
-  const [status, setStatus] = useState<"loading" | "not_logged_in" | "success" | "expired" | "error" | "invalid">("loading");
+  const [status, setStatus] = useState<"loading" | "success" | "expired" | "error" | "invalid">("loading");
 
   const attemptBridge = useCallback(() => {
     if (!origin || !/^https?:\/\/localhost[:/]/.test(origin)) {
@@ -22,7 +22,10 @@ export default function AuthBridgeContent() {
     const deviceId = localStorage.getItem(DEVICE_ID_KEY);
 
     if (!token || !deviceId) {
-      setStatus("not_logged_in");
+      try {
+        sessionStorage.setItem("bridge_pending", `/auth-bridge?origin=${encodeURIComponent(origin)}`);
+      } catch {}
+      window.location.href = "/login";
       return;
     }
 
@@ -71,28 +74,6 @@ export default function AuthBridgeContent() {
       {status === "loading" && (
         <div style={{ color: "#7df9c0", fontSize: 18, fontWeight: 600 }}>
           Connecting...
-        </div>
-      )}
-
-      {status === "not_logged_in" && (
-        <div style={cardStyle}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🔑</div>
-          <h2 style={headingStyle}>Sign in required</h2>
-          <p style={subtextStyle}>
-            Log in to{" "}
-            <a
-              href="https://twedot.com/login"
-              target="_blank"
-              rel="noopener"
-              style={{ color: "#7df9c0", textDecoration: "underline" }}
-            >
-              twedot.com
-            </a>{" "}
-            first, then come back here and tap Retry.
-          </p>
-          <button onClick={attemptBridge} style={btnStyle}>
-            Retry
-          </button>
         </div>
       )}
 
