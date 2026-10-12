@@ -9,12 +9,12 @@ const DEVICE_ID_KEY = "twedot_device_id";
 
 export default function AuthBridgePage() {
   const params = useSearchParams();
-  const redirect = params.get("redirect");
+  const origin = params.get("origin");
   const [status, setStatus] = useState("Connecting...");
 
   useEffect(() => {
-    if (!redirect || !/^https?:\/\/localhost[:/]/.test(redirect)) {
-      setStatus("Invalid redirect URL");
+    if (!origin || !/^https?:\/\/localhost[:/]/.test(origin)) {
+      setStatus("Invalid origin");
       return;
     }
 
@@ -22,8 +22,12 @@ export default function AuthBridgePage() {
     const deviceId = localStorage.getItem(DEVICE_ID_KEY);
 
     if (!token || !deviceId) {
-      setStatus("Not logged in — please log in first");
-      setTimeout(() => (window.location.href = "/login"), 2000);
+      if (window.opener) {
+        window.opener.postMessage({ type: "twedot-bridge", error: "not_logged_in" }, origin);
+        window.close();
+      } else {
+        setStatus("Not logged in");
+      }
       return;
     }
 
@@ -36,22 +40,33 @@ export default function AuthBridgePage() {
         "x-platform": "web",
       },
       credentials: "include",
-      body: JSON.stringify({ redirect }),
+      body: JSON.stringify({ redirect: origin }),
     })
       .then((r) => r.json())
       .then((json) => {
         if (json.success && json.data?.code) {
-          const sep = redirect.includes("?") ? "&" : "?";
-          window.location.href = `${redirect}${sep}bridge_code=${json.data.code}`;
+          if (window.opener) {
+            window.opener.postMessage({ type: "twedot-bridge", code: json.data.code }, origin);
+            window.close();
+          }
         } else {
-          setStatus("Session expired — please log in again");
-          setTimeout(() => (window.location.href = "/login"), 2000);
+          if (window.opener) {
+            window.opener.postMessage({ type: "twedot-bridge", error: "expired" }, origin);
+            window.close();
+          } else {
+            setStatus("Session expired");
+          }
         }
       })
       .catch(() => {
-        setStatus("Connection failed");
+        if (window.opener) {
+          window.opener.postMessage({ type: "twedot-bridge", error: "network" }, origin);
+          window.close();
+        } else {
+          setStatus("Connection failed");
+        }
       });
-  }, [redirect]);
+  }, [origin]);
 
   return (
     <div
