@@ -16,6 +16,10 @@ import {
   IoPlayCircle,
   IoChatbubbleOutline,
   IoChatbubble,
+  IoPlay,
+  IoPause,
+  IoVolumeHigh,
+  IoVolumeMute,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { apiPost, apiUploadFile } from "@/lib/api";
@@ -44,6 +48,128 @@ function grabVideoThumb(url: string): Promise<string> {
     });
     video.addEventListener("error", () => resolve(url));
   });
+}
+
+function fmt(s: number) {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+function VideoPreview({ src, poster }: { src: string; poster?: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [cur, setCur] = useState(0);
+  const [dur, setDur] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const [vol, setVol] = useState(1);
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onTime = () => setCur(v.currentTime);
+    const onMeta = () => setDur(v.duration || 0);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    v.addEventListener("timeupdate", onTime);
+    v.addEventListener("loadedmetadata", onMeta);
+    return () => {
+      v.removeEventListener("play", onPlay);
+      v.removeEventListener("pause", onPause);
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("loadedmetadata", onMeta);
+    };
+  }, [src]);
+
+  function togglePlay() {
+    const v = ref.current;
+    if (!v) return;
+    v.paused ? v.play().catch(() => {}) : v.pause();
+  }
+
+  function seek(e: React.MouseEvent<HTMLDivElement>) {
+    const v = ref.current;
+    const bar = barRef.current;
+    if (!v || !bar || !dur) return;
+    const rect = bar.getBoundingClientRect();
+    v.currentTime = ((e.clientX - rect.left) / rect.width) * dur;
+  }
+
+  function changeVol(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = ref.current;
+    const n = parseFloat(e.target.value);
+    setVol(n);
+    if (v) { v.volume = n; v.muted = n === 0; }
+    setMuted(n === 0);
+  }
+
+  function toggleMute() {
+    const v = ref.current;
+    if (!v) return;
+    const next = !muted;
+    setMuted(next);
+    v.muted = next;
+  }
+
+  const pct = dur ? (cur / dur) * 100 : 0;
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-2xl bg-black">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <video
+        ref={ref}
+        key={src}
+        src={src}
+        poster={poster}
+        playsInline
+        className="w-full max-h-[400px] rounded-2xl"
+      />
+
+      {/* Controls overlay */}
+      <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2 pt-6">
+        {/* Play / Pause */}
+        <button onClick={togglePlay} className="text-white">
+          {playing ? <IoPause size={18} /> : <IoPlay size={18} />}
+        </button>
+
+        {/* Time */}
+        <span className="min-w-[70px] text-[11px] font-medium text-white/90">
+          {fmt(cur)} / {fmt(dur)}
+        </span>
+
+        {/* Progress bar */}
+        <div
+          ref={barRef}
+          onClick={seek}
+          className="relative flex-1 cursor-pointer py-1"
+        >
+          <div className="h-1 rounded-full bg-white/30">
+            <div
+              className="h-1 rounded-full bg-white"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Volume */}
+        <button onClick={toggleMute} className="text-white">
+          {muted || vol === 0 ? <IoVolumeMute size={16} /> : <IoVolumeHigh size={16} />}
+        </button>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.05}
+          value={muted ? 0 : vol}
+          onChange={changeVol}
+          className="w-14 accent-white"
+        />
+      </div>
+    </div>
+  );
 }
 
 function generateId() {
@@ -316,15 +442,7 @@ export default function CreatePostPage() {
                     className="w-full max-h-[400px] object-cover rounded-2xl"
                   />
                 ) : current?.type === "video" ? (
-                  // eslint-disable-next-line jsx-a11y/media-has-caption
-                  <video
-                    key={current.preview}
-                    src={current.preview}
-                    poster={current.thumb}
-                    controls
-                    playsInline
-                    className="w-full max-h-[400px] rounded-2xl"
-                  />
+                  <VideoPreview src={current.preview} poster={current.thumb} />
                 ) : null}
 
                 <span className="absolute bottom-2.5 left-3 text-[11px] font-bold text-white drop-shadow">

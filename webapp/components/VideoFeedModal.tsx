@@ -11,8 +11,10 @@ import { FaRetweet } from "react-icons/fa";
 import { videoFeedStore } from "@/lib/videoFeedStore";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
+import { useJobSocket } from "@/lib/jobSocket";
 import { apiPost, apiDelete } from "@/lib/api";
 import { useBookmark } from "@/lib/bookmarks";
+import { feedStateStore } from "@/lib/feedStateStore";
 import { usePathname, useRouter } from "next/navigation";
 import { profileUrl, postUrl } from "@/lib/url";
 import type { StatusPost } from "@/lib/types";
@@ -32,6 +34,7 @@ function VideoSlide({
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAuth();
   const { notify } = useUi();
+  const { socket } = useJobSocket();
   const router = useRouter();
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(video.id);
   const [following, setFollowing] = useState(video.isFollowingAuthor ?? false);
@@ -148,11 +151,35 @@ function VideoSlide({
     } catch { setFollowing(was); }
   }
 
+  useEffect(() => {
+    if (!socket) return;
+    const onAck = (data: { statusId: string; liked: boolean; likeCount: number }) => {
+      if (data.statusId !== video.id) return;
+      setLiked(data.liked);
+      setLikes(data.likeCount);
+      feedStateStore.updatePost(data.statusId, { likeCount: data.likeCount, isLiked: data.liked });
+    };
+    const onUpdate = (data: { statusId: string; likeCount: number }) => {
+      if (data.statusId !== video.id) return;
+      setLikes(data.likeCount);
+      feedStateStore.updatePost(data.statusId, { likeCount: data.likeCount });
+    };
+    socket.on("like_status_ack", onAck);
+    socket.on("status_like_update", onUpdate);
+    return () => {
+      socket.off("like_status_ack", onAck);
+      socket.off("status_like_update", onUpdate);
+    };
+  }, [socket, video.id]);
+
   function handleLike(e: React.MouseEvent) {
     e.stopPropagation();
-    const now = !liked;
-    setLiked(now);
-    setLikes(c => c + (now ? 1 : -1));
+    if (!socket) return;
+    const nowLiked = !liked;
+    setLiked(nowLiked);
+    setLikes(c => c + (nowLiked ? 1 : -1));
+    socket.emit("like_status", { statusId: video.id, statusOwnerId: video.userId });
+    feedStateStore.updatePost(video.id, { isLiked: nowLiked });
   }
 
   return (

@@ -1,11 +1,19 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // Mirrors the mobile app's own bookmark behavior (FullScreenStatusFeed.tsx's
 // isStatusBookmarked) — bookmarks are device-local there too, not server-backed, so
 // localStorage here is genuine parity, not a shortcut.
 const STORAGE_KEY = "twedot_bookmarks";
+
+// Module-level listener map so all useBookmark instances for the same postId
+// update together when any one component toggles it.
+const listeners = new Map<string, Set<(v: boolean) => void>>();
+
+function notify(postId: string, value: boolean) {
+  listeners.get(postId)?.forEach((fn) => fn(value));
+}
 
 function readBookmarks(): Set<string> {
   try {
@@ -30,6 +38,14 @@ export function useBookmark(postId: string) {
     return readBookmarks().has(postId);
   });
 
+  useEffect(() => {
+    if (!listeners.has(postId)) listeners.set(postId, new Set());
+    listeners.get(postId)!.add(setIsBookmarked);
+    return () => {
+      listeners.get(postId)?.delete(setIsBookmarked);
+    };
+  }, [postId]);
+
   const toggle = useCallback(() => {
     const ids = readBookmarks();
     if (ids.has(postId)) {
@@ -38,7 +54,8 @@ export function useBookmark(postId: string) {
       ids.add(postId);
     }
     writeBookmarks(ids);
-    setIsBookmarked(ids.has(postId));
+    const next = ids.has(postId);
+    notify(postId, next);
   }, [postId]);
 
   return { isBookmarked, toggle };

@@ -20,6 +20,9 @@ const _state: FeedState = {
   query: "",
 };
 
+type Listener = () => void;
+let _listeners: Listener[] = [];
+
 export const feedStateStore = {
   save: (partial: Partial<FeedState>) => Object.assign(_state, partial),
   get: (): FeedState => ({ ..._state }),
@@ -27,6 +30,14 @@ export const feedStateStore = {
   hasCache: (query: string) => _state.posts.length > 0 && _state.query === query,
   updatePost: (id: string, patch: Partial<StatusPost>) => {
     const idx = _state.posts.findIndex((p) => p.id === id);
-    if (idx !== -1) _state.posts[idx] = { ..._state.posts[idx], ...patch };
+    if (idx === -1) return;
+    const updated = [..._state.posts];
+    updated[idx] = { ...updated[idx], ...patch };
+    _state.posts = updated;
+    _listeners.forEach((fn) => fn());
+  },
+  subscribe: (fn: Listener) => {
+    _listeners.push(fn);
+    return () => { _listeners = _listeners.filter((f) => f !== fn); };
   },
 };

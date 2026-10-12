@@ -148,6 +148,11 @@ function FeedContent() {
     feedStateStore.save({ sort });
   }, [sort]);
 
+  // Re-render when another component (e.g. VideoFeedModal) patches a post
+  useEffect(() => {
+    return feedStateStore.subscribe(() => setPosts(feedStateStore.get().posts));
+  }, []);
+
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
