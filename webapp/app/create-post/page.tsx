@@ -217,16 +217,21 @@ export default function CreatePostPage() {
 
   const addFiles = useCallback(async (files: FileList | File[]) => {
     const arr = Array.from(files).slice(0, 10);
-    const newItems: MediaItem[] = await Promise.all(
-      arr.map(async (f) => {
-        const preview = URL.createObjectURL(f);
-        const isVideo = f.type.startsWith("video/");
-        const thumb = isVideo ? await grabVideoThumb(preview) : preview;
-        return { file: f, preview, thumb, type: isVideo ? "video" as const : "image" as const };
-      })
-    );
-    setMediaItems((prev) => [...prev, ...newItems].slice(0, 10));
+    const items: MediaItem[] = arr.map((f) => {
+      const preview = URL.createObjectURL(f);
+      const isVideo = f.type.startsWith("video/");
+      return { file: f, preview, thumb: preview, type: isVideo ? "video" as const : "image" as const };
+    });
+    setMediaItems((prev) => [...prev, ...items].slice(0, 10));
     if (arr[0]) setMode(arr[0].type.startsWith("video/") ? "video" : "image");
+    for (const item of items) {
+      if (item.type === "video") {
+        const thumb = await grabVideoThumb(item.preview);
+        if (thumb !== item.preview) {
+          setMediaItems((prev) => prev.map((m) => m.preview === item.preview ? { ...m, thumb } : m));
+        }
+      }
+    }
   }, []);
 
   const handleInitialPick = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
