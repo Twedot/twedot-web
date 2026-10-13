@@ -46,6 +46,7 @@ const mainItems = [
   { href: "/nearby", label: "Nearby", icon: IoLocationOutline, activeIcon: IoLocation },
   { href: "/channels", label: "Channels", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
   { href: "/job-request", label: "Job Request", icon: IoNotificationsOutline, activeIcon: IoNotifications },
+  { href: "/business", label: "Business", icon: IoStorefrontOutline, activeIcon: IoStorefrontOutline },
 ];
 
 const PLUGIN_ITEMS = [
@@ -278,7 +279,6 @@ export default function SideNav() {
               <>
                 {[
                   { icon: IoMegaphoneOutline, label: "Ads", href: "/ads" },
-                  { icon: IoStorefrontOutline, label: "Business", href: "/business" },
                   { icon: IoWalletOutline, label: "Wallet", href: "/wallet" },
                   { icon: IoCubeOutline, label: "Inventory", href: "/inventory" },
                   { icon: IoStatsChartOutline, label: "Analytics", href: "/analytics" },

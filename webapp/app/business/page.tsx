@@ -7,7 +7,6 @@ import {
   IoAddOutline,
   IoCreateOutline,
   IoTrashOutline,
-  IoCloseOutline,
   IoStorefrontOutline,
   IoTimeOutline,
   IoLocationOutline,
@@ -15,6 +14,7 @@ import {
   IoGlobeOutline,
   IoImageOutline,
   IoChevronBack,
+  IoChevronDown,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { apiGet, apiPost, apiPatch, apiDelete, apiUploadFile } from "@/lib/api";
@@ -448,7 +448,7 @@ export default function BusinessPage() {
   // ── Render helpers ──────────────────────────────────────────────────────
 
   const inputCls =
-    "w-full rounded-xl border border-border bg-bg px-3.5 py-2.5 text-sm text-text outline-none focus:border-primary";
+    "w-full rounded-xl border border-border bg-feed-bg px-3.5 py-2.5 text-sm text-text placeholder:text-light-text outline-none focus:border-primary dark:bg-feed-bg";
   const labelCls = "mb-1.5 block text-xs font-semibold text-light-text";
   const btnPrimary =
     "rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50";
@@ -565,17 +565,23 @@ export default function BusinessPage() {
           {/* Category */}
           <div>
             <label className={labelCls}>Category *</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className={inputCls}
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className={inputCls + " appearance-none pr-10 cursor-pointer"}
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <IoChevronDown
+                size={16}
+                className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-light-text"
+              />
+            </div>
           </div>
 
           {/* Description */}

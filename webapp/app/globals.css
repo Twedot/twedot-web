@@ -68,6 +68,21 @@ body {
   color: var(--foreground);
 }
 
+/* Native form controls (select, input[type=time/date]) render their popup UI
+   using the OS colour scheme. Setting color-scheme here tells the browser which
+   native palette to use so dropdowns and pickers match the app theme. */
+:root {
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+  }
+}
+
 /* ── Global slim scrollbar ── */
 * {
   scrollbar-width: thin;
