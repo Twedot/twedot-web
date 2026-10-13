@@ -32,6 +32,7 @@ import {
   IoHardwareChipOutline,
   IoCompassOutline,
   IoCubeOutline,
+  IoStorefrontOutline,
 } from "react-icons/io5";
 import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
@@ -277,6 +278,7 @@ export default function SideNav() {
               <>
                 {[
                   { icon: IoMegaphoneOutline, label: "Ads", href: "/ads" },
+                  { icon: IoStorefrontOutline, label: "Business", href: "/business" },
                   { icon: IoWalletOutline, label: "Wallet", href: "/wallet" },
                   { icon: IoCubeOutline, label: "Inventory", href: "/inventory" },
                   { icon: IoStatsChartOutline, label: "Analytics", href: "/analytics" },
