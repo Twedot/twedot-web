@@ -122,9 +122,9 @@ async function uploadImage(file: File, folder: string): Promise<string> {
   return result.url;
 }
 
-// ─── Item Row ─────────────────────────────────────────────────────────────────
+// ─── Item Card (grid) ─────────────────────────────────────────────────────────
 
-function ItemRow({
+function ItemCard({
   item,
   onEdit,
   onDelete,
@@ -135,30 +135,37 @@ function ItemRow({
 }) {
   const price = Number(item.price);
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border p-3">
-      <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-feed-bg">
+    <div className="overflow-hidden rounded-xl border border-border">
+      <div className="relative aspect-square w-full overflow-hidden bg-feed-bg">
         {item.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <IoImageOutline size={20} className="text-light-text" />
+            <IoImageOutline size={28} className="text-light-text" />
           </div>
         )}
+        {/* Action buttons overlay */}
+        <div className="absolute right-1.5 top-1.5 flex gap-1">
+          <button
+            onClick={onEdit}
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/80 backdrop-blur-sm text-text hover:bg-background"
+          >
+            <IoCreateOutline size={14} />
+          </button>
+          <button
+            onClick={onDelete}
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/80 backdrop-blur-sm text-red-500 hover:bg-background"
+          >
+            <IoTrashOutline size={14} />
+          </button>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-text">{item.name}</p>
+      <div className="p-2.5">
+        <p className="truncate text-xs font-semibold text-text">{item.name}</p>
         {price > 0 && (
-          <p className="text-xs font-semibold text-primary">₦{price.toLocaleString()}</p>
+          <p className="mt-0.5 text-xs font-semibold text-primary">₦{price.toLocaleString()}</p>
         )}
-      </div>
-      <div className="flex items-center gap-1.5">
-        <button onClick={onEdit} className="rounded-lg p-1.5 text-light-text hover:bg-feed-bg">
-          <IoCreateOutline size={16} />
-        </button>
-        <button onClick={onDelete} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-          <IoTrashOutline size={16} />
-        </button>
       </div>
     </div>
   );
@@ -1020,9 +1027,9 @@ export default function ManageBusinessPage() {
               No items yet. Add your first product or menu item.
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {items.map((item) => (
-                <ItemRow
+                <ItemCard
                   key={item.id}
                   item={item}
                   onEdit={() => { setActiveItem(item); populateItemForm(item); setView("edit-item"); }}
