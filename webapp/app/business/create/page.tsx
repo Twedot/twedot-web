@@ -18,6 +18,8 @@ const CATEGORIES = [
   { value: "food", label: "Food & Restaurant" },
   { value: "services", label: "Services" },
   { value: "retail", label: "Retail & Shop" },
+  { value: "sales", label: "Sales" },
+  { value: "stores", label: "Stores" },
   { value: "entertainment", label: "Entertainment" },
   { value: "health", label: "Health & Wellness" },
   { value: "education", label: "Education" },

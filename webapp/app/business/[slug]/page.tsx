@@ -65,6 +65,8 @@ const CATEGORIES: Record<string, string> = {
   food: "Food & Restaurant",
   services: "Services",
   retail: "Retail & Shop",
+  sales: "Sales",
+  stores: "Stores",
   entertainment: "Entertainment",
   health: "Health & Wellness",
   education: "Education",
@@ -81,7 +83,7 @@ const DAYS = [
   { value: "sun", label: "Sun" },
 ];
 
-const ITEM_CATEGORIES = ["food", "retail"];
+const ITEM_CATEGORIES = ["food", "retail", "sales", "stores"];
 const isItemBusiness = (cat: string) => ITEM_CATEGORIES.includes(cat);
 
 export default function PublicBusinessPage() {
