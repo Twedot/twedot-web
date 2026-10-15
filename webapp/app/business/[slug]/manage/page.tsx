@@ -17,6 +17,9 @@ import {
   IoChevronBack,
   IoChevronDown,
   IoListOutline,
+  IoReceiptOutline,
+  IoCheckmarkOutline,
+  IoCloseOutline,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { apiGet, apiPost, apiPatch, apiDelete, apiUploadFile } from "@/lib/api";
@@ -44,6 +47,24 @@ interface BusinessFeature {
   sort_order: number;
 }
 
+interface BusinessOrder {
+  id: string;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  note?: string | null;
+  created_at: string;
+  item?: {
+    id: string;
+    name: string;
+    price: number | string;
+    image_url?: string | null;
+  } | null;
+  buyer?: {
+    id: string;
+    name: string;
+    profile_photo_url?: string | null;
+  } | null;
+}
+
 interface Business {
   id: string;
   name: string;
@@ -64,7 +85,7 @@ interface Business {
   items?: BusinessItem[];
 }
 
-type View = "detail" | "edit" | "add-item" | "edit-item" | "add-feature" | "edit-feature";
+type View = "detail" | "edit" | "add-item" | "edit-item" | "add-feature" | "edit-feature" | "orders";
 
 const ITEM_CATEGORIES = ["food", "retail", "sales", "stores"];
 const isItemBusiness = (cat: string) => ITEM_CATEGORIES.includes(cat);
@@ -343,6 +364,10 @@ export default function ManageBusinessPage() {
   const [featureLink, setFeatureLink] = useState("");
   const [savingFeature, setSavingFeature] = useState(false);
 
+  // Orders state
+  const [orders, setOrders] = useState<BusinessOrder[]>([]);
+  const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
+
   const coverRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
   const itemFileRef = useRef<HTMLInputElement>(null);
@@ -356,12 +381,14 @@ export default function ManageBusinessPage() {
     if (!data?.business) { router.replace("/business"); return; }
     const b = data.business;
     setBiz(b);
-    if (!isItemBusiness(b.category)) {
-      const feat = await apiGet<{ features: BusinessFeature[] }>(`/business/public/${b.id}/features`, { auth: false }).catch(() => null);
-      setFeatures(feat?.features ?? []);
-    } else {
-      setFeatures([]);
-    }
+    const [featRes, ordersRes] = await Promise.all([
+      !isItemBusiness(b.category)
+        ? apiGet<{ features: BusinessFeature[] }>(`/business/public/${b.id}/features`, { auth: false }).catch(() => null)
+        : Promise.resolve(null),
+      apiGet<{ orders: BusinessOrder[] }>(`/business/${b.id}/orders`).catch(() => null),
+    ]);
+    setFeatures(featRes?.features ?? []);
+    setOrders(ordersRes?.orders ?? []);
   }, [slug, router]);
 
   useEffect(() => {
@@ -556,6 +583,19 @@ export default function ManageBusinessPage() {
     } finally {
       setDeletingFeature(false);
       setDeleteFeatureTarget(null);
+    }
+  }
+
+  async function updateOrderStatus(orderId: string, status: "accepted" | "declined") {
+    if (!biz) return;
+    setUpdatingOrder(orderId);
+    try {
+      await apiPatch(`/business/${biz.id}/orders/${orderId}/status`, { status });
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status } : o));
+    } catch (e: any) {
+      notify(e.message || "Failed to update order");
+    } finally {
+      setUpdatingOrder(null);
     }
   }
 
@@ -771,6 +811,94 @@ export default function ManageBusinessPage() {
     );
   }
 
+  // ─── Orders View ─────────────────────────────────────────────────────────
+
+  if (view === "orders") {
+    const statusBadge = (status: string) => {
+      const map: Record<string, string> = {
+        pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+        accepted: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+        declined: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
+        cancelled: "bg-feed-bg text-light-text",
+      };
+      return map[status] ?? "bg-feed-bg text-light-text";
+    };
+
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-6">
+        <button onClick={() => setView("detail")}
+          className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-primary">
+          <IoChevronBack size={16} /> Back to {biz.name}
+        </button>
+        <h1 className="mb-5 text-lg font-bold text-text">Incoming Orders ({orders.length})</h1>
+
+        {orders.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border py-14 text-center">
+            <IoReceiptOutline size={36} className="mx-auto mb-2 text-light-text" />
+            <p className="text-sm text-light-text">No orders yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {orders.map((order) => (
+              <div key={order.id} className="rounded-xl border border-border p-4">
+                {/* Buyer + item */}
+                <div className="flex items-center gap-3">
+                  {order.buyer?.profile_photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={order.buyer.profile_photo_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg">
+                      <IoStorefrontOutline size={16} className="text-light-text" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-text">{order.buyer?.name ?? "Unknown"}</p>
+                    {order.item && (
+                      <p className="truncate text-xs text-light-text">
+                        {order.item.name}
+                        {Number(order.item.price) > 0 && ` · ₦${Number(order.item.price).toLocaleString()}`}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${statusBadge(order.status)}`}>
+                    {order.status}
+                  </span>
+                </div>
+
+                {order.note && (
+                  <p className="mt-3 rounded-lg bg-feed-bg px-3 py-2 text-xs text-text">
+                    &ldquo;{order.note}&rdquo;
+                  </p>
+                )}
+
+                {order.status === "pending" && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      disabled={updatingOrder === order.id}
+                      onClick={() => updateOrderStatus(order.id, "accepted")}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-500 py-2 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                    >
+                      <IoCheckmarkOutline size={14} />
+                      {updatingOrder === order.id ? "…" : "Accept"}
+                    </button>
+                    <button
+                      disabled={updatingOrder === order.id}
+                      onClick={() => updateOrderStatus(order.id, "declined")}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-200 py-2 text-xs font-semibold text-red-500 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-900/20 disabled:opacity-50"
+                    >
+                      <IoCloseOutline size={14} />
+                      {updatingOrder === order.id ? "…" : "Decline"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // ─── Detail View ─────────────────────────────────────────────────────────
 
   const cat = CATEGORIES.find((c) => c.value === biz.category);
@@ -806,6 +934,17 @@ export default function ManageBusinessPage() {
         </div>
 
         <div className="flex gap-2">
+          <button
+            onClick={() => setView("orders")}
+            className="relative flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text hover:bg-feed-bg"
+          >
+            <IoReceiptOutline size={14} /> Orders
+            {orders.filter((o) => o.status === "pending").length > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                {orders.filter((o) => o.status === "pending").length}
+              </span>
+            )}
+          </button>
           <button
             onClick={() => { populateBizForm(biz); setView("edit"); }}
             className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text hover:bg-feed-bg"
