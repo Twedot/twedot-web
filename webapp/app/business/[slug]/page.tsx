@@ -10,7 +10,7 @@ import {
   IoGlobeOutline,
   IoTimeOutline,
   IoImageOutline,
-  IoChevronBack,
+  IoListOutline,
 } from "react-icons/io5";
 import Link from "next/link";
 import { apiGet } from "@/lib/api";
@@ -24,6 +24,14 @@ interface BusinessItem {
   price: number | string;
   image_url?: string | null;
   is_available: boolean;
+}
+
+interface BusinessFeature {
+  id: string;
+  title: string;
+  description?: string | null;
+  link?: string | null;
+  sort_order: number;
 }
 
 interface BusinessOwner {
@@ -73,9 +81,14 @@ const DAYS = [
   { value: "sun", label: "Sun" },
 ];
 
+const ITEM_CATEGORIES = ["food", "retail"];
+const isItemBusiness = (cat: string) => ITEM_CATEGORIES.includes(cat);
+
 export default function PublicBusinessPage() {
   const { slug } = useParams<{ slug: string }>();
   const [biz, setBiz] = useState<Business | null>(null);
+  const [features, setFeatures] = useState<BusinessFeature[]>([]);
+  const [selectedFeature, setSelectedFeature] = useState<BusinessFeature | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -83,7 +96,16 @@ export default function PublicBusinessPage() {
     if (!slug) return;
     setLoading(true);
     apiGet<{ business: Business }>(`/business/slug/${slug}`, { auth: false })
-      .then((data) => setBiz(data.business))
+      .then(async (data) => {
+        setBiz(data.business);
+        if (!isItemBusiness(data.business.category)) {
+          const feat = await apiGet<{ features: BusinessFeature[] }>(
+            `/business/public/${data.business.id}/features`,
+            { auth: false }
+          ).catch(() => null);
+          setFeatures(feat?.features ?? []);
+        }
+      })
       .catch((e) => setError(e.message || "Business not found"))
       .finally(() => setLoading(false));
   }, [slug]);
@@ -107,6 +129,7 @@ export default function PublicBusinessPage() {
   }
 
   const items = biz.items ?? [];
+  const useItems = isItemBusiness(biz.category);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
@@ -223,8 +246,8 @@ export default function PublicBusinessPage() {
         </div>
       )}
 
-      {/* Items / Menu */}
-      {items.length > 0 && (
+      {/* Items — food & retail only */}
+      {useItems && items.length > 0 && (
         <div className="mt-6">
           <h2 className="mb-3 text-sm font-bold text-text">
             Menu / Items ({items.length})
@@ -271,6 +294,80 @@ export default function PublicBusinessPage() {
             })}
           </div>
         </div>
+      )}
+
+      {/* Features — all other categories */}
+      {!useItems && features.length > 0 && (
+        <div className="mt-6">
+          <h2 className="mb-3 text-sm font-bold text-text">
+            Features / Services ({features.length})
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {features.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setSelectedFeature(f)}
+                className="flex flex-col items-start gap-2 overflow-hidden rounded-xl border border-border bg-background p-4 text-left transition-colors hover:border-primary hover:bg-feed-bg"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <IoListOutline size={18} className="text-primary" />
+                </div>
+                <div className="min-w-0 w-full">
+                  <p className="truncate text-sm font-semibold text-text">{f.title}</p>
+                  {f.description && (
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-light-text">
+                      {f.description}
+                    </p>
+                  )}
+                  {f.link && (
+                    <p className="mt-1.5 text-[11px] font-semibold text-primary">Learn more →</p>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Feature bottom sheet */}
+      {selectedFeature && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => setSelectedFeature(null)}
+          />
+          <div className="fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-border bg-background">
+            <div className="px-6 pb-8 pt-4">
+              <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-border" />
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <IoListOutline size={22} className="text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-text">{selectedFeature.title}</h3>
+              {selectedFeature.description && (
+                <p className="mt-4 text-sm leading-relaxed text-text">
+                  {selectedFeature.description}
+                </p>
+              )}
+              {selectedFeature.link && (
+                <a
+                  href={selectedFeature.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
+                >
+                  <IoGlobeOutline size={16} />
+                  Visit Link
+                </a>
+              )}
+              <button
+                onClick={() => setSelectedFeature(null)}
+                className="mt-3 w-full rounded-xl border border-border py-3 text-sm font-semibold text-text hover:bg-feed-bg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

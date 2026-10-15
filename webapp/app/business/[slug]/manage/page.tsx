@@ -16,6 +16,7 @@ import {
   IoImageOutline,
   IoChevronBack,
   IoChevronDown,
+  IoListOutline,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { apiGet, apiPost, apiPatch, apiDelete, apiUploadFile } from "@/lib/api";
@@ -32,6 +33,14 @@ interface BusinessItem {
   price: number | string;
   image_url?: string | null;
   is_available: boolean;
+  sort_order: number;
+}
+
+interface BusinessFeature {
+  id: string;
+  title: string;
+  description?: string | null;
+  link?: string | null;
   sort_order: number;
 }
 
@@ -55,7 +64,10 @@ interface Business {
   items?: BusinessItem[];
 }
 
-type View = "detail" | "edit" | "add-item" | "edit-item";
+type View = "detail" | "edit" | "add-item" | "edit-item" | "add-feature" | "edit-feature";
+
+const ITEM_CATEGORIES = ["food", "retail"];
+const isItemBusiness = (cat: string) => ITEM_CATEGORIES.includes(cat);
 
 const CATEGORIES = [
   { value: "food", label: "Food & Restaurant" },
@@ -115,6 +127,43 @@ function ItemRow({
         <p className="truncate text-sm font-semibold text-text">{item.name}</p>
         {price > 0 && (
           <p className="text-xs font-semibold text-primary">₦{price.toLocaleString()}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5">
+        <button onClick={onEdit} className="rounded-lg p-1.5 text-light-text hover:bg-feed-bg">
+          <IoCreateOutline size={16} />
+        </button>
+        <button onClick={onDelete} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+          <IoTrashOutline size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Feature Row ──────────────────────────────────────────────────────────────
+
+function FeatureRow({
+  feature,
+  onEdit,
+  onDelete,
+}: {
+  feature: BusinessFeature;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-border p-3">
+      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <IoListOutline size={18} className="text-primary" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-text">{feature.title}</p>
+        {feature.description && (
+          <p className="mt-0.5 line-clamp-1 text-xs text-light-text">{feature.description}</p>
+        )}
+        {feature.link && (
+          <p className="mt-0.5 truncate text-[11px] text-primary">{feature.link}</p>
         )}
       </div>
       <div className="flex items-center gap-1.5">
@@ -189,6 +238,53 @@ function DeleteConfirm({
   );
 }
 
+// ─── Inline delete dialog (centered) ─────────────────────────────────────────
+
+function InlineDeleteDialog({
+  title,
+  subtitle,
+  confirmLabel,
+  loading,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  subtitle: string;
+  confirmLabel: string;
+  loading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center p-4 sm:items-center">
+      <div className="fixed inset-0 z-40" onClick={onCancel} />
+      <div className="relative z-50 w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <div className="px-4 py-3">
+          <p className="text-[13px] font-bold text-text">{title}</p>
+          <p className="text-[12px] text-light-text">{subtitle}</p>
+        </div>
+        <div className="border-t border-border">
+          <button
+            disabled={loading}
+            onClick={onConfirm}
+            className="flex w-full items-center gap-3 px-4 py-3 text-[13px] font-semibold text-red-500 transition-colors hover:bg-feed-bg disabled:opacity-60"
+          >
+            <IoTrashOutline size={16} />
+            {loading ? "Deleting…" : confirmLabel}
+          </button>
+          <button
+            disabled={loading}
+            onClick={onCancel}
+            className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-[13px] font-semibold text-text transition-colors hover:bg-feed-bg"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ManageBusinessPage() {
@@ -201,12 +297,16 @@ export default function ManageBusinessPage() {
   const [loadingBiz, setLoadingBiz] = useState(true);
   const [view, setView] = useState<View>("detail");
   const [activeItem, setActiveItem] = useState<BusinessItem | null>(null);
+  const [features, setFeatures] = useState<BusinessFeature[]>([]);
+  const [activeFeature, setActiveFeature] = useState<BusinessFeature | null>(null);
 
   // Delete state
   const [showDeleteBiz, setShowDeleteBiz] = useState(false);
   const [deletingBiz, setDeletingBiz] = useState(false);
   const [deleteItemTarget, setDeleteItemTarget] = useState<BusinessItem | null>(null);
   const [deletingItem, setDeletingItem] = useState(false);
+  const [deleteFeatureTarget, setDeleteFeatureTarget] = useState<BusinessFeature | null>(null);
+  const [deletingFeature, setDeletingFeature] = useState(false);
   const deleteBizBtnRef = useRef<HTMLButtonElement>(null);
 
   // Business form state
@@ -235,6 +335,12 @@ export default function ManageBusinessPage() {
   const [itemPreview, setItemPreview] = useState<string | null>(null);
   const [savingItem, setSavingItem] = useState(false);
 
+  // Feature form state
+  const [featureTitle, setFeatureTitle] = useState("");
+  const [featureDesc, setFeatureDesc] = useState("");
+  const [featureLink, setFeatureLink] = useState("");
+  const [savingFeature, setSavingFeature] = useState(false);
+
   const coverRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
   const itemFileRef = useRef<HTMLInputElement>(null);
@@ -246,7 +352,14 @@ export default function ManageBusinessPage() {
   const loadBiz = useCallback(async () => {
     const data = await apiGet<{ business: Business }>(`/business/slug/${slug}`, { auth: false }).catch(() => null);
     if (!data?.business) { router.replace("/business"); return; }
-    setBiz(data.business);
+    const b = data.business;
+    setBiz(b);
+    if (!isItemBusiness(b.category)) {
+      const feat = await apiGet<{ features: BusinessFeature[] }>(`/business/public/${b.id}/features`, { auth: false }).catch(() => null);
+      setFeatures(feat?.features ?? []);
+    } else {
+      setFeatures([]);
+    }
   }, [slug, router]);
 
   useEffect(() => {
@@ -286,6 +399,16 @@ export default function ManageBusinessPage() {
     setItemPreview(item.image_url ?? null);
   }
 
+  function resetFeatureForm() {
+    setFeatureTitle(""); setFeatureDesc(""); setFeatureLink("");
+  }
+
+  function populateFeatureForm(f: BusinessFeature) {
+    setFeatureTitle(f.title);
+    setFeatureDesc(f.description ?? "");
+    setFeatureLink(f.link ?? "");
+  }
+
   function toggleDay(d: string) {
     setWorkingDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
   }
@@ -318,7 +441,6 @@ export default function ManageBusinessPage() {
       await apiPatch(`/business/${biz.id}`, body);
       notify("Business updated");
       await loadBiz();
-      // If name changed, slug may have changed — redirect to new slug
       const updated = await apiGet<{ business: Business }>(`/business/slug/${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`, { auth: false }).catch(() => null);
       const newSlug = updated?.business?.slug ?? slug;
       if (newSlug !== slug) {
@@ -390,6 +512,48 @@ export default function ManageBusinessPage() {
     } finally {
       setDeletingItem(false);
       setDeleteItemTarget(null);
+    }
+  }
+
+  async function saveFeature() {
+    if (!biz || !featureTitle.trim()) { notify("Feature title is required"); return; }
+    setSavingFeature(true);
+    try {
+      const body: Record<string, unknown> = {
+        title: featureTitle.trim(),
+        description: featureDesc.trim() || undefined,
+        link: featureLink.trim() || undefined,
+      };
+
+      if (view === "edit-feature" && activeFeature) {
+        await apiPatch(`/business/${biz.id}/features/${activeFeature.id}`, body);
+        notify("Feature updated");
+      } else {
+        await apiPost(`/business/${biz.id}/features`, body);
+        notify("Feature added");
+      }
+      await loadBiz();
+      setView("detail");
+      resetFeatureForm();
+    } catch (e: any) {
+      notify(e.message || "Failed to save feature");
+    } finally {
+      setSavingFeature(false);
+    }
+  }
+
+  async function deleteFeature(feature: BusinessFeature) {
+    if (!biz) return;
+    setDeletingFeature(true);
+    try {
+      await apiDelete(`/business/${biz.id}/features/${feature.id}`);
+      notify("Feature deleted");
+      await loadBiz();
+    } catch (e: any) {
+      notify(e.message || "Delete failed");
+    } finally {
+      setDeletingFeature(false);
+      setDeleteFeatureTarget(null);
     }
   }
 
@@ -549,10 +713,67 @@ export default function ManageBusinessPage() {
     );
   }
 
+  // ─── Feature Form ────────────────────────────────────────────────────────
+
+  if (view === "add-feature" || view === "edit-feature") {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-6">
+        <button onClick={() => { setView("detail"); resetFeatureForm(); }}
+          className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-primary">
+          <IoChevronBack size={16} /> Back to {biz.name}
+        </button>
+        <h1 className="mb-6 text-lg font-bold text-text">
+          {view === "edit-feature" ? "Edit Feature" : "Add Feature"}
+        </h1>
+        <div className="space-y-4">
+          <div>
+            <label className={labelCls}>Feature Title *</label>
+            <input
+              value={featureTitle}
+              onChange={(e) => setFeatureTitle(e.target.value)}
+              placeholder="e.g. Payment Integration"
+              className={inputCls}
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>Description</label>
+            <textarea
+              value={featureDesc}
+              onChange={(e) => setFeatureDesc(e.target.value)}
+              placeholder="Describe what this feature or service offers…"
+              rows={5}
+              className={inputCls + " resize-none"}
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>Link (optional)</label>
+            <input
+              value={featureLink}
+              onChange={(e) => setFeatureLink(e.target.value)}
+              placeholder="https://example.com/feature"
+              className={inputCls}
+            />
+            <p className="mt-1 text-[11px] text-light-text">Users can tap this to visit more details about this feature.</p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button onClick={saveFeature} disabled={savingFeature} className={btnPrimary}>
+              {savingFeature ? "Saving…" : view === "edit-feature" ? "Update Feature" : "Add Feature"}
+            </button>
+            <button onClick={() => { setView("detail"); resetFeatureForm(); }} className={btnSecondary}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ─── Detail View ─────────────────────────────────────────────────────────
 
   const cat = CATEGORIES.find((c) => c.value === biz.category);
   const items = biz.items ?? [];
+  const useItems = isItemBusiness(biz.category);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
@@ -642,39 +863,71 @@ export default function ManageBusinessPage() {
         </div>
       )}
 
-      {/* Items */}
-      <div className="mt-6">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-text">Menu / Items ({items.length})</h2>
-          <button onClick={() => { resetItemForm(); setView("add-item"); }}
-            className={btnPrimary + " !px-3 !py-1.5 !text-xs flex items-center gap-1"}>
-            <IoAddOutline size={14} /> Add Item
-          </button>
-        </div>
+      {/* Items — food & retail only */}
+      {useItems && (
+        <div className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-text">Menu / Items ({items.length})</h2>
+            <button onClick={() => { resetItemForm(); setView("add-item"); }}
+              className={btnPrimary + " !px-3 !py-1.5 !text-xs flex items-center gap-1"}>
+              <IoAddOutline size={14} /> Add Item
+            </button>
+          </div>
 
-        {items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border py-10 text-center text-sm text-light-text">
-            No items yet. Add your first product or menu item.
+          {items.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border py-10 text-center text-sm text-light-text">
+              No items yet. Add your first product or menu item.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {items.map((item) => (
+                <ItemRow
+                  key={item.id}
+                  item={item}
+                  onEdit={() => { setActiveItem(item); populateItemForm(item); setView("edit-item"); }}
+                  onDelete={() => setDeleteItemTarget(item)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Features — all non-food/retail categories */}
+      {!useItems && (
+        <div className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-text">Features / Services ({features.length})</h2>
+            <button onClick={() => { resetFeatureForm(); setView("add-feature"); }}
+              className={btnPrimary + " !px-3 !py-1.5 !text-xs flex items-center gap-1"}>
+              <IoAddOutline size={14} /> Add Feature
+            </button>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {items.map((item) => (
-              <ItemRow
-                key={item.id}
-                item={item}
-                onEdit={() => { setActiveItem(item); populateItemForm(item); setView("edit-item"); }}
-                onDelete={() => setDeleteItemTarget(item)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+
+          {features.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border py-10 text-center text-sm text-light-text">
+              No features yet. Add what your business offers.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {features.map((f) => (
+                <FeatureRow
+                  key={f.id}
+                  feature={f}
+                  onEdit={() => { setActiveFeature(f); populateFeatureForm(f); setView("edit-feature"); }}
+                  onDelete={() => setDeleteFeatureTarget(f)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Delete business confirm */}
       {showDeleteBiz && (
         <DeleteConfirm
           title={`Delete "${biz.name}"?`}
-          subtitle="This will remove the business and all its items permanently."
+          subtitle="This will remove the business and all its data permanently."
           confirmLabel="Delete business"
           loading={deletingBiz}
           anchorRef={deleteBizBtnRef}
@@ -684,37 +937,28 @@ export default function ManageBusinessPage() {
       )}
 
       {/* Delete item confirm */}
-      {deleteItemTarget && (() => {
-        const fakeRef = { current: document.querySelector(`[data-item-delete="${deleteItemTarget.id}"]`) as HTMLButtonElement | null };
-        return (
-          <div className="fixed inset-0 z-40 flex items-end justify-center p-4 sm:items-center">
-            <div className="fixed inset-0 z-40" onClick={() => setDeleteItemTarget(null)} />
-            <div className="relative z-50 w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
-              <div className="px-4 py-3">
-                <p className="text-[13px] font-bold text-text">Delete &ldquo;{deleteItemTarget.name}&rdquo;?</p>
-                <p className="text-[12px] text-light-text">This item will be permanently removed.</p>
-              </div>
-              <div className="border-t border-border">
-                <button
-                  disabled={deletingItem}
-                  onClick={() => deleteItem(deleteItemTarget)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-[13px] font-semibold text-red-500 transition-colors hover:bg-feed-bg disabled:opacity-60"
-                >
-                  <IoTrashOutline size={16} />
-                  {deletingItem ? "Deleting…" : "Delete item"}
-                </button>
-                <button
-                  disabled={deletingItem}
-                  onClick={() => setDeleteItemTarget(null)}
-                  className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-[13px] font-semibold text-text transition-colors hover:bg-feed-bg"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {deleteItemTarget && (
+        <InlineDeleteDialog
+          title={`Delete "${deleteItemTarget.name}"?`}
+          subtitle="This item will be permanently removed."
+          confirmLabel="Delete item"
+          loading={deletingItem}
+          onConfirm={() => deleteItem(deleteItemTarget)}
+          onCancel={() => setDeleteItemTarget(null)}
+        />
+      )}
+
+      {/* Delete feature confirm */}
+      {deleteFeatureTarget && (
+        <InlineDeleteDialog
+          title={`Delete "${deleteFeatureTarget.title}"?`}
+          subtitle="This feature will be permanently removed."
+          confirmLabel="Delete feature"
+          loading={deletingFeature}
+          onConfirm={() => deleteFeature(deleteFeatureTarget)}
+          onCancel={() => setDeleteFeatureTarget(null)}
+        />
+      )}
     </div>
   );
 }
