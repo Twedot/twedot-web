@@ -4,8 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-const TOKEN_KEY = "twedot_token";
-const DEVICE_ID_KEY = "twedot_device_id";
 
 export default function AuthBridgeContent() {
   const params = useSearchParams();
@@ -22,22 +20,13 @@ export default function AuthBridgeContent() {
       return;
     }
 
-    const token = localStorage.getItem(TOKEN_KEY);
-    const deviceId = localStorage.getItem(DEVICE_ID_KEY);
-
-    if (!token || !deviceId) {
-      setStatus("need_login");
-      return;
-    }
-
     setStatus("loading");
 
+    // Auth is carried by HttpOnly cookies — no localStorage, just credentials: "include"
     fetch(`${API_BASE_URL}/users/auth/session-bridge/code`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-device-id": deviceId,
         "x-platform": "web",
       },
       credentials: "include",
