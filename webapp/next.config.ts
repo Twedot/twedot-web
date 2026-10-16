@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
         source: "/twedot-api/:path*",
         destination: "https://prodapi.twedot.com/:path*",
       },
+      {
+        source: "/live/:id",
+        destination: "https://prodapi.twedot.com/live/:id",
+      },
     ];
   },
 };
