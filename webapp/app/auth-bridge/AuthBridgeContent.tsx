@@ -16,7 +16,8 @@ export default function AuthBridgeContent() {
   >("loading");
 
   const attemptBridge = useCallback(() => {
-    if (!origin || !/^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?/.test(origin)) {
+    const ALLOWED = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$|^https:\/\/world\.twedot\.com$/;
+    if (!origin || !ALLOWED.test(origin)) {
       setStatus("invalid");
       return;
     }
