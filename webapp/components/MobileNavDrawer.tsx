@@ -28,6 +28,8 @@ import {
   IoStarOutline,
   IoSettings, IoSettingsOutline,
   IoLogOutOutline,
+  IoRadioOutline,
+  IoEarthOutline,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
@@ -146,6 +148,38 @@ export default function MobileNavDrawer() {
               </button>
             );
           })}
+
+          {/* Live — external */}
+          <a
+            href="https://world.twedot.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeDrawer}
+            className="flex w-full items-center gap-3.5 rounded-lg px-4 py-2.5 text-left text-[14px] font-semibold text-[#FF3B30] hover:bg-feed-bg"
+          >
+            <span className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
+              <IoRadioOutline size={20} className="text-[#FF3B30]" />
+              <span className="absolute -right-0.5 -top-0.5 flex h-[8px] w-[8px]">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FF3B30] opacity-75" />
+                <span className="relative inline-flex h-[8px] w-[8px] rounded-full bg-[#FF3B30]" />
+              </span>
+            </span>
+            Live
+          </a>
+
+          {/* Twedot World — external */}
+          <a
+            href="https://world.twedot.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeDrawer}
+            className="flex w-full items-center gap-3.5 rounded-lg px-4 py-2.5 text-left text-[14px] font-semibold text-light-text hover:bg-feed-bg"
+          >
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center">
+              <IoEarthOutline size={20} className="text-light-text" />
+            </span>
+            Twedot World
+          </a>
 
           {/* Create Channel */}
           <button
