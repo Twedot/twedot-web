@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useCallback, useState } from "react";
+import LiveStreamPlayer from "./LiveStreamPlayer";
 
 export interface LiveStream {
   roomId: string;
@@ -64,50 +65,6 @@ function elapsedStr(startedAt: number) {
   return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 }
 
-/* ── Static preview thumbnail (click to watch) ── */
-function LivePreview({ stream, onClick }: { stream: LiveStream; onClick: () => void }) {
-  return (
-    <div
-      className="relative cursor-pointer overflow-hidden rounded-xl"
-      style={{ aspectRatio: "16/9" }}
-      onClick={onClick}
-    >
-      {/* Blurred background */}
-      {stream.hostPhoto ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={stream.hostPhoto}
-          alt=""
-          className="absolute inset-0 h-full w-full scale-110 object-cover"
-          style={{ filter: "blur(14px) brightness(0.45) saturate(1.3)" }}
-        />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0a2e] to-[#0f0f1a]" />
-      )}
-
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/40" />
-
-      {/* Centre play button */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500 shadow-2xl transition-transform hover:scale-110 active:scale-95"
-          style={{ boxShadow: "0 0 32px rgba(255,0,64,0.5)" }}
-        >
-          {/* play triangle */}
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Bottom hint */}
-      <p className="absolute bottom-3 left-0 right-0 text-center text-[11px] font-semibold text-white/70">
-        Tap to watch live
-      </p>
-    </div>
-  );
-}
 
 /* ── Full-screen iframe viewer modal (for paid streams or "open full") ── */
 function LiveViewer({ stream, onClose }: { stream: LiveStream; onClose: () => void }) {
@@ -245,8 +202,8 @@ export default function LiveStreamCard({ stream }: { stream: LiveStream }) {
             </div>
           </div>
         ) : (
-          /* Free: static preview — click to open full viewer */
-          <LivePreview stream={stream} onClick={() => setFullOpen(true)} />
+          /* Free: inline live video — auto-joins when card enters viewport */
+          <LiveStreamPlayer roomId={stream.roomId} hostPhoto={stream.hostPhoto} />
         )}
       </article>
 
