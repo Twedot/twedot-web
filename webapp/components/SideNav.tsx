@@ -33,6 +33,10 @@ import {
   IoCompassOutline,
   IoCubeOutline,
   IoStorefrontOutline,
+  IoRadioOutline,
+  IoRadio,
+  IoEarthOutline,
+  IoEarth,
 } from "react-icons/io5";
 import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
@@ -41,12 +45,25 @@ import { useHasUnseenStories } from "@/lib/unseenStories";
 import { useJobSocket } from "@/lib/jobSocket";
 import { channelUrl } from "@/lib/url";
 
-const mainItems = [
+interface NavItem {
+  href: string;
+  label: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  icon: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  activeIcon: any;
+  external?: boolean;
+  liveDot?: boolean;
+}
+
+const mainItems: NavItem[] = [
   { href: "/stories", label: "Stories", icon: IoPlayOutline, activeIcon: IoPlay },
   { href: "/nearby", label: "Nearby", icon: IoLocationOutline, activeIcon: IoLocation },
   { href: "/channels", label: "Channels", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
   { href: "/job-request", label: "Job Request", icon: IoNotificationsOutline, activeIcon: IoNotifications },
   { href: "/business", label: "Business", icon: IoStorefrontOutline, activeIcon: IoStorefrontOutline },
+  { href: "https://world.twedot.com", label: "Live", icon: IoRadioOutline, activeIcon: IoRadio, external: true, liveDot: true },
+  { href: "https://world.twedot.com", label: "Twedot World", icon: IoEarthOutline, activeIcon: IoEarth, external: true },
 ];
 
 const PLUGIN_ITEMS = [
@@ -94,7 +111,8 @@ export default function SideNav() {
         <div className={`mx-auto flex flex-1 flex-col gap-0 pb-3 pt-4 ${sidebarCollapsed ? "w-full px-1" : "w-[85%]"}`}>
 
         {mainItems.map((item) => {
-          const active = Boolean(item.href && pathname === item.href);
+          const isExternal = 'external' in item && item.external;
+          const active = !isExternal && Boolean(item.href && pathname === item.href);
           const Icon = active ? item.activeIcon : item.icon;
           const cls = `flex items-center gap-3.5 rounded-lg px-3 py-2 text-left text-sm font-semibold text-light-text ${
             active ? "font-bold text-text" : "hover:bg-feed-bg"
@@ -114,10 +132,30 @@ export default function SideNav() {
                     {jobBadge > 99 ? "99+" : jobBadge}
                   </span>
                 )}
+                {'liveDot' in item && item.liveDot && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-[10px] w-[10px]">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex h-[10px] w-[10px] rounded-full bg-red-500" />
+                  </span>
+                )}
               </span>
               {!sidebarCollapsed && item.label}
             </>
           );
+          if (isExternal) {
+            return (
+              <a
+                key={item.label}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={item.label}
+                className={cls}
+              >
+                {inner}
+              </a>
+            );
+          }
           return item.href ? (
             <Link key={item.label} href={item.href} title={item.label} className={cls}>
               {inner}
