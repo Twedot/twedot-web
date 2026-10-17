@@ -12,7 +12,7 @@ import NearbyVendorsRow from "@/components/NearbyVendorsRow";
 import { markFeedSeen } from "@/lib/unseenStories";
 import { feedStateStore } from "@/lib/feedStateStore";
 import { videoFeedStore } from "@/lib/videoFeedStore";
-import LiveStoriesStrip from "@/components/LiveStoriesStrip";
+import LiveStreamCard, { useLiveStreams } from "@/components/LiveStreamCard";
 
 const PAGE_SIZE = 20;
 const VENDOR_ROW_POSITION = 3;
@@ -48,6 +48,7 @@ function FeedContent() {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [compact, setCompact] = useState(false);
   const [vendors, setVendors] = useState<NearbyVendor[]>([]);
+  const liveStreams = useLiveStreams();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const restoredScroll = useRef(false);
   // Refs so the stable IntersectionObserver callback always reads fresh values
@@ -215,8 +216,6 @@ function FeedContent() {
         </div>
       )}
 
-      <LiveStoriesStrip />
-
       <div className="flex items-center gap-2 border-b border-border bg-background px-4 py-2">
         <div className="relative">
           <button
@@ -267,14 +266,23 @@ function FeedContent() {
       {isFetching && posts.length === 0 && <FeedSkeleton />}
 
       <div className="flex flex-col">
-        {groupedPosts.map((group, i) => (
-          <div key={group[0].id} id={`post-${group[0].id}`} style={{ scrollMarginTop: 60 }}>
-            <PostCard items={group} compact={compact} />
-            {vendors.length > 0 && i === VENDOR_ROW_POSITION - 1 && (
-              <NearbyVendorsRow vendors={vendors} />
-            )}
-          </div>
-        ))}
+        {groupedPosts.map((group, i) => {
+          // Insert live stream cards inline: first after post 1, second after post 5, then every 8
+          const LIVE_POSITIONS = [1, 5, 13, 21];
+          const liveIdx = LIVE_POSITIONS.indexOf(i);
+          const liveStream = liveIdx !== -1 ? liveStreams[liveIdx] : undefined;
+          return (
+            <div key={group[0].id}>
+              <div id={`post-${group[0].id}`} style={{ scrollMarginTop: 60 }}>
+                <PostCard items={group} compact={compact} />
+                {vendors.length > 0 && i === VENDOR_ROW_POSITION - 1 && (
+                  <NearbyVendorsRow vendors={vendors} />
+                )}
+              </div>
+              {liveStream && <LiveStreamCard key={`live-${liveStream.roomId}`} stream={liveStream} />}
+            </div>
+          );
+        })}
       </div>
 
       {isFetching && posts.length > 0 && <p className="py-6 text-center text-sm text-light-text">Loading…</p>}
