@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useCallback, useRef, useState } from "react";
+import Link from "next/link";
+import { useEffect, useCallback, useState } from "react";
 
 export interface LiveStream {
   roomId: string;
@@ -11,6 +12,8 @@ export interface LiveStream {
   viewers: number;
   price: number;
   startedAt: number;
+  rank?: string;
+  occupation?: string;
 }
 
 /* ── hook: polls /streams/live every 10s ── */
@@ -29,10 +32,13 @@ export function useLiveStreams(): LiveStream[] {
           hostId: (r.hostId as string) ?? "",
           hostName: (r.hostName as string) || "Live",
           hostPhoto: (r.hostPhoto as string) || "",
-          title: (r.title as string) || "",
+          // strip leading '#' — the API sometimes includes it; we always add one in display
+          title: ((r.title as string) || "").replace(/^#+/, "").trim(),
           viewers: (r.viewers as number) || 0,
           price: (r.price as number) || 0,
           startedAt: (r.startedAt as number) || 0,
+          rank: (r.rank as string) || undefined,
+          occupation: (r.occupation as string) || undefined,
         }))
       );
     } catch {}
@@ -58,37 +64,47 @@ function elapsedStr(startedAt: number) {
   return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 }
 
-/* ── Inline live video (iframe to embed viewer) ── */
-function LiveVideoEmbed({ roomId }: { roomId: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { rootMargin: "200px" }
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
+/* ── Static preview thumbnail (click to watch) ── */
+function LivePreview({ stream, onClick }: { stream: LiveStream; onClick: () => void }) {
   return (
-    <div ref={ref} className="relative overflow-hidden rounded-xl bg-black" style={{ aspectRatio: "16/9" }}>
-      {visible && (
-        <iframe
-          src={`https://world.twedot.com/?stream=${encodeURIComponent(roomId)}&embed=1`}
-          className="absolute inset-0 h-full w-full border-none"
-          allow="autoplay; fullscreen; camera; microphone"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
-          title="Live stream"
+    <div
+      className="relative cursor-pointer overflow-hidden rounded-xl"
+      style={{ aspectRatio: "16/9" }}
+      onClick={onClick}
+    >
+      {/* Blurred background */}
+      {stream.hostPhoto ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={stream.hostPhoto}
+          alt=""
+          className="absolute inset-0 h-full w-full scale-110 object-cover"
+          style={{ filter: "blur(14px) brightness(0.45) saturate(1.3)" }}
         />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0a2e] to-[#0f0f1a]" />
       )}
-      {!visible && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-red-500" />
+
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Centre play button */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500 shadow-2xl transition-transform hover:scale-110 active:scale-95"
+          style={{ boxShadow: "0 0 32px rgba(255,0,64,0.5)" }}
+        >
+          {/* play triangle */}
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+            <path d="M8 5v14l11-7z" />
+          </svg>
         </div>
-      )}
+      </div>
+
+      {/* Bottom hint */}
+      <p className="absolute bottom-3 left-0 right-0 text-center text-[11px] font-semibold text-white/70">
+        Tap to watch live
+      </p>
     </div>
   );
 }
@@ -144,7 +160,7 @@ export default function LiveStreamCard({ stream }: { stream: LiveStream }) {
       <article className="border-b border-border bg-background px-4 py-3">
         {/* ── Header: avatar ring · name · LIVE · price ── */}
         <header className="mb-2.5 flex items-center gap-2.5">
-          <div className="relative mt-0.5 flex-shrink-0">
+          <Link href={`/profile/${stream.hostId}`} className="relative mt-0.5 flex-shrink-0">
             <div
               className="rounded-full p-[2.5px]"
               style={{ background: "#FF0040", animation: "lsc-ring 2s ease-in-out infinite" }}
@@ -166,11 +182,13 @@ export default function LiveStreamCard({ stream }: { stream: LiveStream }) {
                 </div>
               )}
             </div>
-          </div>
+          </Link>
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[13px] font-bold leading-tight text-text">{stream.hostName}</span>
+              <Link href={`/profile/${stream.hostId}`} className="text-[13px] font-bold leading-tight text-text hover:underline">
+                {stream.hostName}
+              </Link>
               <span className="rounded bg-red-500 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
                 LIVE
               </span>
@@ -180,6 +198,11 @@ export default function LiveStreamCard({ stream }: { stream: LiveStream }) {
                 </span>
               )}
             </div>
+            {(stream.rank || stream.occupation) && (
+              <p className="mt-0.5 text-[11px] text-light-text">
+                {[stream.rank, stream.occupation].filter(Boolean).join(" · ")}
+              </p>
+            )}
             <p className="mt-0.5 text-[11px] text-light-text">
               <span className="animate-pulse text-red-400">●</span>{" "}
               {stream.viewers.toLocaleString()} watching
@@ -222,8 +245,8 @@ export default function LiveStreamCard({ stream }: { stream: LiveStream }) {
             </div>
           </div>
         ) : (
-          /* Free: inline live video */
-          <LiveVideoEmbed roomId={stream.roomId} />
+          /* Free: static preview — click to open full viewer */
+          <LivePreview stream={stream} onClick={() => setFullOpen(true)} />
         )}
       </article>
 
