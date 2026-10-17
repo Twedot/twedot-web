@@ -61,6 +61,7 @@ export default function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const isChannelPage = /^\/channels\/[^/]+/.test(pathname) || /^\/c\/[^/]+/.test(pathname);
+  const isStoriesPage = pathname === "/stories" || pathname.startsWith("/stories/");
   const { notify, openDrawer } = useUi();
   const { unreadNotifCount } = useJobSocket();
   const [query, setQuery] = useState("");
@@ -360,8 +361,8 @@ export default function TopBar() {
         </div>
       </div>
 
-      {/* Mobile search row — hidden on sm+ and on channel pages */}
-      <div className={`${isChannelPage ? "hidden" : "sm:hidden"} px-4 pb-2.5`}>
+      {/* Mobile search row — stories page only */}
+      <div className={`${isStoriesPage ? "sm:hidden" : "hidden"} px-4 pb-2.5`}>
         <button
           onClick={openSearch}
           className="flex w-full items-center gap-2 rounded-full bg-feed-bg px-4 py-2.5 transition-colors hover:bg-border/30"
