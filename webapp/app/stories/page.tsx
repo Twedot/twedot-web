@@ -12,6 +12,7 @@ import NearbyVendorsRow from "@/components/NearbyVendorsRow";
 import { markFeedSeen } from "@/lib/unseenStories";
 import { feedStateStore } from "@/lib/feedStateStore";
 import { videoFeedStore } from "@/lib/videoFeedStore";
+import LiveStoriesStrip from "@/components/LiveStoriesStrip";
 
 const PAGE_SIZE = 20;
 const VENDOR_ROW_POSITION = 3;
@@ -213,6 +214,8 @@ function FeedContent() {
           Results for <span className="font-semibold text-text">{query}</span>
         </div>
       )}
+
+      <LiveStoriesStrip />
 
       <div className="flex items-center gap-2 border-b border-border bg-background px-4 py-2">
         <div className="relative">
