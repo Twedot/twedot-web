@@ -5,20 +5,20 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   IoPlay, IoPlayOutline,
-  IoLocation, IoLocationOutline,
   IoChatbubble, IoChatbubbleOutline,
   IoNotifications, IoNotificationsOutline,
   IoPerson, IoPersonOutline,
+  IoRadioOutline, IoRadio,
 } from "react-icons/io5";
 import { useHasUnseenStories } from "@/lib/unseenStories";
 import { useJobSocket } from "@/lib/jobSocket";
 
 const NAV_ITEMS = [
-  { href: "/stories",     label: "Stories",  icon: IoPlayOutline,          activeIcon: IoPlay },
-  { href: "/nearby",      label: "Nearby",   icon: IoLocationOutline,      activeIcon: IoLocation },
-  { href: "/channels",    label: "Channels", icon: IoChatbubbleOutline,    activeIcon: IoChatbubble },
-  { href: "/job-request", label: "Jobs",     icon: IoNotificationsOutline, activeIcon: IoNotifications },
-  { href: "/profile",     label: "Profile",  icon: IoPersonOutline,        activeIcon: IoPerson },
+  { href: "/stories",                 label: "Stories",  icon: IoPlayOutline,          activeIcon: IoPlay,          external: false, liveDot: false },
+  { href: "https://world.twedot.com", label: "Live",     icon: IoRadioOutline,         activeIcon: IoRadio,         external: true,  liveDot: true  },
+  { href: "/channels",                label: "Channels", icon: IoChatbubbleOutline,    activeIcon: IoChatbubble,    external: false, liveDot: false },
+  { href: "/job-request",             label: "Jobs",     icon: IoNotificationsOutline, activeIcon: IoNotifications, external: false, liveDot: false },
+  { href: "/profile",                 label: "Profile",  icon: IoPersonOutline,        activeIcon: IoPerson,        external: false, liveDot: false },
 ];
 
 export default function MobileBottomNav() {
@@ -60,18 +60,23 @@ export default function MobileBottomNav() {
   return (
     <nav className={`fixed bottom-0 left-0 right-0 z-30 flex h-14 items-center justify-around border-t border-border bg-background lg:hidden transition-transform duration-300 ${navHidden ? "translate-y-full" : "translate-y-0"}`}>
       {NAV_ITEMS.map((item) => {
-        const active = item.href === "/profile"
-          ? pathname === "/profile" || pathname.startsWith("/profile/")
-          : pathname === item.href || pathname.startsWith(item.href + "/");
+        const active = !item.external && (
+          item.href === "/profile"
+            ? pathname === "/profile" || pathname.startsWith("/profile/")
+            : pathname === item.href || pathname.startsWith(item.href + "/")
+        );
         const Icon = active ? item.activeIcon : item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-semibold ${active ? "text-primary" : "text-light-text"}`}
-          >
+        const cls = `relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-semibold ${item.liveDot ? "text-[#FF3B30]" : active ? "text-primary" : "text-light-text"}`;
+        const inner = (
+          <>
             <div className="relative">
               <Icon size={22} />
+              {item.liveDot && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-[8px] w-[8px]">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FF3B30] opacity-75" />
+                  <span className="relative inline-flex h-[8px] w-[8px] rounded-full bg-[#FF3B30]" />
+                </span>
+              )}
               {item.href === "/stories" && hasUnseenStories && !active && (
                 <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[#FF3B30]" />
               )}
@@ -82,6 +87,15 @@ export default function MobileBottomNav() {
               )}
             </div>
             <span>{item.label}</span>
+          </>
+        );
+        return item.external ? (
+          <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" className={cls}>
+            {inner}
+          </a>
+        ) : (
+          <Link key={item.href} href={item.href} className={cls}>
+            {inner}
           </Link>
         );
       })}
