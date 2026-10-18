@@ -447,7 +447,10 @@ export default function StatusDetailPage() {
       if (parentId) body.parentCommentId = parentId;
       const newComment = await apiPost<Comment>(`/status/${statusId}/comments`, body);
       if (newComment) {
-        setComments((prev) => [...prev, newComment]);
+        setComments((prev) => {
+          if (prev.some((c) => c.id === newComment.id)) return prev;
+          return [...prev, newComment];
+        });
         setCommentCount((c) => c + 1);
       }
       setReplyText("");
