@@ -14,6 +14,7 @@ import { feedStateStore } from "@/lib/feedStateStore";
 import { videoFeedStore } from "@/lib/videoFeedStore";
 import LiveStreamCard, { useLiveStreams } from "@/components/LiveStreamCard";
 import LiveStoriesStrip from "@/components/LiveStoriesStrip";
+import ErrorState from "@/components/ErrorState";
 
 const PAGE_SIZE = 20;
 const VENDOR_ROW_POSITION = 3;
@@ -260,13 +261,13 @@ function FeedContent() {
         </button>
       </div>
 
-      {error && (
-        <p className="m-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-500">
-          {error}
-        </p>
-      )}
-
       {isFetching && posts.length === 0 && <FeedSkeleton />}
+      {!isFetching && posts.length === 0 && error && (
+        <ErrorState
+          isOffline={error.toLowerCase().includes("no internet") || error.toLowerCase().includes("network")}
+          onRetry={() => loadPage(1)}
+        />
+      )}
 
       <div className="flex flex-col">
         {groupedPosts.map((group, i) => {
@@ -289,6 +290,13 @@ function FeedContent() {
       </div>
 
       {isFetching && posts.length > 0 && <p className="py-6 text-center text-sm text-light-text">Loading…</p>}
+      {!isFetching && posts.length > 0 && error && (
+        <ErrorState
+          compact
+          isOffline={error.toLowerCase().includes("no internet") || error.toLowerCase().includes("network")}
+          onRetry={() => loadPage(page)}
+        />
+      )}
       {!hasMore && posts.length > 0 && (
         <p className="py-6 text-center text-sm text-light-text">You&apos;re all caught up.</p>
       )}

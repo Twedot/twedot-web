@@ -24,6 +24,7 @@ import RankBadge from "@/components/RankBadge";
 import type { UserProfile, StatusPost } from "@/lib/types";
 import { postDetailStore } from "@/lib/postDetailStore";
 import { extractShortId, postUrl } from "@/lib/url";
+import ErrorState from "@/components/ErrorState";
 
 const WEEK_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -172,9 +173,11 @@ export default function UserPageClient() {
   if (error) {
     return (
       <div className="flex-1 bg-feed-bg">
-        <div className="mx-auto w-full max-w-2xl px-4 py-10">
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-500">{error}</p>
-        </div>
+        <ErrorState
+          isOffline={error.toLowerCase().includes("no internet") || error.toLowerCase().includes("network")}
+          message={error}
+          onRetry={() => window.location.reload()}
+        />
       </div>
     );
   }

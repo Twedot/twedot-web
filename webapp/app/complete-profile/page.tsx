@@ -452,7 +452,12 @@ const quickPicks = allOccupations.slice(0, 12);
             )}
           </div>
 
-          {error && <p className="mt-3 text-xs text-red-500">{error}</p>}
+          {error && (
+            <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-feed-bg px-4 py-3">
+              <span className="mt-px text-[18px] leading-none">⚠️</span>
+              <p className="text-[13px] leading-5 text-text">{error}</p>
+            </div>
+          )}
 
           <button
             type="button"
