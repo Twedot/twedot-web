@@ -250,7 +250,7 @@ export default function PostCommentPanel() {
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         {threadCommentId ? (
           <button
-            onClick={() => setThreadCommentId(null)}
+            onClick={() => { setThreadCommentId(null); setReplyTo(null); }}
             className="flex h-8 w-8 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
           >
             <IoChevronBack size={18} />
@@ -267,13 +267,6 @@ export default function PostCommentPanel() {
           {threadCommentId ? "Replies" : "Comments"}
         </span>
         <span className="text-[13px] font-semibold text-light-text">{commentCount}</span>
-        <button
-          onClick={goToPost}
-          title="Open full post"
-          className="flex h-8 w-8 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
-        >
-          <IoArrowForward size={16} />
-        </button>
       </div>
 
       {/* Post mini-header */}
@@ -302,7 +295,7 @@ export default function PostCommentPanel() {
               )}
             </div>
           </div>
-          {/* Like row */}
+          {/* Like + view post row */}
           <div className="mt-2.5 flex items-center gap-3">
             <button
               onClick={handleLike}
@@ -310,6 +303,12 @@ export default function PostCommentPanel() {
             >
               {isLiked ? <IoHeart size={14} /> : <IoHeartOutline size={14} />}
               <span>{likeCount}</span>
+            </button>
+            <button
+              onClick={goToPost}
+              className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-primary hover:opacity-80"
+            >
+              View post <IoArrowForward size={11} />
             </button>
           </div>
         </div>
