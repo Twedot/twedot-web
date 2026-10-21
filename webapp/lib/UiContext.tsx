@@ -9,6 +9,9 @@ interface UiContextValue {
   drawerOpen: boolean;
   openDrawer: () => void;
   closeDrawer: () => void;
+  postPanelId: string | null;
+  openPostPanel: (postId: string) => void;
+  closePostPanel: () => void;
 }
 
 const UiContext = createContext<UiContextValue>({
@@ -18,16 +21,22 @@ const UiContext = createContext<UiContextValue>({
   drawerOpen: false,
   openDrawer: () => {},
   closeDrawer: () => {},
+  postPanelId: null,
+  openPostPanel: () => {},
+  closePostPanel: () => {},
 });
 
 export function UiProvider({ children }: { children: ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [postPanelId, setPostPanelId] = useState<string | null>(null);
 
   const toggleSidebar = useCallback(() => setSidebarCollapsed((v) => !v), []);
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+  const openPostPanel = useCallback((postId: string) => setPostPanelId(postId), []);
+  const closePostPanel = useCallback(() => setPostPanelId(null), []);
 
   const notify = useCallback((message: string) => {
     setToast(message);
@@ -35,8 +44,8 @@ export function UiProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ sidebarCollapsed, toggleSidebar, notify, drawerOpen, openDrawer, closeDrawer }),
-    [sidebarCollapsed, toggleSidebar, notify, drawerOpen, openDrawer, closeDrawer]
+    () => ({ sidebarCollapsed, toggleSidebar, notify, drawerOpen, openDrawer, closeDrawer, postPanelId, openPostPanel, closePostPanel }),
+    [sidebarCollapsed, toggleSidebar, notify, drawerOpen, openDrawer, closeDrawer, postPanelId, openPostPanel, closePostPanel]
   );
 
   return (

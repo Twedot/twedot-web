@@ -76,7 +76,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
   const active = items[activeIndex] ?? head;
 
   const { user } = useAuth();
-  const { notify } = useUi();
+  const { notify, openPostPanel } = useUi();
   const router = useRouter();
   const { socket } = useJobSocket();
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(active.id);
@@ -131,7 +131,12 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
     e?.stopPropagation();
     if (items.length > 1) postDetailStore.setGroup(items);
     postDetailStore.set(active);
-    router.push(postUrl(items[0].id));
+    // Desktop (lg+): open side panel; mobile: navigate to post page
+    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+      openPostPanel(items[0].id);
+    } else {
+      router.push(postUrl(items[0].id));
+    }
   }
 
   function openProfile(e: React.MouseEvent) {
