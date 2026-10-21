@@ -396,9 +396,9 @@ export default function PostCommentPanel() {
           </div>
         )}
         <div className="flex items-end gap-2.5">
-          {user?.profilePhotoUrl ? (
+          {user?.profile_photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.profilePhotoUrl} alt="" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
+            <img src={user.profile_photo_url} alt="" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
           ) : (
             <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
               <IoPersonOutline size={13} className="text-light-text" />
