@@ -23,6 +23,7 @@ import {
   IoShareSocialOutline,
   IoCreateOutline,
   IoPlayCircle,
+  IoCardOutline,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
@@ -280,6 +281,13 @@ export default function ProfilePage() {
         >
           <IoShareSocialOutline size={13} />
           Share
+        </button>
+        <button
+          onClick={() => router.push("/profile-card")}
+          className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
+        >
+          <IoCardOutline size={13} />
+          Card
         </button>
         <button
           onClick={() => router.push("/invite")}
