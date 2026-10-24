@@ -86,8 +86,6 @@ export default function ProfileCardPage() {
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
   const [showPhone, setShowPhone] = useState(false);
   const [showEmail, setShowEmail] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [emailAddress, setEmailAddress] = useState("");
   const [products, setProducts] = useState<{ name: string; imageUrl: string }[]>([]);
   const productFileRef = useRef<HTMLInputElement>(null);
 
@@ -142,11 +140,6 @@ export default function ProfileCardPage() {
       })
       .catch(() => {});
   }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (user?.email) setEmailAddress(String(user.email));
-    if ((user as any)?.phone) setPhoneNumber(String((user as any).phone));
-  }, [user]);
 
   const handleAddProduct = useCallback((file: File) => {
     if (products.length >= 5) return;
@@ -274,28 +267,6 @@ export default function ProfileCardPage() {
           <ToggleChip label="Phone" active={showPhone} color={t.hex} onToggle={() => setShowPhone(!showPhone)} />
           <ToggleChip label="Email" active={showEmail} color={t.hex} onToggle={() => setShowEmail(!showEmail)} />
         </div>
-
-        {/* Phone input */}
-        {showPhone && (
-          <input
-            type="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="Enter phone number"
-            className="w-full rounded-lg border border-border bg-feed-bg px-3 py-2 text-[13px] text-text placeholder:text-light-text focus:outline-none focus:border-primary"
-          />
-        )}
-
-        {/* Email input */}
-        {showEmail && (
-          <input
-            type="email"
-            value={emailAddress}
-            onChange={(e) => setEmailAddress(e.target.value)}
-            placeholder="Enter email address"
-            className="w-full rounded-lg border border-border bg-feed-bg px-3 py-2 text-[13px] text-text placeholder:text-light-text focus:outline-none focus:border-primary"
-          />
-        )}
 
         {/* Products */}
         <div className="flex items-center gap-2">
@@ -452,6 +423,19 @@ export default function ProfileCardPage() {
                   <span style={{ fontSize: 13, color: "#9ca3af", lineHeight: 1.3, marginTop: 1 }}>
                     {user.occupation || "Twedot User"}
                   </span>
+                  {/* Contact info */}
+                  {(showPhone && (user as any)?.phone) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+                      <IoCallOutline size={11} color="rgba(255,255,255,0.45)" />
+                      <span style={{ fontSize: 10, color: "#9ca3af" }}>{String((user as any).phone)}</span>
+                    </div>
+                  )}
+                  {(showEmail && user?.email) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                      <IoMailOutline size={11} color="rgba(255,255,255,0.45)" />
+                      <span style={{ fontSize: 10, color: "#9ca3af" }}>{String(user.email)}</span>
+                    </div>
+                  )}
                   {/* Rank badge with "Rank:" label */}
                   <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 12, fontWeight: 600, color: "#9ca3af" }}>Rank:</span>
@@ -526,24 +510,6 @@ export default function ProfileCardPage() {
                   />
                 </div>
               </div>
-
-              {/* ═══ CONTACT INFO ═══ */}
-              {(showPhone && phoneNumber) || (showEmail && emailAddress) ? (
-                <div style={{ position: "relative", zIndex: 2, display: "flex", gap: 8, padding: "10px 24px 0", flexWrap: "wrap" }}>
-                  {showPhone && phoneNumber && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 12, padding: "8px 14px", background: ac(r,g,b,0.06), border: `1px solid ${ac(r,g,b,0.18)}`, flex: 1, minWidth: 0 }}>
-                      <IoCallOutline size={14} color="rgba(255,255,255,0.6)" style={{ flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: "#d1d5db", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{phoneNumber}</span>
-                    </div>
-                  )}
-                  {showEmail && emailAddress && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 12, padding: "8px 14px", background: ac(r,g,b,0.06), border: `1px solid ${ac(r,g,b,0.18)}`, flex: 1, minWidth: 0 }}>
-                      <IoMailOutline size={14} color="rgba(255,255,255,0.6)" style={{ flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: "#d1d5db", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{emailAddress}</span>
-                    </div>
-                  )}
-                </div>
-              ) : null}
 
               {/* ═══ PRODUCTS ═══ */}
               {products.length > 0 && (
