@@ -183,10 +183,19 @@ export default function ProfileCardPage() {
       const ref = cardOnly ? cardOnlyRef : cardRef;
       const dataUrl = await captureCard(ref);
       if (!dataUrl) return;
-      const link = document.createElement("a");
-      link.download = `twedot-${(user?.name ?? "profile").replace(/\s+/g, "-").toLowerCase()}${cardOnly ? "-card" : ""}.png`;
-      link.href = dataUrl;
-      link.click();
+      const fileName = `twedot-${(user?.name ?? "profile").replace(/\s+/g, "-").toLowerCase()}${cardOnly ? "-card" : ""}.png`;
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], fileName, { type: "image/png" });
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      if (isIOS && navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file] }).catch(() => {});
+      } else {
+        const link = document.createElement("a");
+        link.download = fileName;
+        link.href = dataUrl;
+        link.click();
+      }
     } catch {
       notify("Failed to generate card image. Try again.");
     } finally {
