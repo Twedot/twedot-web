@@ -91,38 +91,16 @@ export default function UserPageClient() {
 
   useEffect(() => {
     if (isLoading || !shortId) return;
-    const fetchPublic = async () => {
-      try {
-        const res = await fetch(`https://prodapi.twedot.com/api/v1/users/by-short/${shortId}`);
-        if (!res.ok) throw new Error("Not found");
-        const json = await res.json();
-        const p = json?.data;
-        if (!p) throw new Error("Not found");
+    const authOpt = isAuthenticated ? undefined : { auth: false };
+    apiGet<UserProfile>(`/users/by-short/${shortId}`, authOpt)
+      .then((p) => {
         setProfile(p);
         setIsFollowing(p.is_following ?? false);
-        const postsRes = await fetch(`https://prodapi.twedot.com/api/v1/status/public?authorId=${p.id}`);
-        if (postsRes.ok) {
-          const postsJson = await postsRes.json();
-          if (Array.isArray(postsJson?.data)) setPosts(postsJson.data);
-          else if (Array.isArray(postsJson)) setPosts(postsJson);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Couldn't load this profile.");
-      }
-    };
-    if (isAuthenticated) {
-      apiGet<UserProfile>(`/users/by-short/${shortId}`)
-        .then((p) => {
-          setProfile(p);
-          setIsFollowing(p.is_following ?? false);
-          apiGet<StatusPost[]>(`/status/public?authorId=${p.id}`)
-            .then((res) => { if (Array.isArray(res)) setPosts(res); })
-            .catch(() => {});
-        })
-        .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load this profile."));
-    } else {
-      fetchPublic();
-    }
+        apiGet<StatusPost[]>(`/status/public?authorId=${p.id}`, authOpt)
+          .then((res) => { if (Array.isArray(res)) setPosts(res); })
+          .catch(() => {});
+      })
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load this profile."));
   }, [isLoading, isAuthenticated, shortId]);
 
   // Real-time follower count from socket
