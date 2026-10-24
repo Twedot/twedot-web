@@ -99,8 +99,9 @@ export default function ProfileCardPage() {
 
   useEffect(() => {
     if (!user?.profile_photo_url) return;
-    fetch(user.profile_photo_url)
-      .then((res) => res.blob())
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(user.profile_photo_url)}`;
+    fetch(proxyUrl)
+      .then((res) => { if (!res.ok) throw new Error(); return res.blob(); })
       .then((blob) => {
         const reader = new FileReader();
         reader.onloadend = () => setAvatarDataUrl(reader.result as string);
