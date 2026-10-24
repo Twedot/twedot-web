@@ -25,6 +25,7 @@ import type { UserProfile, StatusPost } from "@/lib/types";
 import { postDetailStore } from "@/lib/postDetailStore";
 import { extractShortId, postUrl } from "@/lib/url";
 import ErrorState from "@/components/ErrorState";
+import { useLoginGate, LoginBanner } from "@/components/LoginGate";
 
 const WEEK_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -72,6 +73,7 @@ export default function UserPageClient() {
   const { handle } = useParams<{ handle: string }>();
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
+  const { isGuest, requireLogin } = useLoginGate();
   const { notify } = useUi();
   const { socket } = useJobSocket();
 
@@ -88,21 +90,40 @@ export default function UserPageClient() {
   const [inventoryLoaded, setInventoryLoaded] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) router.replace("/login");
-  }, [isLoading, isAuthenticated, router]);
-
-  useEffect(() => {
-    if (!isAuthenticated || !shortId) return;
-    apiGet<UserProfile>(`/users/by-short/${shortId}`)
-      .then((p) => {
+    if (isLoading || !shortId) return;
+    const fetchPublic = async () => {
+      try {
+        const res = await fetch(`https://prodapi.twedot.com/api/v1/users/by-short/${shortId}`);
+        if (!res.ok) throw new Error("Not found");
+        const json = await res.json();
+        const p = json?.data;
+        if (!p) throw new Error("Not found");
         setProfile(p);
         setIsFollowing(p.is_following ?? false);
-        apiGet<StatusPost[]>(`/status/public?authorId=${p.id}`)
-          .then((res) => { if (Array.isArray(res)) setPosts(res); })
-          .catch(() => {});
-      })
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load this profile."));
-  }, [isAuthenticated, shortId]);
+        const postsRes = await fetch(`https://prodapi.twedot.com/api/v1/status/public?authorId=${p.id}`);
+        if (postsRes.ok) {
+          const postsJson = await postsRes.json();
+          if (Array.isArray(postsJson?.data)) setPosts(postsJson.data);
+          else if (Array.isArray(postsJson)) setPosts(postsJson);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Couldn't load this profile.");
+      }
+    };
+    if (isAuthenticated) {
+      apiGet<UserProfile>(`/users/by-short/${shortId}`)
+        .then((p) => {
+          setProfile(p);
+          setIsFollowing(p.is_following ?? false);
+          apiGet<StatusPost[]>(`/status/public?authorId=${p.id}`)
+            .then((res) => { if (Array.isArray(res)) setPosts(res); })
+            .catch(() => {});
+        })
+        .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load this profile."));
+    } else {
+      fetchPublic();
+    }
+  }, [isLoading, isAuthenticated, shortId]);
 
   // Real-time follower count from socket
   useEffect(() => {
@@ -118,6 +139,7 @@ export default function UserPageClient() {
 
   const handleToggleFollow = useCallback(async () => {
     if (!profile || followLoadingRef.current) return;
+    if (!requireLogin()) return;
     followLoadingRef.current = true;
 
     const wasFollowing = isFollowing;
@@ -147,7 +169,7 @@ export default function UserPageClient() {
     } finally {
       followLoadingRef.current = false;
     }
-  }, [isFollowing, profile, notify]);
+  }, [isFollowing, profile, notify, requireLogin]);
 
   const handleOpenInventory = useCallback(async () => {
     setActiveTab("inventory");
@@ -167,8 +189,6 @@ export default function UserPageClient() {
       try { await (navigator as Navigator).clipboard.writeText(url); notify("Link copied!"); } catch { notify("Profile: " + url); }
     }
   }, [handle, profile?.name, notify]);
-
-  if (!isAuthenticated) return null;
 
   if (error) {
     return (
@@ -192,6 +212,7 @@ export default function UserPageClient() {
 
   return (
     <div className="flex flex-col pb-12">
+      {isGuest && <LoginBanner />}
 
       {/* ── Profile header ── */}
       <div className="flex gap-5 px-6 pb-5 pt-7">
@@ -282,7 +303,7 @@ export default function UserPageClient() {
           {isFollowing ? "Following" : "Follow"}
         </button>
         <button
-          onClick={() => router.push(`/inbox?userId=${profile.id}`)}
+          onClick={() => requireLogin(() => router.push(`/inbox?userId=${profile.id}`))}
           className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
         >
           Message
