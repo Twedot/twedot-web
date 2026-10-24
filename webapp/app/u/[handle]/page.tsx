@@ -13,9 +13,23 @@ async function fetchUser(shortId: string) {
     const res = await fetch(`${API_ORIGIN}/api/v1/users/by-short/${shortId}`, {
       next: { revalidate: 60 },
     });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json?.data ?? null;
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.data) return json.data;
+    }
+    const inviteRes = await fetch(`${API_ORIGIN}/api/v1/users/invite/${shortId}`, {
+      next: { revalidate: 60 },
+    });
+    if (!inviteRes.ok) return null;
+    const inviteJson = await inviteRes.json();
+    const userId = inviteJson?.data?.userId;
+    if (!userId) return null;
+    const userRes = await fetch(`${API_ORIGIN}/api/v1/users/by-short/${userId}`, {
+      next: { revalidate: 60 },
+    });
+    if (!userRes.ok) return null;
+    const userJson = await userRes.json();
+    return userJson?.data ?? null;
   } catch {
     return null;
   }

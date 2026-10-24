@@ -92,15 +92,32 @@ export default function UserPageClient() {
   useEffect(() => {
     if (isLoading || !shortId) return;
     const authOpt = isAuthenticated ? undefined : { auth: false };
-    apiGet<UserProfile>(`/users/by-short/${shortId}`, authOpt)
-      .then((p) => {
-        setProfile(p);
-        setIsFollowing(p.is_following ?? false);
-        apiGet<StatusPost[]>(`/status/public?authorId=${p.id}`, authOpt)
-          .then((res) => { if (Array.isArray(res)) setPosts(res); })
-          .catch(() => {});
-      })
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load this profile."));
+    const loadProfile = async () => {
+      let profileId = shortId;
+      try {
+        await apiGet<UserProfile>(`/users/by-short/${shortId}`, authOpt)
+          .then((p) => {
+            setProfile(p);
+            setIsFollowing(p.is_following ?? false);
+            profileId = p.id;
+          });
+      } catch {
+        try {
+          const resolved = await apiGet<{ userId: string }>(`/users/invite/${shortId}`, { auth: false });
+          profileId = resolved.userId;
+          const p = await apiGet<UserProfile>(`/users/by-short/${profileId}`, authOpt);
+          setProfile(p);
+          setIsFollowing(p.is_following ?? false);
+        } catch (err) {
+          setError(err instanceof ApiError ? err.message : "Couldn't load this profile.");
+          return;
+        }
+      }
+      apiGet<StatusPost[]>(`/status/public?authorId=${profileId}`, authOpt)
+        .then((res) => { if (Array.isArray(res)) setPosts(res); })
+        .catch(() => {});
+    };
+    loadProfile();
   }, [isLoading, isAuthenticated, shortId]);
 
   // Real-time follower count from socket
