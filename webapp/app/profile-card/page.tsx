@@ -513,7 +513,7 @@ export default function ProfileCardPage() {
               {/* ═══ PRODUCTS ═══ */}
               {products.length > 0 && (
                 <div style={{ position: "relative", zIndex: 2, padding: "12px 24px 0" }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Products & Services</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>My Products & Services</div>
                   <div style={{ display: "flex", gap: 10, overflow: "hidden" }}>
                     {products.map((p, i) => (
                       <div key={i} style={{ flexShrink: 0 }}>
