@@ -67,13 +67,47 @@ export default function ProfileCardPage() {
   const [themeIdx, setThemeIdx] = useState(0);
   const [businessAvailable, setBusinessAvailable] = useState(true);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
 
+  const CARD_OUTER_W = 600;
   const t = COLOR_THEMES[themeIdx];
   const { r, g, b } = t;
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [cardScale, setCardScale] = useState(1);
+  const [cardHeight, setCardHeight] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    const card = cardRef.current;
+    if (!wrapper || !card) return;
+    const update = () => {
+      const w = wrapper.clientWidth;
+      const s = w >= CARD_OUTER_W ? 1 : w / CARD_OUTER_W;
+      setCardScale(s);
+      setCardHeight(card.scrollHeight * s);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(wrapper);
+    ro.observe(card);
+    return () => ro.disconnect();
+  }, [user, themeIdx, businessAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
   }, [isLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (!user?.profile_photo_url) return;
+    fetch(user.profile_photo_url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => setAvatarDataUrl(reader.result as string);
+        reader.readAsDataURL(blob);
+      })
+      .catch(() => {});
+  }, [user?.profile_photo_url]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -93,10 +127,13 @@ export default function ProfileCardPage() {
   const captureCard = useCallback(async (ref: React.RefObject<HTMLDivElement | null>): Promise<string | null> => {
     if (!ref.current) return null;
     const el = ref.current;
-    return toPng(el, {
-      pixelRatio: 3,
-      cacheBust: true,
-    });
+    const prev = el.style.transform;
+    el.style.transform = "none";
+    try {
+      return await toPng(el, { pixelRatio: 3 });
+    } finally {
+      el.style.transform = prev;
+    }
   }, []);
 
   const handleDownload = useCallback(async (cardOnly: boolean) => {
@@ -162,9 +199,9 @@ export default function ProfileCardPage() {
       </p>
 
       {/* ── Color picker ── */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap justify-center">
         <span className="text-[12px] font-semibold text-light-text">Theme</span>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-center">
           {COLOR_THEMES.map((ct, i) => (
             <button
               key={ct.name}
@@ -220,9 +257,16 @@ export default function ProfileCardPage() {
 
       {/* ── Full card with background (for full download) ── */}
       <div
+        ref={wrapperRef}
+        className="w-full"
+        style={{ maxWidth: CARD_OUTER_W, overflow: "hidden", height: cardHeight }}
+      >
+      <div
         ref={cardRef}
         style={{
-          width: 600,
+          width: CARD_OUTER_W,
+          transform: `scale(${cardScale})`,
+          transformOrigin: "top left",
           paddingTop: 50,
           paddingBottom: 70,
           paddingLeft: 36,
@@ -290,12 +334,11 @@ export default function ProfileCardPage() {
                 {/* Avatar */}
                 <div style={{ flexShrink: 0 }}>
                   <div style={{ borderRadius: "50%", padding: 3, background: `linear-gradient(135deg, ${t.hex} 0%, ${ac(r,g,b,0.6)} 50%, ${t.hex} 100%)` }}>
-                    {user.profile_photo_url ? (
+                    {(avatarDataUrl ?? user.profile_photo_url) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={user.profile_photo_url}
+                        src={(avatarDataUrl ?? user.profile_photo_url)!}
                         alt={user.name ?? ""}
-                        crossOrigin="anonymous"
                         style={{ width: 100, height: 100, borderRadius: "50%", objectFit: "cover", border: `3px solid ${t.inner}`, display: "block" }}
                       />
                     ) : (
@@ -422,6 +465,7 @@ export default function ProfileCardPage() {
           <div style={{ width: 160, height: 14, borderRadius: 8, background: `linear-gradient(180deg, ${ac(r,g,b,0.2)} 0%, ${ac(r,g,b,0.05)} 100%)`, border: `1px solid ${ac(r,g,b,0.2)}` }} />
           <div style={{ width: 120, height: 6, marginTop: 4, borderRadius: "50%", background: `radial-gradient(ellipse, ${ac(r,g,b,0.15)} 0%, transparent 70%)` }} />
         </div>
+      </div>
       </div>
 
       {/* ── Action buttons ── */}

@@ -110,6 +110,26 @@ function AppShellLayout({ children }: { children: ReactNode }) {
   );
 }
 
+// Routes guests can browse without logging in
+const PUBLIC_ROUTES = [
+  "/stories",
+  "/search",
+  "/status/",
+  "/p/",
+  "/u/",
+  "/channels",
+  "/c/",
+  "/nearby",
+  "/live",
+  "/rank",
+];
+
+function isPublicRoute(pathname: string) {
+  return PUBLIC_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r)
+  );
+}
+
 export default function AppShell({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const pathname = usePathname();
@@ -118,13 +138,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const isLoginOrVerify = pathname === "/login" || pathname === "/verify";
   const isCompleteProfile = pathname === "/complete-profile";
   const isAuthBridge = pathname === "/auth-bridge";
+  const isFullscreen = pathname.startsWith("/live/watch");
   const profileComplete = !!user?.profileComplete;
+  const isPublic = isPublicRoute(pathname);
 
   useEffect(() => {
     if (isLoading || isAuthBridge) return;
 
     if (!isAuthenticated) {
-      if (!isLoginOrVerify) router.replace("/login");
+      // Allow guests on public routes — redirect private routes to login
+      if (!isLoginOrVerify && !isPublic) router.replace("/login");
       return;
     }
 
@@ -144,13 +167,21 @@ export default function AppShell({ children }: { children: ReactNode }) {
       } catch {}
       router.replace(dest);
     }
-  }, [isLoading, isAuthenticated, profileComplete, isLoginOrVerify, isCompleteProfile, isAuthBridge, router]);
+  }, [isLoading, isAuthenticated, profileComplete, isLoginOrVerify, isCompleteProfile, isAuthBridge, isPublic, router]);
 
   if (isAuthBridge) return <>{children}</>;
   if (isLoading) return null;
 
   if (!isAuthenticated) {
     if (isLoginOrVerify) return <>{children}</>;
+    // Let guests see public routes inside the full shell layout
+    if (isPublic) {
+      return (
+        <UiProvider>
+          <AppShellLayout>{children}</AppShellLayout>
+        </UiProvider>
+      );
+    }
     return null;
   }
 
@@ -160,6 +191,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }
 
   if (isLoginOrVerify || isCompleteProfile) return null;
+
+  if (isFullscreen) return <>{children}</>;
 
   return (
     <JobSocketProvider>

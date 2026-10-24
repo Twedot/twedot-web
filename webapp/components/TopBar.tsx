@@ -342,21 +342,32 @@ export default function TopBar() {
           <button onClick={() => router.push("/create-post")} className="sm:hidden flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg">
             <IoAddCircleOutline size={22} />
           </button>
-          <button onClick={() => router.push("/inbox")} className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg">
-            <IoNotificationsOutline size={20} />
-            {unreadNotifCount > 0 && (
-              <span className="absolute right-0.5 top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#FF3B30] px-[3px] text-[9px] font-bold leading-none text-white">
-                {unreadNotifCount > 99 ? "99+" : unreadNotifCount}
-              </span>
-            )}
-          </button>
-          {user?.profile_photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 cursor-pointer rounded-full object-cover" onClick={() => router.push("/profile")} />
+          {user ? (
+            <>
+              <button onClick={() => router.push("/inbox")} className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg">
+                <IoNotificationsOutline size={20} />
+                {unreadNotifCount > 0 && (
+                  <span className="absolute right-0.5 top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#FF3B30] px-[3px] text-[9px] font-bold leading-none text-white">
+                    {unreadNotifCount > 99 ? "99+" : unreadNotifCount}
+                  </span>
+                )}
+              </button>
+              {user.profile_photo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 cursor-pointer rounded-full object-cover" onClick={() => router.push("/profile")} />
+              ) : (
+                <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-feed-bg" onClick={() => router.push("/profile")}>
+                  <IoPersonOutline size={17} className="text-light-text" />
+                </div>
+              )}
+            </>
           ) : (
-            <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-feed-bg" onClick={() => router.push("/profile")}>
-              <IoPersonOutline size={17} className="text-light-text" />
-            </div>
+            <button
+              onClick={() => router.push("/login")}
+              className="rounded-full bg-primary px-4 py-1.5 text-[13px] font-semibold text-white hover:bg-primary/90 transition-colors"
+            >
+              Sign in
+            </button>
           )}
         </div>
       </div>

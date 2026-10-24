@@ -370,6 +370,18 @@ export default function SideNav() {
         )}
 
         <div className="mt-auto border-t border-border pt-2">
+          {!isAuthenticated ? (
+            <Link
+              href="/login"
+              title="Sign in"
+              className={`flex items-center gap-3.5 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-light-text hover:bg-feed-bg hover:text-text ${sidebarCollapsed ? "justify-center px-0" : ""}`}
+            >
+              <span className="icon-bold flex h-5 w-5 flex-shrink-0 items-center justify-center">
+                <IoLogOutOutline size={20} className="text-light-text" style={{ transform: 'scaleX(-1)' }} />
+              </span>
+              {!sidebarCollapsed && "Sign in"}
+            </Link>
+          ) : (<>
           <Link
             href="/settings"
             title="Settings"
@@ -399,6 +411,7 @@ export default function SideNav() {
             </span>
             {!sidebarCollapsed && "Logout"}
           </button>
+          </>)}
         </div>
 
         </div>{/* end centered wrapper */}

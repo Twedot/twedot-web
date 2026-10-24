@@ -40,6 +40,7 @@ import { postDetailStore } from "@/lib/postDetailStore";
 import { videoFeedStore } from "@/lib/videoFeedStore";
 import type { StatusPost } from "@/lib/types";
 import { profileUrl, postUrl } from "@/lib/url";
+import { useLoginGate } from "./LoginGate";
 
 function MediaBackdrop({ bgSrc, children, isVideo = false }: { bgSrc?: string | null; children: ReactNode; isVideo?: boolean }) {
   return (
@@ -75,10 +76,11 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
   const head = items[0];
   const active = items[activeIndex] ?? head;
 
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { notify, openPostPanel } = useUi();
   const router = useRouter();
   const { socket } = useJobSocket();
+  const { requireLogin } = useLoginGate();
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(active.id);
   const isOwnPost = user?.id === head.userId;
   const hasMedia = items.some((it) => it.type === "image" || it.type === "video");
@@ -120,6 +122,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
 
   function handleLike(e: React.MouseEvent) {
     e.stopPropagation();
+    if (!requireLogin()) return;
     if (!socket) return;
     const nowLiked = !isLiked;
     setIsLiked(nowLiked);
@@ -161,6 +164,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
 
   const handleToggleFollow = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!requireLogin()) return;
     if (followLoadingRef.current) return;
     followLoadingRef.current = true;
     const wasFollowing = isFollowing;
@@ -529,13 +533,13 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                 <span className="text-[11px] font-bold text-light-text">{likeCount}</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
-                <button onClick={() => openDetail()} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
+                <button onClick={(e) => { e.stopPropagation(); if (requireLogin()) openDetail(); }} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
                   <IoChatbubbleEllipsesOutline size={18} />
                 </button>
                 <span className="text-[11px] font-bold text-light-text">{active.commentCount}</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
-                <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
+                <button onClick={(e) => { e.stopPropagation(); if (requireLogin()) toggleBookmark(); }} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
                   {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
                 </button>
               </div>
@@ -564,11 +568,11 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
             {isLiked ? <IoHeart size={16} /> : <IoHeartOutline size={16} />}
             <span>{likeCount}</span>
           </button>
-          <button onClick={() => openDetail()} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-light-text transition-colors hover:bg-border/50">
+          <button onClick={(e) => { e.stopPropagation(); if (requireLogin()) openDetail(); }} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-bold text-light-text transition-colors hover:bg-border/50">
             <IoChatbubbleEllipsesOutline size={16} />
             <span>{active.commentCount}</span>
           </button>
-          <button onClick={(e) => { e.stopPropagation(); toggleBookmark(); }} className={`flex items-center justify-center rounded-full bg-feed-bg p-[9px] transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
+          <button onClick={(e) => { e.stopPropagation(); if (requireLogin()) toggleBookmark(); }} className={`flex items-center justify-center rounded-full bg-feed-bg p-[9px] transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
             {isBookmarked ? <IoBookmark size={16} /> : <IoBookmarkOutline size={16} />}
           </button>
           {!isOwnPost && (

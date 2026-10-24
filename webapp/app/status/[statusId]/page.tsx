@@ -473,11 +473,6 @@ export default function StatusDetailPage() {
     setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) router.replace("/login");
-  }, [isLoading, isAuthenticated, router]);
-
-  if (!isAuthenticated) return null;
   if (loadingPost && !post) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">

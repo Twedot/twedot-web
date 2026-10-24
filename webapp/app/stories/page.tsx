@@ -9,6 +9,7 @@ import type { StatusPost } from "@/lib/types";
 import type { NearbyVendor } from "@/lib/vendors";
 import PostCard from "@/components/PostCard";
 import NearbyVendorsRow from "@/components/NearbyVendorsRow";
+import { LoginBanner } from "@/components/LoginGate";
 import { markFeedSeen } from "@/lib/unseenStories";
 import { feedStateStore } from "@/lib/feedStateStore";
 import { videoFeedStore } from "@/lib/videoFeedStore";
@@ -62,10 +63,6 @@ function FeedContent() {
   useEffect(() => { isFetchingRef.current = isFetching; }, [isFetching]);
   useEffect(() => { pageRef.current = page; }, [page]);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) router.replace("/login");
-  }, [isLoading, isAuthenticated, router]);
-
   const HEADER_H = 112; // sticky nav + filter bar combined height
 
   // Restore scroll to the saved top post after cached posts render
@@ -116,17 +113,17 @@ function FeedContent() {
   );
 
   useEffect(() => {
+    if (isLoading) return;
     // Skip initial fetch if we have a valid cache for this query
-    if (isAuthenticated && !feedStateStore.hasCache(query)) loadPage(1);
+    if (!feedStateStore.hasCache(query)) loadPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, query]);
+  }, [isLoading, query]);
 
   // Reload feed when switching to/from Following (different endpoint)
   const prevSortRef = useRef(sort);
   useEffect(() => {
     const prev = prevSortRef.current;
     prevSortRef.current = sort;
-    if (!isAuthenticated) return;
     if ((sort === "following") !== (prev === "following")) {
       setPosts([]);
       setPage(1);
@@ -143,7 +140,7 @@ function FeedContent() {
   useEffect(() => {
     if (!isAuthenticated) return;
     apiGet<NearbyVendor[]>("/users/suggested")
-      .then((result) => setVendors(result.filter((u: any) => !u.is_following).slice(0, 12)))
+      .then((result) => setVendors(result.filter((u: any) => !u.is_following).slice(0, 10)))
       .catch(() => {});
   }, [isAuthenticated]);
 
@@ -208,10 +205,9 @@ function FeedContent() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [groupedPosts]);
 
-  if (!isAuthenticated) return null;
-
   return (
     <div className="min-h-full bg-background">
+      {!isAuthenticated && <LoginBanner />}
       {query && (
         <div className="border-b border-border bg-background px-4 py-3 text-sm text-light-text">
           Results for <span className="font-semibold text-text">{query}</span>
@@ -233,7 +229,7 @@ function FeedContent() {
             <>
               <div className="fixed inset-0 z-10" onClick={() => setSortMenuOpen(false)} />
               <div className="absolute left-0 top-full z-20 mt-1 w-36 overflow-hidden rounded-lg border border-border bg-background shadow-lg">
-                {(Object.keys(SORT_LABELS) as SortOption[]).map((opt) => (
+                {(Object.keys(SORT_LABELS) as SortOption[]).filter((opt) => isAuthenticated || opt !== "following").map((opt) => (
                   <button
                     key={opt}
                     onClick={() => {
