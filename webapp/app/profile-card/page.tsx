@@ -21,6 +21,11 @@ import {
   IoTrophy,
   IoCheckmark,
   IoImageOutline,
+  IoCallOutline,
+  IoMailOutline,
+  IoAddCircleOutline,
+  IoCloseCircle,
+  IoCubeOutline,
 } from "react-icons/io5";
 import {
   GLOBAL_RANK_COLORS,
@@ -57,6 +62,17 @@ function ac(r: number, g: number, b: number, a: number) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
+function ToggleChip({ label, active, color, onToggle }: { label: string; active: boolean; color: string; onToggle: () => void }) {
+  return (
+    <button onClick={onToggle} className="flex items-center gap-2 text-[12px] font-semibold text-light-text hover:text-text transition-colors">
+      <div style={{ width: 36, height: 20, borderRadius: 10, background: active ? color : "rgba(255,255,255,0.15)", position: "relative", transition: "background 0.2s" }}>
+        <div style={{ position: "absolute", top: 2, left: active ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "white", transition: "left 0.2s" }} />
+      </div>
+      {label}
+    </button>
+  );
+}
+
 export default function ProfileCardPage() {
   const { user, isLoading, isAuthenticated, refreshUser } = useAuth();
   const { notify } = useUi();
@@ -68,6 +84,12 @@ export default function ProfileCardPage() {
   const [businessAvailable, setBusinessAvailable] = useState(true);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
+  const [showPhone, setShowPhone] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [products, setProducts] = useState<{ name: string; imageUrl: string }[]>([]);
+  const productFileRef = useRef<HTMLInputElement>(null);
 
   const CARD_OUTER_W = 600;
   const t = COLOR_THEMES[themeIdx];
@@ -91,7 +113,7 @@ export default function ProfileCardPage() {
     ro.observe(wrapper);
     ro.observe(card);
     return () => ro.disconnect();
-  }, [user, themeIdx, businessAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, themeIdx, businessAvailable, showPhone, showEmail, products.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -120,6 +142,25 @@ export default function ProfileCardPage() {
       })
       .catch(() => {});
   }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (user?.email) setEmailAddress(String(user.email));
+    if ((user as any)?.phone) setPhoneNumber(String((user as any).phone));
+  }, [user]);
+
+  const handleAddProduct = useCallback((file: File) => {
+    if (products.length >= 5) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const name = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+      setProducts((prev) => [...prev, { name, imageUrl: reader.result as string }]);
+    };
+    reader.readAsDataURL(file);
+  }, [products.length]);
+
+  const removeProduct = useCallback((idx: number) => {
+    setProducts((prev) => prev.filter((_, i) => i !== idx));
+  }, []);
 
   const profileUrl = inviteToken
     ? `https://twedot.com/u/${encodeURIComponent(inviteToken)}`
@@ -225,36 +266,86 @@ export default function ProfileCardPage() {
         </div>
       </div>
 
-      {/* ── Business toggle control ── */}
-      <button
-        onClick={() => setBusinessAvailable(!businessAvailable)}
-        className="flex items-center gap-2 text-[12px] font-semibold text-light-text hover:text-text transition-colors"
-      >
-        <div
-          style={{
-            width: 36,
-            height: 20,
-            borderRadius: 10,
-            background: businessAvailable ? t.hex : "rgba(255,255,255,0.15)",
-            position: "relative",
-            transition: "background 0.2s",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: 2,
-              left: businessAvailable ? 18 : 2,
-              width: 16,
-              height: 16,
-              borderRadius: "50%",
-              background: "white",
-              transition: "left 0.2s",
+      {/* ── Card options ── */}
+      <div className="flex flex-col gap-3 w-full max-w-[420px]">
+        {/* Toggle row */}
+        <div className="flex flex-wrap gap-3 justify-center">
+          <ToggleChip label="Business" active={businessAvailable} color={t.hex} onToggle={() => setBusinessAvailable(!businessAvailable)} />
+          <ToggleChip label="Phone" active={showPhone} color={t.hex} onToggle={() => setShowPhone(!showPhone)} />
+          <ToggleChip label="Email" active={showEmail} color={t.hex} onToggle={() => setShowEmail(!showEmail)} />
+        </div>
+
+        {/* Phone input */}
+        {showPhone && (
+          <input
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="Enter phone number"
+            className="w-full rounded-lg border border-border bg-feed-bg px-3 py-2 text-[13px] text-text placeholder:text-light-text focus:outline-none focus:border-primary"
+          />
+        )}
+
+        {/* Email input */}
+        {showEmail && (
+          <input
+            type="email"
+            value={emailAddress}
+            onChange={(e) => setEmailAddress(e.target.value)}
+            placeholder="Enter email address"
+            className="w-full rounded-lg border border-border bg-feed-bg px-3 py-2 text-[13px] text-text placeholder:text-light-text focus:outline-none focus:border-primary"
+          />
+        )}
+
+        {/* Products */}
+        <div className="flex items-center gap-2">
+          <IoCubeOutline size={14} className="text-light-text" />
+          <span className="text-[12px] font-semibold text-light-text">Products / Services ({products.length}/5)</span>
+          {products.length < 5 && (
+            <button
+              onClick={() => productFileRef.current?.click()}
+              className="ml-auto flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold text-primary hover:bg-feed-bg transition-colors"
+            >
+              <IoAddCircleOutline size={14} />
+              Add
+            </button>
+          )}
+          <input
+            ref={productFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleAddProduct(file);
+              e.target.value = "";
             }}
           />
         </div>
-        Available for Business
-      </button>
+
+        {products.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {products.map((p, i) => (
+              <div key={i} className="relative flex-shrink-0 group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.imageUrl} alt={p.name} className="w-16 h-16 rounded-lg object-cover border border-border" />
+                <button
+                  onClick={() => removeProduct(i)}
+                  className="absolute -top-1.5 -right-1.5 text-red-400 hover:text-red-300 bg-background rounded-full"
+                >
+                  <IoCloseCircle size={18} />
+                </button>
+                <input
+                  value={p.name}
+                  onChange={(e) => setProducts((prev) => prev.map((item, j) => j === i ? { ...item, name: e.target.value } : item))}
+                  className="w-16 mt-1 text-[9px] text-center text-light-text bg-transparent border-none focus:outline-none truncate"
+                  title={p.name}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── Full card with background (for full download) ── */}
       <div
@@ -435,6 +526,46 @@ export default function ProfileCardPage() {
                   />
                 </div>
               </div>
+
+              {/* ═══ CONTACT INFO ═══ */}
+              {(showPhone && phoneNumber) || (showEmail && emailAddress) ? (
+                <div style={{ position: "relative", zIndex: 2, display: "flex", gap: 8, padding: "10px 24px 0", flexWrap: "wrap" }}>
+                  {showPhone && phoneNumber && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 12, padding: "8px 14px", background: ac(r,g,b,0.06), border: `1px solid ${ac(r,g,b,0.18)}`, flex: 1, minWidth: 0 }}>
+                      <IoCallOutline size={14} color="rgba(255,255,255,0.6)" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#d1d5db", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{phoneNumber}</span>
+                    </div>
+                  )}
+                  {showEmail && emailAddress && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 12, padding: "8px 14px", background: ac(r,g,b,0.06), border: `1px solid ${ac(r,g,b,0.18)}`, flex: 1, minWidth: 0 }}>
+                      <IoMailOutline size={14} color="rgba(255,255,255,0.6)" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#d1d5db", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{emailAddress}</span>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
+              {/* ═══ PRODUCTS ═══ */}
+              {products.length > 0 && (
+                <div style={{ position: "relative", zIndex: 2, padding: "12px 24px 0" }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Products & Services</div>
+                  <div style={{ display: "flex", gap: 10, overflow: "hidden" }}>
+                    {products.map((p, i) => (
+                      <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: 80, flexShrink: 0 }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          style={{ width: 72, height: 72, borderRadius: 14, objectFit: "cover", border: `1px solid ${ac(r,g,b,0.25)}` }}
+                        />
+                        <span style={{ fontSize: 10, fontWeight: 600, color: "#d1d5db", textAlign: "center", lineHeight: 1.2, maxWidth: 76, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {p.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* ═══ BOTTOM TAGS ═══ */}
               <div style={{ position: "relative", zIndex: 2, display: "flex", flexWrap: "wrap", gap: 6, padding: "14px 24px 20px" }}>
