@@ -141,14 +141,19 @@ export default function ProfileCardPage() {
       .catch(() => {});
   }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleAddProduct = useCallback((file: File) => {
-    if (products.length >= 5) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const name = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
-      setProducts((prev) => [...prev, { name, imageUrl: reader.result as string }]);
-    };
-    reader.readAsDataURL(file);
+  const handleAddProducts = useCallback((files: FileList) => {
+    const remaining = 5 - products.length;
+    const toAdd = Array.from(files).slice(0, remaining);
+    toAdd.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProducts((prev) => {
+          if (prev.length >= 5) return prev;
+          return [...prev, { name: file.name, imageUrl: reader.result as string }];
+        });
+      };
+      reader.readAsDataURL(file);
+    });
   }, [products.length]);
 
   const removeProduct = useCallback((idx: number) => {
@@ -285,10 +290,10 @@ export default function ProfileCardPage() {
             ref={productFileRef}
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleAddProduct(file);
+              if (e.target.files?.length) handleAddProducts(e.target.files);
               e.target.value = "";
             }}
           />
@@ -297,21 +302,15 @@ export default function ProfileCardPage() {
         {products.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-1">
             {products.map((p, i) => (
-              <div key={i} className="relative flex-shrink-0 group">
+              <div key={i} className="relative flex-shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.imageUrl} alt={p.name} className="w-16 h-16 rounded-lg object-cover border border-border" />
+                <img src={p.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover border border-border" />
                 <button
                   onClick={() => removeProduct(i)}
                   className="absolute -top-1.5 -right-1.5 text-red-400 hover:text-red-300 bg-background rounded-full"
                 >
                   <IoCloseCircle size={18} />
                 </button>
-                <input
-                  value={p.name}
-                  onChange={(e) => setProducts((prev) => prev.map((item, j) => j === i ? { ...item, name: e.target.value } : item))}
-                  className="w-16 mt-1 text-[9px] text-center text-light-text bg-transparent border-none focus:outline-none truncate"
-                  title={p.name}
-                />
               </div>
             ))}
           </div>
@@ -517,16 +516,13 @@ export default function ProfileCardPage() {
                   <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Products & Services</div>
                   <div style={{ display: "flex", gap: 10, overflow: "hidden" }}>
                     {products.map((p, i) => (
-                      <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: 80, flexShrink: 0 }}>
+                      <div key={i} style={{ flexShrink: 0 }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={p.imageUrl}
-                          alt={p.name}
+                          alt=""
                           style={{ width: 72, height: 72, borderRadius: 14, objectFit: "cover", border: `1px solid ${ac(r,g,b,0.25)}` }}
                         />
-                        <span style={{ fontSize: 10, fontWeight: 600, color: "#d1d5db", textAlign: "center", lineHeight: 1.2, maxWidth: 76, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {p.name}
-                        </span>
                       </div>
                     ))}
                   </div>
