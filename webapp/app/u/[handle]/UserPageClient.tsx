@@ -72,7 +72,7 @@ function deduplicateByGroup(items: StatusPost[]): StatusPost[] {
 export default function UserPageClient() {
   const { handle } = useParams<{ handle: string }>();
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user: me } = useAuth();
   const { isGuest, requireLogin } = useLoginGate();
   const { notify } = useUi();
   const { socket } = useJobSocket();
@@ -286,23 +286,27 @@ export default function UserPageClient() {
 
       {/* ── Action buttons ── */}
       <div className="mx-6 mt-4 flex gap-2">
-        <button
-          onClick={handleToggleFollow}
-          className={`flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
-            isFollowing
-              ? "bg-primary/10 text-primary hover:bg-primary/20"
-              : "bg-primary text-white hover:bg-primary/90"
-          }`}
-        >
-          <IoPersonAddOutline size={13} />
-          {isFollowing ? "Following" : "Follow"}
-        </button>
-        <button
-          onClick={() => requireLogin(() => router.push(`/inbox?userId=${profile.id}`))}
-          className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
-        >
-          Message
-        </button>
+        {me?.id !== profile.id && (
+          <>
+            <button
+              onClick={handleToggleFollow}
+              className={`flex items-center gap-1 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
+                isFollowing
+                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "bg-primary text-white hover:bg-primary/90"
+              }`}
+            >
+              <IoPersonAddOutline size={13} />
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+            <button
+              onClick={() => requireLogin(() => router.push(`/inbox?userId=${profile.id}`))}
+              className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
+            >
+              Message
+            </button>
+          </>
+        )}
         <button
           onClick={handleShareProfile}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border text-text hover:bg-feed-bg"
