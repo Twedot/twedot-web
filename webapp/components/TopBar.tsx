@@ -436,9 +436,13 @@ function ChatDropdown() {
   const threads = useChatStore((s) => s.threads);
   const openChat = useChatStore((s) => s.openChat);
 
+  const openChatIds = useChatStore((s) => s.openChatIds);
+  const minimizedChatIds = useChatStore((s) => s.minimizedChatIds);
+
   const totalUnread = Array.from(threads.values()).reduce((sum, t) => sum + t.unreadCount, 0);
+  const activeIds = new Set([...openChatIds, ...minimizedChatIds]);
   const chatList = Array.from(threads.values())
-    .filter((t) => t.messages.length > 0 || t.unreadCount > 0)
+    .filter((t) => t.messages.length > 0 || t.unreadCount > 0 || activeIds.has(t.contact.userId))
     .sort((a, b) => {
       const aTime = a.lastMessage?.timestamp ?? 0;
       const bTime = b.lastMessage?.timestamp ?? 0;
@@ -459,8 +463,8 @@ function ChatDropdown() {
         )}
       </button>
 
-      {/* Vertical avatar sidebar — fixed to the right edge */}
-      {open && chatList.length > 0 && (
+      {/* Vertical avatar sidebar — fixed to the right edge, always visible when there are chats */}
+      {chatList.length > 0 && (
         <div className="fixed right-3 top-16 z-[9998] flex flex-col items-center gap-3 py-2">
           {chatList.map((thread) => {
             const { contact, lastMessage, unreadCount, isOnline } = thread;

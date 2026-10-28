@@ -58,22 +58,26 @@ export default function ChatWindow({ userId }: { userId: string }) {
     if (thread?.contact) chatSocket.subscribePresence([userId]);
   }, [userId, thread?.contact]);
 
+  const [wsConnected, setWsConnected] = useState(chatSocket.connected);
+  useEffect(() => {
+    const unsub = chatSocket.on("connectionChange", setWsConnected);
+    return unsub;
+  }, []);
+
   const handleSend = () => {
     const trimmed = text.trim();
     if (!trimmed || !myUserId) return;
     const clientMessageId = chatSocket.send(userId, trimmed);
-    if (clientMessageId) {
-      useChatStore.getState().addMessage(userId, {
-        id: clientMessageId,
-        clientMessageId,
-        senderId: myUserId,
-        recipientId: userId,
-        content: trimmed,
-        messageType: "text",
-        timestamp: Date.now(),
-        status: "sending",
-      }, true);
-    }
+    useChatStore.getState().addMessage(userId, {
+      id: clientMessageId ?? crypto.randomUUID(),
+      clientMessageId: clientMessageId ?? undefined,
+      senderId: myUserId,
+      recipientId: userId,
+      content: trimmed,
+      messageType: "text",
+      timestamp: Date.now(),
+      status: clientMessageId ? "sending" : "failed",
+    }, true);
     setText("");
     chatSocket.sendTyping(userId, false);
     inputRef.current?.focus();
@@ -108,7 +112,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold text-white truncate leading-tight">{contact.name}</p>
           <p className="text-[9px] text-white/70 leading-tight">
-            {isTyping ? "typing..." : isOnline ? "Active now" : ""}
+            {!wsConnected ? "Connecting..." : isTyping ? "typing..." : isOnline ? "Active now" : ""}
           </p>
         </div>
         <button onClick={() => minimizeChat(userId)} className="p-0.5 text-white/60 hover:text-white transition-colors">
@@ -140,8 +144,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
                 ) : (
                   <span>{msg.content}</span>
                 )}
-                <span className={`block text-[8px] mt-0.5 ${isMine ? "text-white/50" : "text-white/30"}`}>
-                  {formatTime(msg.timestamp)}
+                <span className={`block text-[8px] mt-0.5 ${msg.status === "failed" ? "text-red-400" : isMine ? "text-white/50" : "text-white/30"}`}>
+                  {msg.status === "failed" ? "Not connected" : formatTime(msg.timestamp)}
                 </span>
               </div>
             </div>

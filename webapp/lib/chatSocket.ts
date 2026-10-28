@@ -53,19 +53,24 @@ class ChatSocket {
 
   connect() {
     const token = AuthStorage.getToken();
-    if (!token) return;
+    if (!token) {
+      console.warn("[chat-ws] no token, skipping connect");
+      return;
+    }
 
     this.intentionalClose = false;
     const url = `${CHAT_WS_URL}?token=${encodeURIComponent(token)}&deviceId=${encodeURIComponent(getDeviceId())}`;
 
     try {
       this.ws = new WebSocket(url);
-    } catch {
+    } catch (e) {
+      console.error("[chat-ws] WebSocket constructor failed:", e);
       this.scheduleReconnect();
       return;
     }
 
     this.ws.onopen = () => {
+      console.log("[chat-ws] connected");
       this.reconnectDelay = 1000;
       this.emit("connectionChange", true);
     };
@@ -77,12 +82,15 @@ class ChatSocket {
       } catch {}
     };
 
-    this.ws.onclose = () => {
+    this.ws.onclose = (event) => {
+      console.warn("[chat-ws] closed:", event.code, event.reason);
       this.emit("connectionChange", false);
       if (!this.intentionalClose) this.scheduleReconnect();
     };
 
-    this.ws.onerror = () => {};
+    this.ws.onerror = () => {
+      console.error("[chat-ws] error");
+    };
   }
 
   disconnect() {
