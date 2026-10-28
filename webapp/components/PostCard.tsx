@@ -38,6 +38,7 @@ import { apiPost, apiDelete } from "@/lib/api";
 import { useBookmark } from "@/lib/bookmarks";
 import { postDetailStore } from "@/lib/postDetailStore";
 import { videoFeedStore } from "@/lib/videoFeedStore";
+import { useChatStore } from "@/lib/chatStore";
 import type { StatusPost } from "@/lib/types";
 import { profileUrl, postUrl } from "@/lib/url";
 import { useLoginGate } from "./LoginGate";
@@ -388,6 +389,10 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                     <button onClick={handleMoreLikeThis} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors">
                       <IoThumbsUpOutline size={16} className="text-light-text flex-shrink-0" />
                       <span className="truncate">More like this</span>
+                    </button>
+                    <button onClick={() => { setMenuOpen(false); useChatStore.getState().openChat({ userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null }); }} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors">
+                      <IoChatbubbleEllipsesOutline size={16} className="text-light-text flex-shrink-0" />
+                      <span className="truncate">Message @{head.userName}</span>
                     </button>
                     <button onClick={(e) => { handleToggleFollow(e); setMenuOpen(false); }} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-feed-bg transition-colors">
                       {isFollowing

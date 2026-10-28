@@ -16,6 +16,8 @@ import VideoFeedModal from "./VideoFeedModal";
 import MobileBottomNav from "./MobileBottomNav";
 import MobileNavDrawer from "./MobileNavDrawer";
 import PostCommentPanel from "./PostCommentPanel";
+import ChatProvider from "@/lib/ChatProvider";
+import ChatTray from "./ChatTray";
 
 function UploadProgress() {
   const [state, setState] = useState<UploadState | null>(uploadStore.get());
@@ -106,6 +108,7 @@ function AppShellLayout({ children }: { children: ReactNode }) {
       <MobileNavDrawer />
       <UploadProgress />
       <VideoFeedModal />
+      <ChatTray />
     </div>
   );
 }
@@ -197,6 +200,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   return (
     <JobSocketProvider>
     <UiProvider>
+      <ChatProvider />
       <AppShellLayout>{children}</AppShellLayout>
     </UiProvider>
     </JobSocketProvider>
