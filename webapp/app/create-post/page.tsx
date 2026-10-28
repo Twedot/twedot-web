@@ -9,6 +9,7 @@ import {
   IoTextOutline,
   IoAtOutline,
   IoGlobeOutline,
+  IoRadioOutline,
   IoCheckmarkCircle,
   IoPersonOutline,
   IoAddOutline,
@@ -378,6 +379,13 @@ export default function CreatePostPage() {
             {m.charAt(0).toUpperCase() + m.slice(1)}
           </button>
         ))}
+        <button
+          onClick={() => router.push("/live/broadcast")}
+          className="flex items-center gap-1.5 rounded-full bg-red-500/10 px-4 py-2 text-[12px] font-semibold text-red-500 hover:bg-red-500/20 transition-colors"
+        >
+          <IoRadioOutline size={14} />
+          Go Live
+        </button>
       </div>
 
       {error && (

@@ -62,7 +62,7 @@ const mainItems: NavItem[] = [
   { href: "/channels", label: "Channels", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
   { href: "/job-request", label: "Job Request", icon: IoNotificationsOutline, activeIcon: IoNotifications },
   { href: "/business", label: "Business", icon: IoStorefrontOutline, activeIcon: IoStorefrontOutline },
-  { href: "https://world.twedot.com", label: "Live", icon: IoRadioOutline, activeIcon: IoRadio, external: true, liveDot: true },
+  { href: "/live/broadcast", label: "Live", icon: IoRadioOutline, activeIcon: IoRadio, liveDot: true },
   { href: "https://world.twedot.com", label: "Twedot World", icon: IoEarthOutline, activeIcon: IoEarth, external: true },
 ];
 

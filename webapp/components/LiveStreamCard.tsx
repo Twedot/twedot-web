@@ -83,12 +83,10 @@ function LiveViewer({ stream, onClose }: { stream: LiveStream; onClose: () => vo
         </span>
         <span className="flex-1 truncate text-[15px] font-bold text-white">{stream.hostName}</span>
         <a
-          href={`https://world.twedot.com/?stream=${stream.roomId}`}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`/live/watch/${stream.roomId}`}
           className="mr-2 text-[12px] font-semibold text-purple-300 hover:text-purple-200"
         >
-          Open in World ↗
+          Full Screen ↗
         </a>
         <button
           onClick={onClose}
@@ -97,12 +95,9 @@ function LiveViewer({ stream, onClose }: { stream: LiveStream; onClose: () => vo
           ✕
         </button>
       </div>
-      <iframe
-        src={`https://world.twedot.com/?stream=${stream.roomId}`}
-        className="flex-1 border-none bg-black"
-        allow="camera; microphone; autoplay; fullscreen"
-        title={`${stream.hostName} — Live`}
-      />
+      <div className="flex-1">
+        <LiveStreamPlayer roomId={stream.roomId} hostPhoto={stream.hostPhoto} />
+      </div>
     </div>
   );
 }
