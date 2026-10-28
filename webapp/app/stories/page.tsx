@@ -98,6 +98,7 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
   const followLoadingRef = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(head.id);
 
   const isOwnPost = user?.id === head.userId;
@@ -167,11 +168,10 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
   function handleEmbedPost() { setMenuOpen(false); const code = `<iframe src="${window.location.origin}${postUrl(head.id)}" width="550" height="400" frameborder="0" scrolling="no"></iframe>`; navigator.clipboard?.writeText(code).catch(() => {}); notify("Embed code copied"); }
   function handleViewActivity() { setMenuOpen(false); router.push(postUrl(head.id)); }
 
-  const MEDIA_W = 420;
   const mediaH = "calc(100vh - 56px - 16px)";
 
   return (
-    <div className="flex h-[calc(100vh-56px)] w-full items-end justify-center gap-5 pb-6">
+    <div className="flex h-[calc(100vh-56px)] w-full items-end justify-start gap-5 pb-6 pl-8">
       {/* ── Left column: caption / author / follow (bottom-aligned) ── */}
       <div className="flex-shrink-0 w-[300px] flex flex-col gap-2 pb-2">
         {/* Search suggestion */}
@@ -217,28 +217,31 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
           )}
         </div>
 
-        {/* Caption */}
+        {/* Caption — click to expand */}
         {active.caption && active.type !== "text" && (
-          <p className="text-[14px] leading-[20px] text-white font-semibold line-clamp-2">
+          <p
+            onClick={() => setCaptionExpanded(e => !e)}
+            className={`text-[14px] leading-[20px] text-white font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
+          >
             {active.caption}
           </p>
         )}
       </div>
 
-      {/* ── Media card ── */}
+      {/* ── Media card — natural width, max 480px ── */}
       <div
-        className="relative flex-shrink-0 overflow-hidden rounded-2xl"
-        style={{ width: MEDIA_W, height: mediaH }}
+        className="relative flex-shrink-0 overflow-hidden rounded-2xl max-w-[480px]"
+        style={{ height: mediaH }}
       >
         {active.type === "video" && active.content ? (
-          <div className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&>div]:w-full [&>div]:h-full">
+          <div className="h-full [&_video]:h-full [&_video]:w-auto [&_video]:max-w-none [&>div]:h-full [&>div]:w-auto">
             <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
           </div>
         ) : active.type === "image" && (active.content || active.thumbnailUrl) ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={active.content || active.thumbnailUrl!} alt="" className="w-full h-full object-cover" />
+          <img src={active.content || active.thumbnailUrl!} alt="" className="h-full w-auto object-contain" />
         ) : (
-          <div className="flex items-center justify-center bg-zinc-900 w-full h-full">
+          <div className="flex items-center justify-center bg-zinc-900 h-full w-[360px]">
             <p className="max-w-sm text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap px-6">
               <LinkText text={active.caption ?? active.content ?? ""} />
             </p>
