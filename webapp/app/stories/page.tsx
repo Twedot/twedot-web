@@ -277,8 +277,8 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
         )}
       </div>
 
-      {/* ── Action rail + nav arrows ── */}
-      <div className="flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2">
+      {/* ── Action rail + nav arrows (z-50 to stay above comment drawer backdrop) ── */}
+      <div className="relative z-50 flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2">
         <div className="flex flex-col items-center gap-1">
           <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
             {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
@@ -497,7 +497,7 @@ function FeedContent() {
   const currentGroup = groupedPosts[currentIdx];
 
   return (
-    <div className="relative h-[calc(100vh-56px)] overflow-hidden bg-black">
+    <div className="relative h-[calc(100vh-56px)] overflow-hidden">
       {!isAuthenticated && <LoginBanner />}
       {query && (
         <div className="absolute top-0 left-0 right-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
