@@ -178,9 +178,9 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
   const maxH = "calc(100vh - 56px - 40px)";
 
   return (
-    <div className="flex h-[calc(100vh-56px)] w-full items-end justify-center gap-5 pb-5 pt-5">
+    <div className="flex h-[calc(100vh-56px)] w-full items-center justify-center gap-5 pb-5 pt-5">
       {/* ── Left column: caption / author / follow (bottom-aligned) ── */}
-      <div className="flex-shrink-0 w-[300px] flex flex-col gap-2 pb-2">
+      <div className="flex-shrink-0 w-[300px] flex flex-col gap-2 self-end pb-2">
         {/* Search suggestion */}
         {head.caption && (
           <button
