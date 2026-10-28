@@ -654,12 +654,11 @@ export default function PostPageClient() {
           </div>
         ) : (
           <>
-            {/* ── Shorts-style immersive media area ── */}
-            <div className="relative bg-black" style={{ minHeight: isText ? 200 : 400 }}>
-              {/* Media */}
+            {/* ── Media row: media (centered) + action rail (right) ── */}
+            <div className="flex items-start justify-center gap-4 bg-black py-4 px-4">
+              {/* Media column — keeps original dimensions */}
               <div
-                className="relative flex items-center justify-center overflow-hidden"
-                style={{ minHeight: isText ? 200 : 400, maxHeight: "70vh" }}
+                className="relative flex-shrink-0 overflow-hidden rounded-xl max-w-[480px]"
                 onPointerDown={(e) => { swipeStartX.current = e.clientX; swipeStartY.current = e.clientY; }}
                 onPointerUp={(e) => {
                   const dx = e.clientX - swipeStartX.current;
@@ -671,34 +670,28 @@ export default function PostPageClient() {
                 }}
               >
                 {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
-                  <div className="relative w-full cursor-zoom-in bg-zinc-900" onClick={() => setLightboxOpen(true)}>
+                  <div className="cursor-zoom-in" onClick={() => setLightboxOpen(true)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-40 blur-2xl" />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="relative w-full object-contain max-h-[70vh]" />
+                    <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="max-h-[480px] max-w-[480px] object-cover" />
                   </div>
                 )}
                 {isVideo && activeItem.content && (
-                  <div className="w-full [&_video]:max-h-[70vh] [&_video]:w-full [&_video]:object-contain [&_video]:max-h-none [&>div]:w-full">
-                    <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
-                  </div>
+                  <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
                 )}
                 {isText && (
-                  <div className="flex w-full items-center justify-center px-8 py-10 bg-zinc-900">
-                    <p className="max-w-lg text-center text-[18px] leading-[28px] text-white whitespace-pre-wrap">
+                  <div className="flex items-center justify-center bg-zinc-900 px-8 py-16 min-h-[300px] max-w-[480px]">
+                    <p className="max-w-lg text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap">
                       <LinkText text={post.content || post.caption || ""} />
                     </p>
                   </div>
                 )}
-
-                {/* Carousel nav */}
                 {groupItems.length > 1 && activeGroupIdx > 0 && (
-                  <button onClick={() => setActiveGroupIdx((i) => i - 1)} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 z-10">
+                  <button onClick={() => setActiveGroupIdx((i) => i - 1)} className="absolute left-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 z-10">
                     <IoChevronBack size={20} />
                   </button>
                 )}
                 {groupItems.length > 1 && activeGroupIdx < groupItems.length - 1 && (
-                  <button onClick={() => setActiveGroupIdx((i) => i + 1)} className="absolute right-14 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 z-10">
+                  <button onClick={() => setActiveGroupIdx((i) => i + 1)} className="absolute right-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 z-10">
                     <IoChevronForward size={20} />
                   </button>
                 )}
@@ -711,67 +704,23 @@ export default function PostPageClient() {
                 )}
               </div>
 
-              {/* Overlaid bottom: author + caption + follow */}
-              <div className="absolute bottom-0 left-0 right-12 z-10 pointer-events-none">
-                <div className="bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-4 pt-16">
-                  <div className="flex items-center gap-2.5 mb-2 pointer-events-auto">
-                    <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
-                      {post.userPhoto ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={post.userPhoto} alt={post.userName} className="h-10 w-10 rounded-full object-cover ring-2 ring-white/30" />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 ring-2 ring-white/30">
-                          <IoPersonOutline size={20} className="text-white" />
-                        </div>
-                      )}
-                    </button>
-                    <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="min-w-0 flex-1 text-left">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[14px] font-bold text-white truncate">{post.userName}</span>
-                        <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="" />
-                      </div>
-                      <p className="text-[11px] text-white/60 truncate">
-                        {post.userOccupation ? `${post.userOccupation} · ` : ""}{timeAgo(post.createdAt)}
-                      </p>
-                    </button>
-                    {user?.id !== post.userId && (
-                      <button
-                        onClick={handleToggleFollow}
-                        className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
-                          isFollowingAuthor
-                            ? "border border-white/30 text-white hover:bg-white/10"
-                            : "bg-primary text-white hover:opacity-90"
-                        }`}
-                      >
-                        {isFollowingAuthor ? "Following" : "Follow"}
-                      </button>
-                    )}
-                  </div>
-                  {!isText && post.caption && (
-                    <p className="text-[13px] leading-[19px] text-white/90 line-clamp-3 pointer-events-auto">
-                      <LinkText text={post.caption} />
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Right action rail */}
-              <div className="absolute right-2 bottom-20 z-10 flex flex-col items-center gap-4">
+              {/* Action rail — outside media to the right */}
+              <div className="flex flex-col items-center gap-4 flex-shrink-0 pt-4">
                 <div className="flex flex-col items-center gap-1">
-                  <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm transition-colors hover:bg-black/60 ${isLiked ? "text-red-500" : "text-white"}`}>
-                    {isLiked ? <IoHeart size={22} /> : <IoHeartOutline size={22} />}
+                  <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
+                    {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
                   </button>
-                  <span className="text-[11px] font-bold text-white">{fmt(likeCount)}</span>
+                  <span className="text-[11px] font-bold text-white/70">{fmt(likeCount)}</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <button onClick={() => inputRef.current?.focus()} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white transition-colors hover:bg-black/60">
-                    <IoChatbubbleEllipsesOutline size={22} />
+                  <button onClick={() => inputRef.current?.focus()} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
+                    <IoChatbubbleEllipsesOutline size={24} />
                   </button>
-                  <span className="text-[11px] font-bold text-white">{fmt(commentCount)}</span>
+                  <span className="text-[11px] font-bold text-white/70">{fmt(commentCount)}</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <button onClick={toggleBookmark} className={`flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm transition-colors hover:bg-black/60 ${isBookmarked ? "text-[#D4A400]" : "text-white"}`}>
-                    {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
+                  <button onClick={toggleBookmark} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isBookmarked ? "text-[#D4A400]" : "text-white/80"}`}>
+                    {isBookmarked ? <IoBookmark size={24} /> : <IoBookmarkOutline size={24} />}
                   </button>
                 </div>
                 <div className="flex flex-col items-center gap-1">
@@ -780,16 +729,15 @@ export default function PostPageClient() {
                       const url = window.location.href;
                       try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
                     }}
-                    className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white transition-colors hover:bg-black/60"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10"
                   >
-                    <IoShareOutline size={22} />
+                    <IoShareOutline size={24} />
                   </button>
-                  <span className="text-[11px] font-bold text-white">Share</span>
+                  <span className="text-[11px] font-bold text-white/70">Share</span>
                 </div>
-                {/* 3-dot menu */}
                 <div className="relative" onClick={(e) => e.stopPropagation()}>
-                  <button onClick={() => setMenuOpen(o => !o)} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white transition-colors hover:bg-black/60">
-                    <IoEllipsisHorizontal size={22} />
+                  <button onClick={() => setMenuOpen(o => !o)} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
+                    <IoEllipsisHorizontal size={24} />
                   </button>
                   {menuOpen && (
                     <>
@@ -854,6 +802,48 @@ export default function PostPageClient() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* ── Below media: author + caption ── */}
+            <div className="bg-black px-4 pb-3">
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
+                  {post.userPhoto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={post.userPhoto} alt={post.userName} className="h-9 w-9 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                      <IoPersonOutline size={18} className="text-white" />
+                    </div>
+                  )}
+                </button>
+                <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="min-w-0 text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-bold text-white">{post.userName}</span>
+                    <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="" />
+                  </div>
+                  <p className="text-[11px] text-white/50 truncate">
+                    {post.userOccupation ? `${post.userOccupation} · ` : ""}{timeAgo(post.createdAt)}
+                  </p>
+                </button>
+                {user?.id !== post.userId && (
+                  <button
+                    onClick={handleToggleFollow}
+                    className={`ml-1 flex-shrink-0 rounded-full px-3.5 py-1 text-[12px] font-bold transition-colors ${
+                      isFollowingAuthor
+                        ? "border border-white/20 text-white hover:bg-white/10"
+                        : "bg-white text-black hover:bg-white/90"
+                    }`}
+                  >
+                    {isFollowingAuthor ? "Following" : "Subscribe"}
+                  </button>
+                )}
+              </div>
+              {!isText && post.caption && (
+                <p className="text-[13px] leading-[19px] text-white/80">
+                  <LinkText text={post.caption} />
+                </p>
+              )}
             </div>
 
             {/* ── rest of content: padded ── */}

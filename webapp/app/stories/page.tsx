@@ -26,6 +26,8 @@ import {
   IoPlay,
   IoChevronBack,
   IoChevronForward,
+  IoChevronUp,
+  IoChevronDown,
   IoSearchOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
@@ -165,155 +167,83 @@ function ShortsCard({ items }: { items: StatusPost[] }) {
   function handleViewActivity() { setMenuOpen(false); router.push(postUrl(head.id)); }
 
   return (
-    <div className="relative flex h-[calc(100vh-56px)] w-full snap-start snap-always flex-col bg-black">
-      {/* ── Media area ── */}
-      <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden">
-        {active.type === "video" && active.content ? (
-          <div className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-contain [&_video]:max-h-none [&>div]:h-full [&>div]:w-full">
+    <div className="flex h-[calc(100vh-56px)] w-full flex-col bg-black">
+      {/* ── Main row: media (centered) + action rail (right) ── */}
+      <div className="flex flex-1 min-h-0 items-center justify-center">
+        {/* Media column — keeps original PostCard dimensions */}
+        <div className="relative flex-shrink-0 overflow-hidden rounded-xl max-w-[480px] max-h-[calc(100vh-200px)]">
+          {active.type === "video" && active.content ? (
             <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
-          </div>
-        ) : active.type === "image" && (active.content || active.thumbnailUrl) ? (
-          <div className="relative h-full w-full cursor-pointer" onClick={openDetail}>
-            {/* Blurred backdrop */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={active.content || active.thumbnailUrl!} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-40 blur-2xl" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={active.content || active.thumbnailUrl!} alt="" className="relative h-full w-full object-contain" />
-          </div>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-zinc-900 px-8" onClick={openDetail}>
-            <p className="max-w-lg text-center text-[18px] leading-[28px] text-white whitespace-pre-wrap">
-              <LinkText text={active.caption ?? active.content ?? ""} />
-            </p>
-          </div>
-        )}
-
-        {/* Carousel arrows for multi-image posts */}
-        {items.length > 1 && (
-          <>
-            {activeIndex > 0 && (
-              <button onClick={() => setActiveIndex(i => i - 1)} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 z-10">
-                <IoChevronBack size={18} />
-              </button>
-            )}
-            {activeIndex < items.length - 1 && (
-              <button onClick={() => setActiveIndex(i => i + 1)} className="absolute right-14 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 z-10">
-                <IoChevronForward size={18} />
-              </button>
-            )}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-              {items.map((_, i) => (
-                <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === activeIndex ? "bg-white" : "bg-white/40"}`} />
-              ))}
+          ) : active.type === "image" && (active.content || active.thumbnailUrl) ? (
+            <div className="cursor-pointer" onClick={openDetail}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={active.content || active.thumbnailUrl!} alt="" className="max-h-[calc(100vh-200px)] max-w-[480px] object-cover" />
             </div>
-          </>
-        )}
+          ) : (
+            <div className="flex items-center justify-center bg-zinc-900 px-8 py-16 min-h-[300px] max-w-[480px] cursor-pointer" onClick={openDetail}>
+              <p className="max-w-lg text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap">
+                <LinkText text={active.caption ?? active.content ?? ""} />
+              </p>
+            </div>
+          )}
 
-        {/* ── Overlaid bottom content ── */}
-        <div className="absolute bottom-0 left-0 right-12 z-10 pointer-events-none">
-          <div className="bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-4 pt-16">
-            {/* Author info + follow */}
-            <div className="flex items-center gap-2.5 mb-2.5 pointer-events-auto">
-              <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
-                {head.userPhoto ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={head.userPhoto} alt={head.userName} className="h-10 w-10 rounded-full object-cover ring-2 ring-white/30" />
-                ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 ring-2 ring-white/30">
-                    <IoPersonOutline size={20} className="text-white" />
-                  </div>
-                )}
-              </button>
-              <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 flex-1 text-left">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[14px] font-bold text-white truncate">{head.userName}</span>
-                  <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
-                </div>
-                <p className="text-[11px] text-white/60 truncate">
-                  {head.userOccupation ? `${head.userOccupation} · ` : ""}{timeAgo(head.createdAt)}
-                </p>
-              </button>
-              {!isOwnPost && (
-                <button
-                  onClick={handleToggleFollow}
-                  className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
-                    isFollowing
-                      ? "border border-white/30 text-white hover:bg-white/10"
-                      : "bg-primary text-white hover:opacity-90"
-                  }`}
-                >
-                  {isFollowing ? "Following" : "Follow"}
+          {/* Carousel arrows */}
+          {items.length > 1 && (
+            <>
+              {activeIndex > 0 && (
+                <button onClick={() => setActiveIndex(i => i - 1)} className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 z-10">
+                  <IoChevronBack size={18} />
                 </button>
               )}
-            </div>
-
-            {/* Caption */}
-            {active.caption && active.type !== "text" && (
-              <p className="text-[13px] leading-[19px] text-white/90 line-clamp-3 pointer-events-auto cursor-pointer" onClick={openDetail}>
-                <LinkText text={active.caption} />
-              </p>
-            )}
-
-            {/* Search suggestion */}
-            {head.caption && (
-              <button
-                onClick={() => router.push(`/search?q=${encodeURIComponent(head.caption!.split(/\s+/).slice(0, 3).join(" "))}`)}
-                className="mt-2.5 flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1.5 pointer-events-auto hover:bg-white/20 transition-colors"
-              >
-                <IoSearchOutline size={14} className="text-white/70 flex-shrink-0" />
-                <span className="text-[11px] text-white/70 truncate">
-                  Search: {head.caption.split(/\s+/).slice(0, 4).join(" ")}
-                </span>
-              </button>
-            )}
-          </div>
+              {activeIndex < items.length - 1 && (
+                <button onClick={() => setActiveIndex(i => i + 1)} className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 z-10">
+                  <IoChevronForward size={18} />
+                </button>
+              )}
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                {items.map((_, i) => (
+                  <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === activeIndex ? "bg-white" : "bg-white/40"}`} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* ── Right action rail ── */}
-        <div className="absolute right-2 bottom-20 z-10 flex flex-col items-center gap-4">
-          {/* Like */}
+        {/* ── Action rail — outside media, to the right ── */}
+        <div className="flex flex-col items-center gap-4 ml-4 flex-shrink-0">
           <div className="flex flex-col items-center gap-1">
-            <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm transition-colors hover:bg-black/60 ${isLiked ? "text-red-500" : "text-white"}`}>
-              {isLiked ? <IoHeart size={22} /> : <IoHeartOutline size={22} />}
+            <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
+              {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
             </button>
-            <span className="text-[11px] font-bold text-white">{fmt(likeCount)}</span>
+            <span className="text-[11px] font-bold text-white/70">{fmt(likeCount)}</span>
           </div>
-
-          {/* Comment */}
           <div className="flex flex-col items-center gap-1">
-            <button onClick={openDetail} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white transition-colors hover:bg-black/60">
-              <IoChatbubbleEllipsesOutline size={22} />
+            <button onClick={openDetail} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
+              <IoChatbubbleEllipsesOutline size={24} />
             </button>
-            <span className="text-[11px] font-bold text-white">{fmt(active.commentCount ?? 0)}</span>
+            <span className="text-[11px] font-bold text-white/70">{fmt(active.commentCount ?? 0)}</span>
           </div>
-
-          {/* Bookmark */}
           <div className="flex flex-col items-center gap-1">
-            <button onClick={() => { if (requireLogin()) toggleBookmark(); }} className={`flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm transition-colors hover:bg-black/60 ${isBookmarked ? "text-[#D4A400]" : "text-white"}`}>
-              {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
+            <button onClick={() => { if (requireLogin()) toggleBookmark(); }} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isBookmarked ? "text-[#D4A400]" : "text-white/80"}`}>
+              {isBookmarked ? <IoBookmark size={24} /> : <IoBookmarkOutline size={24} />}
             </button>
           </div>
-
-          {/* Share */}
           <div className="flex flex-col items-center gap-1">
             <button
               onClick={async () => {
                 const url = window.location.origin + postUrl(head.id);
                 try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
               }}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white transition-colors hover:bg-black/60"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10"
             >
-              <IoShareOutline size={22} />
+              <IoShareOutline size={24} />
             </button>
-            <span className="text-[11px] font-bold text-white">Share</span>
+            <span className="text-[11px] font-bold text-white/70">Share</span>
           </div>
-
-          {/* 3-dot menu */}
           <div className="relative">
-            <button onClick={() => setMenuOpen(o => !o)} className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white transition-colors hover:bg-black/60">
-              <IoEllipsisHorizontal size={22} />
+            <button onClick={() => setMenuOpen(o => !o)} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
+              <IoEllipsisHorizontal size={24} />
             </button>
-
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setConfirmDelete(false); }} />
@@ -381,6 +311,64 @@ function ShortsCard({ items }: { items: StatusPost[] }) {
           </div>
         </div>
       </div>
+
+      {/* ── Bottom: search suggestion, author + follow, caption ── */}
+      <div className="flex-shrink-0 px-4 pb-4 pt-2 max-w-[540px]">
+        {/* Search suggestion */}
+        {head.caption && (
+          <button
+            onClick={() => router.push(`/search?q=${encodeURIComponent(head.caption!.split(/\s+/).slice(0, 3).join(" "))}`)}
+            className="mb-2 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 hover:bg-white/15 transition-colors"
+          >
+            <IoSearchOutline size={14} className="text-white/60 flex-shrink-0" />
+            <span className="text-[11px] text-white/60 truncate">
+              Search &quot;{head.caption.split(/\s+/).slice(0, 4).join(" ")}&quot;
+            </span>
+          </button>
+        )}
+
+        {/* Author info + follow */}
+        <div className="flex items-center gap-2.5 mb-1.5">
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
+            {head.userPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                <IoPersonOutline size={18} className="text-white" />
+              </div>
+            )}
+          </button>
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 text-left">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[13px] font-bold text-white">{head.userName}</span>
+              <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
+            </div>
+            <p className="text-[11px] text-white/50 truncate">
+              {head.userOccupation ? `${head.userOccupation} · ` : ""}{timeAgo(head.createdAt)}
+            </p>
+          </button>
+          {!isOwnPost && (
+            <button
+              onClick={handleToggleFollow}
+              className={`ml-1 flex-shrink-0 rounded-full px-3.5 py-1 text-[12px] font-bold transition-colors ${
+                isFollowing
+                  ? "border border-white/20 text-white hover:bg-white/10"
+                  : "bg-white text-black hover:bg-white/90"
+              }`}
+            >
+              {isFollowing ? "Following" : "Subscribe"}
+            </button>
+          )}
+        </div>
+
+        {/* Caption */}
+        {active.caption && active.type !== "text" && (
+          <p className="text-[13px] leading-[19px] text-white/80 line-clamp-2 cursor-pointer" onClick={openDetail}>
+            {active.caption}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -398,7 +386,7 @@ function FeedContent() {
   const [hasMore, setHasMore] = useState(cached?.hasMore ?? true);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const hasMoreRef = useRef(hasMore);
   const isFetchingRef = useRef(isFetching);
   const pageRef = useRef(page);
@@ -445,33 +433,44 @@ function FeedContent() {
     return feedStateStore.subscribe(() => setPosts(feedStateStore.get().posts));
   }, []);
 
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMoreRef.current && !isFetchingRef.current) {
-          loadPage(pageRef.current + 1);
-        }
-      },
-      { rootMargin: "600px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadPage]);
-
   const groupedPosts = useMemo(() => groupPosts(posts), [posts]);
 
   useEffect(() => {
     videoFeedStore.setFeedVideos(posts);
   }, [posts]);
 
+  // Prefetch next page when near end
+  useEffect(() => {
+    if (groupedPosts.length > 0 && currentIdx >= groupedPosts.length - 3 && hasMoreRef.current && !isFetchingRef.current) {
+      loadPage(pageRef.current + 1);
+    }
+  }, [currentIdx, groupedPosts.length, loadPage]);
+
+  const goNext = useCallback(() => {
+    setCurrentIdx((i) => Math.min(i + 1, groupedPosts.length - 1));
+  }, [groupedPosts.length]);
+
+  const goPrev = useCallback(() => {
+    setCurrentIdx((i) => Math.max(i - 1, 0));
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown" || e.key === "j") { e.preventDefault(); goNext(); }
+      if (e.key === "ArrowUp" || e.key === "k") { e.preventDefault(); goPrev(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goNext, goPrev]);
+
+  const currentGroup = groupedPosts[currentIdx];
+
   return (
-    <div className="h-[calc(100vh-56px)] snap-y snap-mandatory overflow-y-auto bg-black">
+    <div className="relative h-[calc(100vh-56px)] overflow-hidden bg-black">
       {!isAuthenticated && <LoginBanner />}
       {query && (
-        <div className="sticky top-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
+        <div className="absolute top-0 left-0 right-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
           Results for <span className="font-semibold text-white">{query}</span>
         </div>
       )}
@@ -495,22 +494,33 @@ function FeedContent() {
         </div>
       )}
 
-      {groupedPosts.map((group) => (
-        <ShortsCard key={group[0].id} items={group} />
-      ))}
+      {currentGroup && <ShortsCard key={currentGroup[0].id} items={currentGroup} />}
 
-      {isFetching && posts.length > 0 && (
-        <div className="flex h-20 items-center justify-center snap-start">
+      {/* Up/Down navigation arrows */}
+      {groupedPosts.length > 1 && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
+          <button
+            onClick={goPrev}
+            disabled={currentIdx === 0}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <IoChevronUp size={22} />
+          </button>
+          <button
+            onClick={goNext}
+            disabled={currentIdx === groupedPosts.length - 1 && !hasMore}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <IoChevronDown size={22} />
+          </button>
+        </div>
+      )}
+
+      {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
         </div>
       )}
-      {!hasMore && posts.length > 0 && (
-        <div className="flex h-20 items-center justify-center snap-start">
-          <p className="text-sm text-white/40">You&apos;re all caught up.</p>
-        </div>
-      )}
-
-      <div ref={sentinelRef} className="h-1" />
     </div>
   );
 }
