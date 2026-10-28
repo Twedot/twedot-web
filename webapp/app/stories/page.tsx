@@ -171,8 +171,61 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
   const mediaH = "calc(100vh - 56px - 16px)";
 
   return (
-    <div className="flex h-[calc(100vh-56px)] w-full items-center justify-center gap-5 pt-2">
-      {/* ── Portrait media card with overlaid author/caption ── */}
+    <div className="flex h-[calc(100vh-56px)] w-full items-end justify-center gap-5 pb-6">
+      {/* ── Left column: caption / author / follow (bottom-aligned) ── */}
+      <div className="flex-shrink-0 w-[300px] flex flex-col gap-2 pb-2">
+        {/* Search suggestion */}
+        {head.caption && (
+          <button
+            onClick={() => router.push(`/search?q=${encodeURIComponent(head.caption!.split(/\s+/).slice(0, 3).join(" "))}`)}
+            className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 w-fit hover:bg-white/15 transition-colors"
+          >
+            <IoSearchOutline size={12} className="text-white/60 flex-shrink-0" />
+            <span className="text-[11px] text-white/60 truncate">
+              Search &quot;{head.caption.split(/\s+/).slice(0, 4).join(" ")}&quot;
+            </span>
+          </button>
+        )}
+
+        {/* Author row */}
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
+            {head.userPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                <IoPersonOutline size={16} className="text-white" />
+              </div>
+            )}
+          </button>
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 text-left">
+            <span className="text-[13px] font-bold text-white">{head.userName}</span>
+            <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
+          </button>
+          {!isOwnPost && (
+            <button
+              onClick={handleToggleFollow}
+              className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
+                isFollowing
+                  ? "border border-white/20 text-white hover:bg-white/10"
+                  : "bg-white text-black hover:bg-white/90"
+              }`}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          )}
+        </div>
+
+        {/* Caption */}
+        {active.caption && active.type !== "text" && (
+          <p className="text-[14px] leading-[20px] text-white font-semibold line-clamp-2">
+            {active.caption}
+          </p>
+        )}
+      </div>
+
+      {/* ── Media card ── */}
       <div
         className="relative flex-shrink-0 overflow-hidden rounded-2xl"
         style={{ width: MEDIA_W, height: mediaH }}
@@ -212,64 +265,6 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
             </div>
           </>
         )}
-
-        {/* ── Left overlay: author + caption ── */}
-        <div className="absolute bottom-0 left-0 w-[70%] bg-gradient-to-t from-black/85 via-black/30 to-transparent pl-4 pr-2 pt-16 pb-4 z-10">
-          {/* Search suggestion */}
-          {head.caption && (
-            <button
-              onClick={() => router.push(`/search?q=${encodeURIComponent(head.caption!.split(/\s+/).slice(0, 3).join(" "))}`)}
-              className="mb-2 flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 w-fit hover:bg-white/25 transition-colors"
-            >
-              <IoSearchOutline size={12} className="text-white/70 flex-shrink-0" />
-              <span className="text-[11px] text-white/70 truncate">
-                Search &quot;{head.caption.split(/\s+/).slice(0, 4).join(" ")}&quot;
-              </span>
-            </button>
-          )}
-
-          {/* Author row */}
-          <div className="flex items-center gap-2">
-            <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
-              {head.userPhoto ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover ring-1 ring-white/20" />
-              ) : (
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/20">
-                  <IoPersonOutline size={16} className="text-white" />
-                </div>
-              )}
-            </button>
-            <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 flex-1 text-left">
-              <div className="flex items-center gap-1">
-                <span className="text-[13px] font-bold text-white drop-shadow">{head.userName}</span>
-                <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
-              </div>
-              <p className="text-[11px] text-white/60">
-                {head.userOccupation ? `${head.userOccupation} · ` : ""}{timeAgo(head.createdAt)}
-              </p>
-            </button>
-            {!isOwnPost && (
-              <button
-                onClick={handleToggleFollow}
-                className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
-                  isFollowing
-                    ? "border border-white/30 text-white hover:bg-white/10"
-                    : "bg-white text-black hover:bg-white/90"
-                }`}
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </button>
-            )}
-          </div>
-
-          {/* Caption */}
-          {active.caption && active.type !== "text" && (
-            <p className="mt-1.5 text-[12px] leading-[18px] text-white/80 line-clamp-2">
-              {active.caption}
-            </p>
-          )}
-        </div>
       </div>
 
       {/* ── Action rail — immediately to the right of media ── */}
