@@ -18,6 +18,15 @@ export default function ChatProvider() {
 
     const unsubs: (() => void)[] = [];
 
+    unsubs.push(chatSocket.on("connectionChange", (connected) => {
+      if (connected) {
+        const threads = useChatStore.getState().threads;
+        for (const [peerId] of threads) {
+          chatSocket.requestHistory(peerId);
+        }
+      }
+    }));
+
     unsubs.push(chatSocket.on("message", (msg) => {
       const chatUserId = msg.senderId === myUserId ? msg.recipientId : msg.senderId;
       const isMine = msg.senderId === myUserId;

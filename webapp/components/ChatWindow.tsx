@@ -46,7 +46,10 @@ export default function ChatWindow({ userId }: { userId: string }) {
   }, [userId, thread?.messages.length, thread?.unreadCount, markRead, myUserId]);
 
   useEffect(() => {
-    if (thread?.contact) chatSocket.subscribePresence([userId]);
+    if (thread?.contact) {
+      chatSocket.subscribePresence([userId]);
+      if (thread.messages.length === 0) chatSocket.requestHistory(userId);
+    }
   }, [userId, thread?.contact]);
 
   const [wsConnected, setWsConnected] = useState(chatSocket.connected);
