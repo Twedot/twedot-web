@@ -167,22 +167,28 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
   function handleEmbedPost() { setMenuOpen(false); const code = `<iframe src="${window.location.origin}${postUrl(head.id)}" width="550" height="400" frameborder="0" scrolling="no"></iframe>`; navigator.clipboard?.writeText(code).catch(() => {}); notify("Embed code copied"); }
   function handleViewActivity() { setMenuOpen(false); router.push(postUrl(head.id)); }
 
+  const MEDIA_W = 400;
+  const mediaH = "calc(100vh - 56px - 110px)";
+
   return (
     <div className="flex h-[calc(100vh-56px)] w-full flex-col bg-black">
-      {/* ── Main row: media (top-aligned) + action rail (right) ── */}
-      <div className="flex flex-1 min-h-0 items-start justify-center pt-4">
-        {/* Media column — keeps original PostCard dimensions */}
-        <div className="relative flex-shrink-0 overflow-hidden rounded-xl w-full max-w-[480px]" style={{ maxHeight: "calc(100vh - 190px)" }}>
+      {/* ── Main row: media + action rail, both centered as a unit ── */}
+      <div className="flex flex-1 min-h-0 items-center justify-center gap-4">
+        {/* Fixed-size media column — tall portrait card */}
+        <div
+          className="relative flex-shrink-0 overflow-hidden rounded-2xl"
+          style={{ width: MEDIA_W, height: mediaH }}
+        >
           {active.type === "video" && active.content ? (
-            <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
-          ) : active.type === "image" && (active.content || active.thumbnailUrl) ? (
-            <div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={active.content || active.thumbnailUrl!} alt="" className="w-full object-cover" style={{ maxHeight: "calc(100vh - 190px)" }} />
+            <div className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&>div]:w-full [&>div]:h-full">
+              <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
             </div>
+          ) : active.type === "image" && (active.content || active.thumbnailUrl) ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={active.content || active.thumbnailUrl!} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="flex items-center justify-center bg-zinc-900 px-8 py-16 min-h-[300px] w-full max-w-[480px]">
-              <p className="max-w-lg text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap">
+            <div className="flex items-center justify-center bg-zinc-900 w-full h-full">
+              <p className="max-w-sm text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap px-6">
                 <LinkText text={active.caption ?? active.content ?? ""} />
               </p>
             </div>
@@ -210,8 +216,8 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
           )}
         </div>
 
-        {/* ── Action rail — outside media, to the right ── */}
-        <div className="flex flex-col items-center gap-4 ml-4 flex-shrink-0">
+        {/* ── Action rail — immediately to the right of media ── */}
+        <div className="flex flex-col items-center gap-4 flex-shrink-0">
           <div className="flex flex-col items-center gap-1">
             <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
               {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
@@ -313,62 +319,64 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
         </div>
       </div>
 
-      {/* ── Bottom: search suggestion, author + follow, caption ── */}
-      <div className="flex-shrink-0 px-4 pb-4 pt-2 max-w-[540px]">
-        {/* Search suggestion */}
-        {head.caption && (
-          <button
-            onClick={() => router.push(`/search?q=${encodeURIComponent(head.caption!.split(/\s+/).slice(0, 3).join(" "))}`)}
-            className="mb-2 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 hover:bg-white/15 transition-colors"
-          >
-            <IoSearchOutline size={14} className="text-white/60 flex-shrink-0" />
-            <span className="text-[11px] text-white/60 truncate">
-              Search &quot;{head.caption.split(/\s+/).slice(0, 4).join(" ")}&quot;
-            </span>
-          </button>
-        )}
-
-        {/* Author info + follow */}
-        <div className="flex items-center gap-2.5 mb-1.5">
-          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
-            {head.userPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover" />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
-                <IoPersonOutline size={18} className="text-white" />
-              </div>
-            )}
-          </button>
-          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 text-left">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[13px] font-bold text-white">{head.userName}</span>
-              <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
-            </div>
-            <p className="text-[11px] text-white/50 truncate">
-              {head.userOccupation ? `${head.userOccupation} · ` : ""}{timeAgo(head.createdAt)}
-            </p>
-          </button>
-          {!isOwnPost && (
+      {/* ── Bottom strip: aligned under the media column ── */}
+      <div className="flex-shrink-0 pb-2 pt-1 flex justify-center">
+        <div style={{ width: MEDIA_W }} className="flex flex-col gap-1 px-1">
+          {/* Search suggestion */}
+          {head.caption && (
             <button
-              onClick={handleToggleFollow}
-              className={`ml-1 flex-shrink-0 rounded-full px-3.5 py-1 text-[12px] font-bold transition-colors ${
-                isFollowing
-                  ? "border border-white/20 text-white hover:bg-white/10"
-                  : "bg-white text-black hover:bg-white/90"
-              }`}
+              onClick={() => router.push(`/search?q=${encodeURIComponent(head.caption!.split(/\s+/).slice(0, 3).join(" "))}`)}
+              className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 w-fit hover:bg-white/15 transition-colors"
             >
-              {isFollowing ? "Following" : "Subscribe"}
+              <IoSearchOutline size={13} className="text-white/60 flex-shrink-0" />
+              <span className="text-[11px] text-white/60 truncate">
+                Search &quot;{head.caption.split(/\s+/).slice(0, 4).join(" ")}&quot;
+              </span>
             </button>
           )}
-        </div>
 
-        {/* Caption */}
-        {active.caption && active.type !== "text" && (
-          <p className="text-[13px] leading-[19px] text-white/80 line-clamp-2 cursor-pointer" onClick={openDetail}>
-            {active.caption}
-          </p>
-        )}
+          {/* Author info + follow */}
+          <div className="flex items-center gap-2">
+            <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
+              {head.userPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={head.userPhoto} alt={head.userName} className="h-8 w-8 rounded-full object-cover" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                  <IoPersonOutline size={16} className="text-white" />
+                </div>
+              )}
+            </button>
+            <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 flex-1 text-left">
+              <div className="flex items-center gap-1">
+                <span className="text-[13px] font-bold text-white">{head.userName}</span>
+                <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
+              </div>
+              <p className="text-[11px] text-white/50 truncate">
+                {head.userOccupation ? `${head.userOccupation} · ` : ""}{timeAgo(head.createdAt)}
+              </p>
+            </button>
+            {!isOwnPost && (
+              <button
+                onClick={handleToggleFollow}
+                className={`flex-shrink-0 rounded-full px-3 py-1 text-[12px] font-bold transition-colors ${
+                  isFollowing
+                    ? "border border-white/20 text-white hover:bg-white/10"
+                    : "bg-white text-black hover:bg-white/90"
+                }`}
+              >
+                {isFollowing ? "Following" : "Subscribe"}
+              </button>
+            )}
+          </div>
+
+          {/* Caption */}
+          {active.caption && active.type !== "text" && (
+            <p className="text-[12px] leading-[17px] text-white/70 line-clamp-2">
+              {active.caption}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -387,7 +395,9 @@ function FeedContent() {
   const [hasMore, setHasMore] = useState(cached?.hasMore ?? true);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [currentIdx, setCurrentIdx] = useState(() => {
+    try { return parseInt(sessionStorage.getItem("stories_idx") ?? "0") || 0; } catch { return 0; }
+  });
   const [commentPanelPostId, setCommentPanelPostId] = useState<string | null>(null);
   const [commentPanelCount, setCommentPanelCount] = useState(0);
   const hasMoreRef = useRef(hasMore);
@@ -450,11 +460,19 @@ function FeedContent() {
   }, [currentIdx, groupedPosts.length, loadPage]);
 
   const goNext = useCallback(() => {
-    setCurrentIdx((i) => Math.min(i + 1, groupedPosts.length - 1));
+    setCurrentIdx((i) => {
+      const next = Math.min(i + 1, groupedPosts.length - 1);
+      try { sessionStorage.setItem("stories_idx", String(next)); } catch {}
+      return next;
+    });
   }, [groupedPosts.length]);
 
   const goPrev = useCallback(() => {
-    setCurrentIdx((i) => Math.max(i - 1, 0));
+    setCurrentIdx((i) => {
+      const prev = Math.max(i - 1, 0);
+      try { sessionStorage.setItem("stories_idx", String(prev)); } catch {}
+      return prev;
+    });
   }, []);
 
   // Keyboard navigation

@@ -556,21 +556,26 @@ export default function PostPageClient() {
   const threadReplies = threadCommentId ? comments.filter((c) => c.parentCommentId === threadCommentId) : [];
   const topLevelComments = comments.filter((c) => !c.parentCommentId);
 
+  const MEDIA_W = 400;
+  const mediaH = "calc(100vh - 56px - 110px)";
+
   return (
-    <div className="pb-20">
+    <div className="flex h-[calc(100vh-56px)] bg-black overflow-hidden">
 
-      {/* ── Floating back button ── */}
-      <button
-        onClick={() => {
-          if (threadCommentId) { setThreadCommentId(null); setReplyTo(null); }
-          else { router.back(); }
-        }}
-        className="fixed left-4 top-16 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 backdrop-blur text-white hover:bg-black/80 transition-colors"
-      >
-        <IoArrowBack size={18} />
-      </button>
+      {/* ── Left: media card (same layout as stories) ── */}
+      <div className="flex flex-col flex-shrink-0 items-center" style={{ width: MEDIA_W + 80 }}>
+        {/* Floating back button */}
+        <button
+          onClick={() => {
+            if (threadCommentId) { setThreadCommentId(null); setReplyTo(null); }
+            else { router.back(); }
+          }}
+          className="self-start ml-4 mt-3 mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors flex-shrink-0"
+        >
+          <IoArrowBack size={16} />
+        </button>
 
-        {/* ── Thread view ── */}
+        {/* ── Thread view (replaces comments in right panel) ── */}
         {threadComment ? (
           <div className="px-4 pt-4">
             <div className="rounded-2xl bg-feed-bg px-3">
@@ -649,11 +654,12 @@ export default function PostPageClient() {
           </div>
         ) : (
           <>
-            {/* ── Media row: media (centered) + action rail (right) ── */}
-            <div className="flex items-start justify-center gap-4 bg-black py-4 px-4">
-              {/* Media column — keeps original dimensions */}
+            {/* ── Media row: fixed-size card + action rail ── */}
+            <div className="flex items-center gap-3 justify-center">
+              {/* Fixed-size media — same as stories */}
               <div
-                className="relative flex-shrink-0 overflow-hidden rounded-xl max-w-[480px]"
+                className="relative flex-shrink-0 overflow-hidden rounded-2xl"
+                style={{ width: MEDIA_W, height: mediaH }}
                 onPointerDown={(e) => { swipeStartX.current = e.clientX; swipeStartY.current = e.clientY; }}
                 onPointerUp={(e) => {
                   const dx = e.clientX - swipeStartX.current;
@@ -665,13 +671,15 @@ export default function PostPageClient() {
                 }}
               >
                 {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
-                  <div className="cursor-zoom-in" onClick={() => setLightboxOpen(true)}>
+                  <div className="w-full h-full cursor-zoom-in" onClick={() => setLightboxOpen(true)}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="max-h-[480px] max-w-[480px] object-cover" />
+                    <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="w-full h-full object-cover" />
                   </div>
                 )}
                 {isVideo && activeItem.content && (
-                  <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                  <div className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&>div]:w-full [&>div]:h-full">
+                    <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+                  </div>
                 )}
                 {isText && (
                   <div className="flex items-center justify-center bg-zinc-900 px-8 py-16 min-h-[300px] max-w-[480px]">
@@ -699,8 +707,8 @@ export default function PostPageClient() {
                 )}
               </div>
 
-              {/* Action rail — outside media to the right */}
-              <div className="flex flex-col items-center gap-4 flex-shrink-0 pt-4">
+              {/* Action rail — right next to media */}
+              <div className="flex flex-col items-center gap-4 flex-shrink-0">
                 <div className="flex flex-col items-center gap-1">
                   <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
                     {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
@@ -799,21 +807,21 @@ export default function PostPageClient() {
               </div>
             </div>
 
-            {/* ── Below media: author + caption ── */}
-            <div className="bg-black px-4 pb-3 mx-auto max-w-2xl">
-              <div className="flex items-center gap-2.5 mb-1.5">
+            {/* ── Author strip (below media, same width) ── */}
+            <div style={{ width: MEDIA_W }} className="mt-2 px-1 flex flex-col gap-1">
+              <div className="flex items-center gap-2">
                 <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
                   {post.userPhoto ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={post.userPhoto} alt={post.userName} className="h-9 w-9 rounded-full object-cover" />
+                    <img src={post.userPhoto} alt={post.userName} className="h-8 w-8 rounded-full object-cover" />
                   ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
-                      <IoPersonOutline size={18} className="text-white" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                      <IoPersonOutline size={16} className="text-white" />
                     </div>
                   )}
                 </button>
-                <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="min-w-0 text-left">
-                  <div className="flex items-center gap-1.5">
+                <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="min-w-0 flex-1 text-left">
+                  <div className="flex items-center gap-1">
                     <span className="text-[13px] font-bold text-white">{post.userName}</span>
                     <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="" />
                   </div>
@@ -824,7 +832,7 @@ export default function PostPageClient() {
                 {user?.id !== post.userId && (
                   <button
                     onClick={handleToggleFollow}
-                    className={`ml-1 flex-shrink-0 rounded-full px-3.5 py-1 text-[12px] font-bold transition-colors ${
+                    className={`flex-shrink-0 rounded-full px-3 py-1 text-[12px] font-bold transition-colors ${
                       isFollowingAuthor
                         ? "border border-white/20 text-white hover:bg-white/10"
                         : "bg-white text-black hover:bg-white/90"
@@ -835,85 +843,90 @@ export default function PostPageClient() {
                 )}
               </div>
               {!isText && post.caption && (
-                <p className="text-[13px] leading-[19px] text-white/80">
+                <p className="text-[12px] leading-[17px] text-white/70 line-clamp-2">
                   <LinkText text={post.caption} />
                 </p>
               )}
             </div>
-
-            {/* ── rest of content: padded ── */}
-            <div className="px-4 mx-auto max-w-2xl">
-            {/* ── Date · Views ── */}
-            <div className="flex items-center gap-2 py-2 text-[11px] text-light-text">
-              <span>{formatDate(post.createdAt)}</span>
-              <span>·</span>
-              <span className="flex items-center gap-1">
-                <IoEyeOutline size={12} />
-                {fmt(post.viewCount)} views
-              </span>
-            </div>
-
-            {/* ── Composer ── */}
-            <div className="flex gap-2.5 border-b border-t border-border py-3">
-              {user?.profile_photo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
-              ) : (
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
-                  <IoPersonOutline size={18} className="text-light-text" />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="mb-0.5 text-[12px] font-semibold text-text">{user?.name ?? "You"}</p>
-                <textarea
-                  ref={inputRef}
-                  value={replyText}
-                  onChange={(e) => { setReplyText(e.target.value); autoGrow(e.target); }}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-                  placeholder="Write a comment…"
-                  rows={1}
-                  className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
-                  style={{ minHeight: 24 }}
-                />
-                <div className="mt-2 flex justify-end">
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!replyText.trim() || submitting}
-                    className="flex h-7 items-center rounded-full bg-zinc-800 px-4 text-[12px] font-bold text-white disabled:opacity-40"
-                  >
-                    {submitting ? "…" : "Post"}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Comments ── */}
-            {topLevelComments.length > 0 ? (
-              <div className="divide-y divide-border/40">
-                {topLevelComments.map((comment) => {
-                  const count = comments.filter((c) => c.parentCommentId === comment.id).length;
-                  return (
-                    <CommentItem
-                      key={comment.id}
-                      comment={comment}
-                      statusId={statusId}
-                      socket={socket}
-                      onReply={(name, id) => startReply(name, id)}
-                      onReactionUpdate={handleCommentReaction}
-                      replyCount={count}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-10 text-center">
-                <IoChatbubbleEllipsesOutline size={30} className="text-light-text" />
-                <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
-              </div>
-            )}
-            </div>{/* end px-4 rest-of-content block */}
           </>
         )}
+      </div>{/* end left column */}
+
+      {/* ── Right: permanent comments panel ── */}
+      <div className="flex-1 min-w-0 border-l border-white/10 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-white/10">
+          <IoChatbubbleEllipsesOutline size={16} className="text-white/50" />
+          <span className="text-[13px] font-bold text-white">Comments</span>
+          <span className="text-[12px] text-white/40">({commentCount})</span>
+          <span className="ml-auto flex items-center gap-1 text-[10px] text-white/30">
+            <IoEyeOutline size={11} />
+            {fmt(post?.viewCount ?? 0)}
+          </span>
+        </div>
+
+        {/* Comments list */}
+        <div className="flex-1 overflow-y-auto px-4 divide-y divide-white/5">
+          {loadingPost && (
+            <div className="flex justify-center py-8">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+            </div>
+          )}
+          {topLevelComments.length === 0 && !loadingPost && (
+            <div className="flex flex-col items-center gap-2 py-10 text-center">
+              <IoChatbubbleEllipsesOutline size={28} className="text-white/20" />
+              <p className="text-[13px] text-white/30">No comments yet. Be the first!</p>
+            </div>
+          )}
+          {topLevelComments.map((comment) => {
+            const count = comments.filter((c) => c.parentCommentId === comment.id).length;
+            return (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                statusId={statusId}
+                socket={socket}
+                onReply={(name, id) => startReply(name, id)}
+                onReactionUpdate={handleCommentReaction}
+                replyCount={count}
+              />
+            );
+          })}
+        </div>
+
+        {/* Composer */}
+        <div className="flex-shrink-0 border-t border-white/10 px-4 py-3">
+          <div className="flex items-end gap-2">
+            {user?.profile_photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.profile_photo_url} alt="" className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
+                <IoPersonOutline size={16} className="text-light-text" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
+              <textarea
+                ref={inputRef}
+                value={replyText}
+                onChange={(e) => { setReplyText(e.target.value); autoGrow(e.target); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+                placeholder="Write a comment…"
+                rows={1}
+                className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
+                style={{ minHeight: 24 }}
+              />
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={!replyText.trim() || submitting}
+              className="flex-shrink-0 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white disabled:opacity-40"
+            >
+              {submitting ? "…" : "Post"}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* ── Full-screen image lightbox ── */}
       {lightboxOpen && isImage && (activeItem.content || activeItem.thumbnailUrl) && (
