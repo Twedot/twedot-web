@@ -451,7 +451,7 @@ function ChatDropdown() {
           const isMobile = window.innerWidth < 640;
           if (isMobile) { chatRouter.push("/messages"); }
         }}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
+        className="relative flex sm:hidden h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
       >
         <IoChatbubbleEllipsesOutline size={20} />
         {totalUnread > 0 && (

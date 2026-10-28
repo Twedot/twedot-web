@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { IoPlay, IoPause, IoVolumeMute, IoVolumeHigh, IoExpand } from "react-icons/io5";
 
+let globalMuted = true;
+
 export default function VideoPlayer({
   src,
   poster,
@@ -15,7 +17,7 @@ export default function VideoPlayer({
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(globalMuted);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -75,6 +77,7 @@ export default function VideoPlayer({
     const el = videoRef.current;
     if (!el) return;
     el.muted = !el.muted;
+    globalMuted = el.muted;
     setIsMuted(el.muted);
   }
 

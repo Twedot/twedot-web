@@ -409,6 +409,7 @@ function FeedContent() {
   });
   const [commentPanelPostId, setCommentPanelPostId] = useState<string | null>(null);
   const [commentPanelCount, setCommentPanelCount] = useState(0);
+  const drawerOpen = commentPanelPostId !== null;
   const hasMoreRef = useRef(hasMore);
   const isFetchingRef = useRef(isFetching);
   const pageRef = useRef(page);
@@ -497,7 +498,7 @@ function FeedContent() {
   const currentGroup = groupedPosts[currentIdx];
 
   return (
-    <div className="relative h-[calc(100vh-56px)] overflow-hidden">
+    <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 ${drawerOpen ? "pr-[400px]" : ""}`}>
       {!isAuthenticated && <LoginBanner />}
       {query && (
         <div className="absolute top-0 left-0 right-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
