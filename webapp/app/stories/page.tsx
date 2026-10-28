@@ -81,7 +81,14 @@ function timeAgo(iso: string) {
 }
 
 /* ── Single Shorts-style card ── */
-function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () => void }) {
+function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
+  items: StatusPost[];
+  onComment: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+}) {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const { notify } = useUi();
@@ -168,10 +175,10 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
   function handleEmbedPost() { setMenuOpen(false); const code = `<iframe src="${window.location.origin}${postUrl(head.id)}" width="550" height="400" frameborder="0" scrolling="no"></iframe>`; navigator.clipboard?.writeText(code).catch(() => {}); notify("Embed code copied"); }
   function handleViewActivity() { setMenuOpen(false); router.push(postUrl(head.id)); }
 
-  const mediaH = "calc(100vh - 56px - 16px)";
+  const maxH = "calc(100vh - 56px - 40px)";
 
   return (
-    <div className="flex h-[calc(100vh-56px)] w-full items-end justify-start gap-5 pb-6 pl-8">
+    <div className="flex h-[calc(100vh-56px)] w-full items-end justify-center gap-5 pb-5 pt-5">
       {/* ── Left column: caption / author / follow (bottom-aligned) ── */}
       <div className="flex-shrink-0 w-[300px] flex flex-col gap-2 pb-2">
         {/* Search suggestion */}
@@ -228,20 +235,20 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
         )}
       </div>
 
-      {/* ── Media card — natural width, max 480px ── */}
+      {/* ── Media card — natural size, capped to viewport ── */}
       <div
-        className="relative flex-shrink-0 overflow-hidden rounded-2xl max-w-[480px]"
-        style={{ height: mediaH }}
+        className="relative flex-shrink-0 overflow-hidden rounded-2xl"
+        style={{ maxHeight: maxH, maxWidth: 480 }}
       >
         {active.type === "video" && active.content ? (
-          <div className="h-full [&_video]:h-full [&_video]:w-auto [&_video]:max-w-none [&>div]:h-full [&>div]:w-auto">
+          <div className="[&_video]:max-w-[480px] [&_video]:w-auto [&_video]:rounded-2xl [&>div]:flex [&>div]:items-center" style={{ maxHeight: maxH }}>
             <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
           </div>
         ) : active.type === "image" && (active.content || active.thumbnailUrl) ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={active.content || active.thumbnailUrl!} alt="" className="h-full w-auto object-contain" />
+          <img src={active.content || active.thumbnailUrl!} alt="" className="w-auto max-w-[480px] rounded-2xl" style={{ maxHeight: maxH }} />
         ) : (
-          <div className="flex items-center justify-center bg-zinc-900 h-full w-[360px]">
+          <div className="flex items-center justify-center bg-zinc-900 w-[360px]" style={{ height: maxH }}>
             <p className="max-w-sm text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap px-6">
               <LinkText text={active.caption ?? active.content ?? ""} />
             </p>
@@ -270,8 +277,8 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
         )}
       </div>
 
-      {/* ── Action rail — immediately to the right of media ── */}
-      <div className="flex flex-col items-center gap-4 flex-shrink-0 self-center">
+      {/* ── Action rail + nav arrows ── */}
+      <div className="flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2">
         <div className="flex flex-col items-center gap-1">
           <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
             {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
@@ -369,6 +376,15 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
               </div>
             </>
           )}
+        </div>
+        {/* Nav arrows */}
+        <div className="flex flex-col items-center gap-1 mt-2">
+          <button onClick={onPrev} disabled={!hasPrev} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
+            <IoChevronUp size={20} />
+          </button>
+          <button onClick={onNext} disabled={!hasNext} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
+            <IoChevronDown size={20} />
+          </button>
         </div>
       </div>
     </div>
@@ -516,6 +532,10 @@ function FeedContent() {
             setCommentPanelPostId(currentGroup[0].id);
             setCommentPanelCount(currentGroup[0].commentCount ?? 0);
           }}
+          onPrev={goPrev}
+          onNext={goNext}
+          hasPrev={currentIdx > 0}
+          hasNext={currentIdx < groupedPosts.length - 1 || hasMore}
         />
       )}
 
@@ -524,26 +544,6 @@ function FeedContent() {
         commentCount={commentPanelCount}
         onClose={() => setCommentPanelPostId(null)}
       />
-
-      {/* Up/Down navigation arrows — right side */}
-      {groupedPosts.length > 1 && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
-          <button
-            onClick={goPrev}
-            disabled={currentIdx === 0}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <IoChevronUp size={22} />
-          </button>
-          <button
-            onClick={goNext}
-            disabled={currentIdx === groupedPosts.length - 1 && !hasMore}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <IoChevronDown size={22} />
-          </button>
-        </div>
-      )}
 
       {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
