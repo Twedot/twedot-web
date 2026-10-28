@@ -838,7 +838,7 @@ export default function PostPageClient() {
                         : "bg-white text-black hover:bg-white/90"
                     }`}
                   >
-                    {isFollowingAuthor ? "Following" : "Subscribe"}
+                    {isFollowingAuthor ? "Following" : "Follow"}
                   </button>
                 )}
               </div>
