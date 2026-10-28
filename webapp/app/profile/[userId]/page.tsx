@@ -268,12 +268,14 @@ export default function OtherUserProfilePage() {
         <button
           onClick={() => {
             if (profile) {
-              useChatStore.getState().openChat({
+              const contact = {
                 userId: profile.id,
                 name: profile.name ?? "User",
                 photo: profile.profile_photo_url ?? null,
                 occupation: profile.occupation ?? null,
-              });
+              };
+              useChatStore.getState().openChat(contact);
+              if (window.innerWidth < 640) router.push("/messages");
             }
           }}
           className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"

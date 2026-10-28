@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useChatStore } from "@/lib/chatStore";
-import { chatSocket } from "@/lib/chatSocket";
+import { chatSocket, type ChatMessage } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
 import { IoClose, IoChevronDown, IoSend } from "react-icons/io5";
 
@@ -16,6 +16,57 @@ function userColor(userId: string) {
   let hash = 0;
   for (let i = 0; i < userId.length; i++) hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
   return HEADER_COLORS[Math.abs(hash) % HEADER_COLORS.length];
+}
+
+function toDate(ts: string | number): Date {
+  return new Date(typeof ts === "number" ? ts : ts);
+}
+
+function dateLabel(d: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = today.getTime() - msgDay.getTime();
+  if (diff === 0) return "Today";
+  if (diff === 86400_000) return "Yesterday";
+  return d.toLocaleDateString([], { month: "short", day: "numeric", year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
+}
+
+function timeLabel(d: Date): string {
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+interface MessageGroup {
+  date: string;
+  clusters: { senderId: string; time: string; messages: ChatMessage[] }[];
+}
+
+function groupMessages(messages: ChatMessage[]): MessageGroup[] {
+  const groups: MessageGroup[] = [];
+  let currentDate = "";
+  let currentCluster: { senderId: string; time: string; messages: ChatMessage[] } | null = null;
+
+  for (const msg of messages) {
+    const d = toDate(msg.timestamp);
+    const dl = dateLabel(d);
+    const tl = timeLabel(d);
+
+    if (dl !== currentDate) {
+      currentDate = dl;
+      currentCluster = { senderId: msg.senderId, time: tl, messages: [msg] };
+      groups.push({ date: dl, clusters: [currentCluster] });
+      continue;
+    }
+
+    const lastGroup = groups[groups.length - 1];
+    if (currentCluster && currentCluster.senderId === msg.senderId && currentCluster.time === tl) {
+      currentCluster.messages.push(msg);
+    } else {
+      currentCluster = { senderId: msg.senderId, time: tl, messages: [msg] };
+      lastGroup.clusters.push(currentCluster);
+    }
+  }
+  return groups;
 }
 
 export default function ChatWindow({ userId }: { userId: string }) {
@@ -86,6 +137,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
 
   if (!thread) return null;
   const { contact, messages, isTyping, isOnline } = thread;
+  const grouped = groupMessages(messages);
 
   return (
     <div className="flex flex-col w-[260px] h-[320px] bg-[#1a1a1a] rounded-t-lg shadow-2xl border border-[#333] overflow-hidden">
@@ -131,27 +183,45 @@ export default function ChatWindow({ userId }: { userId: string }) {
               Start a conversation
             </div>
           )}
-          {messages.map((msg) => {
-            const isMine = msg.senderId === myUserId;
-            return (
-              <div key={msg.id ?? msg.clientMessageId} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
-                  isMine
-                    ? "text-white rounded-br-sm"
-                    : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
-                }`} style={isMine ? { background: color } : undefined}>
-                  {msg.messageType === "image" ? (
-                    <img src={msg.content} alt="" className="max-w-full rounded-lg" />
-                  ) : (
-                    <span>{msg.content}</span>
-                  )}
-                  {msg.status === "failed" && (
-                    <span className="block text-[8px] mt-0.5 text-red-400">Not connected</span>
-                  )}
-                </div>
+          {grouped.map((group) => (
+            <div key={group.date}>
+              {/* Date divider */}
+              <div className="flex items-center gap-2 my-2">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[9px] text-white/30 font-medium">{group.date}</span>
+                <div className="flex-1 h-px bg-white/10" />
               </div>
-            );
-          })}
+              {group.clusters.map((cluster, ci) => {
+                const isMine = cluster.senderId === myUserId;
+                return (
+                  <div key={ci} className="mb-1">
+                    {cluster.messages.map((msg, mi) => (
+                      <div key={msg.id ?? msg.clientMessageId} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[80%] px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
+                          isMine
+                            ? "text-white rounded-br-sm"
+                            : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
+                        }`} style={isMine ? { background: color } : undefined}>
+                          {msg.messageType === "image" ? (
+                            <img src={msg.content} alt="" className="max-w-full rounded-lg" />
+                          ) : (
+                            <span>{msg.content}</span>
+                          )}
+                          {msg.status === "failed" && (
+                            <span className="block text-[8px] text-red-400">Not connected</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {/* Time after the cluster */}
+                    <p className={`text-[8px] text-white/25 mt-0.5 ${isMine ? "text-right pr-1" : "pl-1"}`}>
+                      {cluster.time}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
           {isTyping && (
             <div className="flex justify-start">
               <div className="px-2 py-1 rounded-2xl bg-[#2a2a2a] rounded-bl-sm">

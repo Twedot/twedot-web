@@ -433,6 +433,7 @@ function avatarBorder(userId: string) {
 
 function ChatDropdown() {
   const [open, setOpen] = useState(false);
+  const chatRouter = useRouter();
   const threads = useChatStore((s) => s.threads);
   const openChat = useChatStore((s) => s.openChat);
 
@@ -452,7 +453,11 @@ function ChatDropdown() {
   return (
     <>
       <button
-        onClick={() => setOpen((p) => !p)}
+        onClick={() => {
+          const isMobile = window.innerWidth < 640;
+          if (isMobile) { chatRouter.push("/messages"); }
+          else { setOpen((p) => !p); }
+        }}
         className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
       >
         <IoChatbubbleEllipsesOutline size={20} />
@@ -465,7 +470,7 @@ function ChatDropdown() {
 
       {/* Vertical avatar sidebar — fixed to the right edge, always visible when there are chats */}
       {chatList.length > 0 && (
-        <div className="fixed right-3 top-16 z-[9998] flex flex-col items-end gap-2.5 py-2">
+        <div className="fixed right-3 top-16 z-[9998] hidden sm:flex flex-col items-end gap-2.5 py-2">
           {chatList.map((thread) => {
             const { contact, unreadCount, isOnline } = thread;
             const borderColor = avatarBorder(contact.userId);

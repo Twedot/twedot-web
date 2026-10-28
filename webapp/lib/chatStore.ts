@@ -20,6 +20,7 @@ export interface ChatThread {
 }
 
 const CONTACTS_KEY = "twedot_chat_contacts";
+const OPEN_IDS_KEY = "twedot_chat_open";
 
 function loadSavedContacts(): Map<string, ChatThread> {
   const threads = new Map<string, ChatThread>();
@@ -35,11 +36,22 @@ function loadSavedContacts(): Map<string, ChatThread> {
   return threads;
 }
 
+function loadOpenIds(): string[] {
+  try {
+    const raw = localStorage.getItem(OPEN_IDS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
 function saveContacts(threads: Map<string, ChatThread>) {
   try {
     const contacts = Array.from(threads.values()).map((t) => t.contact);
     localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
   } catch {}
+}
+
+function saveOpenIds(ids: string[]) {
+  try { localStorage.setItem(OPEN_IDS_KEY, JSON.stringify(ids)); } catch {}
 }
 
 interface ChatState {
@@ -61,10 +73,11 @@ interface ChatState {
 }
 
 const initialThreads = typeof window !== "undefined" ? loadSavedContacts() : new Map<string, ChatThread>();
+const initialOpenIds = typeof window !== "undefined" ? loadOpenIds() : [];
 
 export const useChatStore = create<ChatState>((set, get) => ({
   threads: initialThreads,
-  openChatIds: [],
+  openChatIds: initialOpenIds,
   minimizedChatIds: [],
 
   getThread: (userId) => get().threads.get(userId),
@@ -177,22 +190,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
     openChatIds.push(contact.userId);
     if (openChatIds.length > 3) openChatIds.shift();
     const minimizedChatIds = state.minimizedChatIds.filter((id) => id !== contact.userId);
+    saveOpenIds(openChatIds);
     return { threads, openChatIds, minimizedChatIds };
   }),
 
-  closeChat: (userId) => set((state) => ({
-    openChatIds: state.openChatIds.filter((id) => id !== userId),
-    minimizedChatIds: state.minimizedChatIds.filter((id) => id !== userId),
-  })),
+  closeChat: (userId) => set((state) => {
+    const openChatIds = state.openChatIds.filter((id) => id !== userId);
+    saveOpenIds(openChatIds);
+    return { openChatIds, minimizedChatIds: state.minimizedChatIds.filter((id) => id !== userId) };
+  }),
 
-  minimizeChat: (userId) => set((state) => ({
-    openChatIds: state.openChatIds.filter((id) => id !== userId),
-    minimizedChatIds: [...state.minimizedChatIds.filter((id) => id !== userId), userId],
-  })),
+  minimizeChat: (userId) => set((state) => {
+    const openChatIds = state.openChatIds.filter((id) => id !== userId);
+    saveOpenIds(openChatIds);
+    return { openChatIds, minimizedChatIds: [...state.minimizedChatIds.filter((id) => id !== userId), userId] };
+  }),
 
   restoreChat: (userId) => set((state) => {
     const openChatIds = [...state.openChatIds.filter((id) => id !== userId), userId];
     if (openChatIds.length > 3) openChatIds.shift();
+    saveOpenIds(openChatIds);
     return {
       openChatIds,
       minimizedChatIds: state.minimizedChatIds.filter((id) => id !== userId),
