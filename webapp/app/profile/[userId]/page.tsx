@@ -273,6 +273,7 @@ export default function OtherUserProfilePage() {
                 name: profile.name ?? "User",
                 photo: profile.profile_photo_url ?? null,
                 occupation: profile.occupation ?? null,
+                activityScore: profile.global_activity_score ?? 0,
               };
               useChatStore.getState().openChat(contact);
               if (window.innerWidth < 640) router.push("/messages");

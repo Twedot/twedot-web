@@ -1,11 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useChatStore, type ChatContact } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
-import { IoArrowBack, IoSend } from "react-icons/io5";
+import { apiUploadFile } from "@/lib/api";
+import { IoArrowBack, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle } from "react-icons/io5";
+import RankBadge from "@/components/RankBadge";
+import dynamic from "next/dynamic";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const emojiDataRaw = require("@emoji-mart/data");
+const emojiData = emojiDataRaw?.default ?? emojiDataRaw;
+const EmojiPicker = dynamic(() => import("@emoji-mart/react"), { ssr: false });
 
 const HEADER_COLORS = [
   "#6B4EFF", "#E04E6A", "#2EA87E", "#E08C3A", "#3A8FE0",
@@ -91,7 +99,6 @@ export default function MessagesPage() {
   const router = useRouter();
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const threads = useChatStore((s) => s.threads);
-  const openChat = useChatStore((s) => s.openChat);
 
   const chatList = Array.from(threads.values())
     .sort((a, b) => {
@@ -171,9 +178,14 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   const [text, setText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const myUserId = AuthStorage.getProfile()?.id;
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const color = userColor(userId);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<{ file: File; url: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const emojiRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -202,7 +214,16 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
     return unsub;
   }, []);
 
-  const handleSend = () => {
+  useEffect(() => {
+    if (!showEmoji) return;
+    function handleClick(e: MouseEvent) {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmoji(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showEmoji]);
+
+  const handleSend = useCallback(() => {
     const trimmed = text.trim();
     if (!trimmed || !myUserId) return;
     const clientMessageId = chatSocket.send(userId, trimmed);
@@ -217,8 +238,42 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       status: clientMessageId ? "sending" : "failed",
     }, true);
     setText("");
+    setShowEmoji(false);
     chatSocket.sendTyping(userId, false);
     inputRef.current?.focus();
+  }, [text, myUserId, userId]);
+
+  const handleSendMedia = useCallback(async () => {
+    if (!mediaPreview || !myUserId || uploading) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", mediaPreview.file);
+      form.append("type", "chat");
+      const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
+      const url = result.url;
+      const clientMessageId = chatSocket.send(userId, url, "image", { fileName: mediaPreview.file.name, fileSize: mediaPreview.file.size });
+      useChatStore.getState().addMessage(userId, {
+        id: clientMessageId ?? crypto.randomUUID(),
+        clientMessageId: clientMessageId ?? undefined,
+        senderId: myUserId,
+        recipientId: userId,
+        content: url,
+        messageType: "image",
+        timestamp: Date.now(),
+        status: clientMessageId ? "sending" : "failed",
+      }, true);
+    } catch {}
+    URL.revokeObjectURL(mediaPreview.url);
+    setMediaPreview(null);
+    setUploading(false);
+  }, [mediaPreview, myUserId, userId, uploading]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMediaPreview({ file, url: URL.createObjectURL(file) });
+    e.target.value = "";
   };
 
   const handleTyping = (value: string) => {
@@ -226,6 +281,11 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
     chatSocket.sendTyping(userId, true);
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     typingTimerRef.current = setTimeout(() => chatSocket.sendTyping(userId, false), 2000);
+  };
+
+  const onEmojiSelect = (emoji: any) => {
+    setText((prev) => prev + emoji.native);
+    inputRef.current?.focus();
   };
 
   if (!thread) return null;
@@ -258,9 +318,14 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
           onClick={() => router.push(`/profile/${userId}`)}
           className="flex-1 min-w-0 text-left"
         >
-          <p className="text-[13px] font-semibold text-white truncate">{contact.name}</p>
-          <p className="text-[10px] text-white/70">
-            {!wsConnected ? "Connecting..." : isTyping ? "typing..." : isOnline ? "Active now" : ""}
+          <div className="flex items-center gap-1">
+            <p className="text-[13px] font-semibold text-white truncate">{contact.name}</p>
+            {contact.activityScore != null && contact.activityScore > 0 && (
+              <RankBadge activityScore={contact.activityScore} rankVisible plain className="scale-75 origin-left" />
+            )}
+          </div>
+          <p className="text-[10px] text-white/70 truncate">
+            {!wsConnected ? "Connecting..." : isTyping ? "typing..." : contact.occupation ? contact.occupation : isOnline ? "Active now" : ""}
           </p>
         </button>
       </div>
@@ -285,14 +350,14 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                 return (
                   <div key={ci} className="mb-1.5">
                     {cluster.messages.map((msg) => (
-                      <div key={msg.id ?? msg.clientMessageId} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[75%] px-3 py-1 rounded-2xl text-[13px] leading-[1.4] break-words ${
                           isMine
                             ? "text-white rounded-br-sm"
                             : "bg-feed-bg text-text rounded-bl-sm"
                         }`} style={isMine ? { background: color } : undefined}>
                           {msg.messageType === "image" ? (
-                            <img src={msg.content} alt="" className="max-w-full rounded-lg" />
+                            <img src={msg.content} alt="" className="max-w-full rounded-lg max-h-[200px] object-cover" />
                           ) : (
                             <span>{msg.content}</span>
                           )}
@@ -325,8 +390,50 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
         </div>
       </div>
 
+      {/* Media preview */}
+      {mediaPreview && (
+        <div className="relative px-3 py-2 border-t border-border bg-background">
+          <img src={mediaPreview.url} alt="Preview" className="h-28 rounded-lg object-cover" />
+          <button onClick={() => { URL.revokeObjectURL(mediaPreview.url); setMediaPreview(null); }} className="absolute top-3 right-4 text-text/80 hover:text-text">
+            <IoCloseCircle size={22} />
+          </button>
+          <button
+            onClick={handleSendMedia}
+            disabled={uploading}
+            className="absolute bottom-3 right-4 p-2 rounded-full transition-colors"
+            style={{ background: color, opacity: uploading ? 0.5 : 1 }}
+          >
+            <IoSend size={16} className="text-white" />
+          </button>
+        </div>
+      )}
+
+      {/* Emoji picker */}
+      {showEmoji && (
+        <div ref={emojiRef} className="border-t border-border bg-background">
+          <EmojiPicker
+            data={emojiData}
+            onEmojiSelect={onEmojiSelect}
+            theme="auto"
+            previewPosition="none"
+            skinTonePosition="none"
+            perLine={8}
+            emojiSize={22}
+            emojiButtonSize={34}
+            maxFrequentRows={2}
+          />
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex items-center gap-2 px-3 py-2 border-t border-border bg-background shrink-0">
+        <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-light-text hover:text-text transition-colors">
+          <IoHappyOutline size={22} />
+        </button>
+        <button onClick={() => fileRef.current?.click()} className="p-1 text-light-text hover:text-text transition-colors">
+          <IoImageOutline size={22} />
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
         <input
           ref={inputRef}
           type="text"

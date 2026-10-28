@@ -1,11 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useChatStore } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
-import { IoClose, IoChevronDown, IoSend } from "react-icons/io5";
+import { apiUploadFile } from "@/lib/api";
+import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle } from "react-icons/io5";
+import RankBadge from "@/components/RankBadge";
+import dynamic from "next/dynamic";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const emojiDataRaw = require("@emoji-mart/data");
+const emojiData = emojiDataRaw?.default ?? emojiDataRaw;
+const EmojiPicker = dynamic(() => import("@emoji-mart/react"), { ssr: false });
 
 const HEADER_COLORS = [
   "#6B4EFF", "#E04E6A", "#2EA87E", "#E08C3A", "#3A8FE0",
@@ -78,9 +86,14 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const [text, setText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const myUserId = AuthStorage.getProfile()?.id;
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const color = userColor(userId);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<{ file: File; url: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const emojiRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -109,7 +122,17 @@ export default function ChatWindow({ userId }: { userId: string }) {
     return unsub;
   }, []);
 
-  const handleSend = () => {
+  // Close emoji on outside click
+  useEffect(() => {
+    if (!showEmoji) return;
+    function handleClick(e: MouseEvent) {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmoji(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showEmoji]);
+
+  const handleSend = useCallback(() => {
     const trimmed = text.trim();
     if (!trimmed || !myUserId) return;
     const clientMessageId = chatSocket.send(userId, trimmed);
@@ -124,8 +147,42 @@ export default function ChatWindow({ userId }: { userId: string }) {
       status: clientMessageId ? "sending" : "failed",
     }, true);
     setText("");
+    setShowEmoji(false);
     chatSocket.sendTyping(userId, false);
     inputRef.current?.focus();
+  }, [text, myUserId, userId]);
+
+  const handleSendMedia = useCallback(async () => {
+    if (!mediaPreview || !myUserId || uploading) return;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", mediaPreview.file);
+      form.append("type", "chat");
+      const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
+      const url = result.url;
+      const clientMessageId = chatSocket.send(userId, url, "image", { fileName: mediaPreview.file.name, fileSize: mediaPreview.file.size });
+      useChatStore.getState().addMessage(userId, {
+        id: clientMessageId ?? crypto.randomUUID(),
+        clientMessageId: clientMessageId ?? undefined,
+        senderId: myUserId,
+        recipientId: userId,
+        content: url,
+        messageType: "image",
+        timestamp: Date.now(),
+        status: clientMessageId ? "sending" : "failed",
+      }, true);
+    } catch {}
+    URL.revokeObjectURL(mediaPreview.url);
+    setMediaPreview(null);
+    setUploading(false);
+  }, [mediaPreview, myUserId, userId, uploading]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMediaPreview({ file, url: URL.createObjectURL(file) });
+    e.target.value = "";
   };
 
   const handleTyping = (value: string) => {
@@ -135,13 +192,18 @@ export default function ChatWindow({ userId }: { userId: string }) {
     typingTimerRef.current = setTimeout(() => chatSocket.sendTyping(userId, false), 2000);
   };
 
+  const onEmojiSelect = (emoji: any) => {
+    setText((prev) => prev + emoji.native);
+    inputRef.current?.focus();
+  };
+
   if (!thread) return null;
   const { contact, messages, isTyping, isOnline } = thread;
   const grouped = groupMessages(messages);
 
   return (
-    <div className="flex flex-col w-[260px] h-[320px] bg-[#1a1a1a] rounded-t-lg shadow-2xl border border-[#333] overflow-hidden">
-      {/* Header — click avatar/name to go to profile */}
+    <div className="flex flex-col w-[280px] h-[360px] bg-[#1a1a1a] rounded-t-lg shadow-2xl border border-[#333] overflow-hidden">
+      {/* Header */}
       <div className="flex items-center gap-2 px-2 py-1.5 shrink-0" style={{ background: color }}>
         <button
           onClick={() => { closeChat(userId); router.push(`/profile/${userId}`); }}
@@ -162,9 +224,14 @@ export default function ChatWindow({ userId }: { userId: string }) {
           onClick={() => { closeChat(userId); router.push(`/profile/${userId}`); }}
           className="flex-1 min-w-0 text-left"
         >
-          <p className="text-[11px] font-semibold text-white truncate leading-tight">{contact.name}</p>
-          <p className="text-[9px] text-white/70 leading-tight">
-            {!wsConnected ? "Connecting..." : isTyping ? "typing..." : isOnline ? "Active now" : ""}
+          <div className="flex items-center gap-1">
+            <p className="text-[11px] font-semibold text-white truncate leading-tight">{contact.name}</p>
+            {contact.activityScore != null && contact.activityScore > 0 && (
+              <RankBadge activityScore={contact.activityScore} rankVisible plain className="scale-75 origin-left" />
+            )}
+          </div>
+          <p className="text-[9px] text-white/70 leading-tight truncate">
+            {!wsConnected ? "Connecting..." : isTyping ? "typing..." : contact.occupation ? contact.occupation : isOnline ? "Active now" : ""}
           </p>
         </button>
         <button onClick={() => minimizeChat(userId)} className="p-0.5 text-white/60 hover:text-white transition-colors">
@@ -175,7 +242,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
         </button>
       </div>
 
-      {/* Messages — flex-col-reverse so content anchors to the bottom */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-2 py-1.5 flex flex-col-reverse">
         <div className="flex flex-col gap-0.5">
           {messages.length === 0 && (
@@ -185,7 +252,6 @@ export default function ChatWindow({ userId }: { userId: string }) {
           )}
           {grouped.map((group) => (
             <div key={group.date}>
-              {/* Date divider */}
               <div className="flex items-center gap-2 my-2">
                 <div className="flex-1 h-px bg-white/10" />
                 <span className="text-[9px] text-white/30 font-medium">{group.date}</span>
@@ -195,15 +261,15 @@ export default function ChatWindow({ userId }: { userId: string }) {
                 const isMine = cluster.senderId === myUserId;
                 return (
                   <div key={ci} className="mb-1">
-                    {cluster.messages.map((msg, mi) => (
-                      <div key={msg.id ?? msg.clientMessageId} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                    {cluster.messages.map((msg) => (
+                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[80%] px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
                           isMine
                             ? "text-white rounded-br-sm"
                             : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
                         }`} style={isMine ? { background: color } : undefined}>
                           {msg.messageType === "image" ? (
-                            <img src={msg.content} alt="" className="max-w-full rounded-lg" />
+                            <img src={msg.content} alt="" className="max-w-full rounded-lg max-h-[140px] object-cover" />
                           ) : (
                             <span>{msg.content}</span>
                           )}
@@ -213,7 +279,6 @@ export default function ChatWindow({ userId }: { userId: string }) {
                         </div>
                       </div>
                     ))}
-                    {/* Time after the cluster */}
                     <p className={`text-[8px] text-white/25 mt-0.5 ${isMine ? "text-right pr-1" : "pl-1"}`}>
                       {cluster.time}
                     </p>
@@ -237,8 +302,50 @@ export default function ChatWindow({ userId }: { userId: string }) {
         </div>
       </div>
 
+      {/* Media preview */}
+      {mediaPreview && (
+        <div className="relative px-2 py-1.5 border-t border-[#333] bg-[#111]">
+          <img src={mediaPreview.url} alt="Preview" className="h-20 rounded-lg object-cover" />
+          <button onClick={() => { URL.revokeObjectURL(mediaPreview.url); setMediaPreview(null); }} className="absolute top-2 right-3 text-white/80 hover:text-white">
+            <IoCloseCircle size={18} />
+          </button>
+          <button
+            onClick={handleSendMedia}
+            disabled={uploading}
+            className="absolute bottom-2 right-3 p-1.5 rounded-full transition-colors"
+            style={{ background: color, opacity: uploading ? 0.5 : 1 }}
+          >
+            <IoSend size={12} className="text-white" />
+          </button>
+        </div>
+      )}
+
+      {/* Emoji picker */}
+      {showEmoji && (
+        <div ref={emojiRef} className="absolute bottom-12 left-0 z-50">
+          <EmojiPicker
+            data={emojiData}
+            onEmojiSelect={onEmojiSelect}
+            theme="dark"
+            previewPosition="none"
+            skinTonePosition="none"
+            perLine={7}
+            emojiSize={18}
+            emojiButtonSize={28}
+            maxFrequentRows={2}
+          />
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex items-center gap-1 px-2 py-1.5 border-t border-[#333] bg-[#111] shrink-0">
+        <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-white/40 hover:text-white/70 transition-colors">
+          <IoHappyOutline size={16} />
+        </button>
+        <button onClick={() => fileRef.current?.click()} className="p-1 text-white/40 hover:text-white/70 transition-colors">
+          <IoImageOutline size={16} />
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
         <input
           ref={inputRef}
           type="text"

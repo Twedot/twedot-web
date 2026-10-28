@@ -8,6 +8,7 @@ export interface ChatContact {
   name: string;
   photo: string | null;
   occupation?: string | null;
+  activityScore?: number;
 }
 
 export interface ChatThread {

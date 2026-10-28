@@ -432,18 +432,12 @@ function avatarBorder(userId: string) {
 }
 
 function ChatDropdown() {
-  const [open, setOpen] = useState(false);
   const chatRouter = useRouter();
   const threads = useChatStore((s) => s.threads);
   const openChat = useChatStore((s) => s.openChat);
 
-  const openChatIds = useChatStore((s) => s.openChatIds);
-  const minimizedChatIds = useChatStore((s) => s.minimizedChatIds);
-
   const totalUnread = Array.from(threads.values()).reduce((sum, t) => sum + t.unreadCount, 0);
-  const activeIds = new Set([...openChatIds, ...minimizedChatIds]);
   const chatList = Array.from(threads.values())
-    .filter((t) => t.messages.length > 0 || t.unreadCount > 0 || activeIds.has(t.contact.userId))
     .sort((a, b) => {
       const aTime = a.lastMessage?.timestamp ?? 0;
       const bTime = b.lastMessage?.timestamp ?? 0;
@@ -456,7 +450,6 @@ function ChatDropdown() {
         onClick={() => {
           const isMobile = window.innerWidth < 640;
           if (isMobile) { chatRouter.push("/messages"); }
-          else { setOpen((p) => !p); }
         }}
         className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
       >
@@ -472,23 +465,30 @@ function ChatDropdown() {
       {chatList.length > 0 && (
         <div className="fixed right-3 top-16 z-[9998] hidden sm:flex flex-col items-end gap-2.5 py-2">
           {chatList.map((thread) => {
-            const { contact, unreadCount, isOnline } = thread;
+            const { contact, unreadCount, isOnline, lastMessage } = thread;
             const borderColor = avatarBorder(contact.userId);
+            const preview = lastMessage
+              ? lastMessage.messageType === "image" ? "📷 Photo" : (lastMessage.content.length > 25 ? lastMessage.content.slice(0, 25) + "…" : lastMessage.content)
+              : null;
             return (
               <button
                 key={contact.userId}
                 onClick={() => { openChat(contact); }}
                 className="flex items-center gap-2"
               >
-                {/* Name label — always visible, pointing left */}
-                <div className="relative rounded-lg bg-[#222] px-2 py-0.5 shadow-lg border border-[#333]">
-                  <p className="text-[10px] font-semibold text-white whitespace-nowrap max-w-[120px] truncate">{contact.name}</p>
-                  {unreadCount > 0 && (
-                    <span className="ml-1 inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#FF3B30] px-[2px] text-[8px] font-bold text-white">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
+                {/* Name + last message label — always visible, pointing left */}
+                <div className="relative rounded-lg bg-[#222] px-2 py-1 shadow-lg border border-[#333] max-w-[160px]">
+                  <div className="flex items-center gap-1">
+                    <p className="text-[10px] font-semibold text-white whitespace-nowrap truncate">{contact.name}</p>
+                    {unreadCount > 0 && (
+                      <span className="flex-shrink-0 inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#FF3B30] px-[2px] text-[8px] font-bold text-white">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  {preview && (
+                    <p className="text-[9px] text-white/50 truncate leading-tight">{preview}</p>
                   )}
-                  {/* Arrow pointing right */}
                   <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 rotate-45 bg-[#222] border-r border-t border-[#333]" />
                 </div>
                 {/* Avatar */}
