@@ -557,23 +557,18 @@ export default function PostPageClient() {
   const topLevelComments = comments.filter((c) => !c.parentCommentId);
 
   return (
-    <div className="mx-auto max-w-2xl pb-20">
+    <div className="pb-20">
 
-      {/* ── Back bar ── */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-black/90 px-4 py-3 backdrop-blur z-20">
-        <button
-          onClick={() => {
-            if (threadCommentId) { setThreadCommentId(null); setReplyTo(null); }
-            else { router.back(); }
-          }}
-          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/10"
-        >
-          <IoArrowBack size={20} className="text-white" />
-        </button>
-        <span className="text-[15px] font-bold text-white">
-          {threadCommentId ? "Replies" : "Post"}
-        </span>
-      </div>
+      {/* ── Floating back button ── */}
+      <button
+        onClick={() => {
+          if (threadCommentId) { setThreadCommentId(null); setReplyTo(null); }
+          else { router.back(); }
+        }}
+        className="fixed left-4 top-16 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 backdrop-blur text-white hover:bg-black/80 transition-colors"
+      >
+        <IoArrowBack size={18} />
+      </button>
 
         {/* ── Thread view ── */}
         {threadComment ? (
@@ -805,7 +800,7 @@ export default function PostPageClient() {
             </div>
 
             {/* ── Below media: author + caption ── */}
-            <div className="bg-black px-4 pb-3">
+            <div className="bg-black px-4 pb-3 mx-auto max-w-2xl">
               <div className="flex items-center gap-2.5 mb-1.5">
                 <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
                   {post.userPhoto ? (
@@ -847,7 +842,7 @@ export default function PostPageClient() {
             </div>
 
             {/* ── rest of content: padded ── */}
-            <div className="px-4">
+            <div className="px-4 mx-auto max-w-2xl">
             {/* ── Date · Views ── */}
             <div className="flex items-center gap-2 py-2 text-[11px] text-light-text">
               <span>{formatDate(post.createdAt)}</span>

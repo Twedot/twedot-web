@@ -91,7 +91,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const color = userColor(userId);
   const [showEmoji, setShowEmoji] = useState(false);
-  const [mediaPreview, setMediaPreview] = useState<{ file: File; url: string } | null>(null);
+  const [mediaPreviews, setMediaPreviews] = useState<{ file: File; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const emojiRef = useRef<HTMLDivElement>(null);
 
@@ -153,35 +153,40 @@ export default function ChatWindow({ userId }: { userId: string }) {
   }, [text, myUserId, userId]);
 
   const handleSendMedia = useCallback(async () => {
-    if (!mediaPreview || !myUserId || uploading) return;
+    if (!mediaPreviews.length || !myUserId || uploading) return;
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", mediaPreview.file);
-      form.append("type", "chat");
-      const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
-      const url = result.url;
-      const clientMessageId = chatSocket.send(userId, url, "image", { fileName: mediaPreview.file.name, fileSize: mediaPreview.file.size });
-      useChatStore.getState().addMessage(userId, {
-        id: clientMessageId ?? crypto.randomUUID(),
-        clientMessageId: clientMessageId ?? undefined,
-        senderId: myUserId,
-        recipientId: userId,
-        content: url,
-        messageType: "image",
-        timestamp: Date.now(),
-        status: clientMessageId ? "sending" : "failed",
-      }, true);
+      for (const preview of mediaPreviews) {
+        const form = new FormData();
+        form.append("file", preview.file);
+        form.append("type", "chat");
+        const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
+        const url = result.url;
+        const clientMessageId = chatSocket.send(userId, url, "image", { fileName: preview.file.name, fileSize: preview.file.size });
+        useChatStore.getState().addMessage(userId, {
+          id: clientMessageId ?? crypto.randomUUID(),
+          clientMessageId: clientMessageId ?? undefined,
+          senderId: myUserId,
+          recipientId: userId,
+          content: url,
+          messageType: "image",
+          timestamp: Date.now(),
+          status: clientMessageId ? "sending" : "failed",
+        }, true);
+        URL.revokeObjectURL(preview.url);
+      }
     } catch {}
-    URL.revokeObjectURL(mediaPreview.url);
-    setMediaPreview(null);
+    setMediaPreviews([]);
     setUploading(false);
-  }, [mediaPreview, myUserId, userId, uploading]);
+  }, [mediaPreviews, myUserId, userId, uploading]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setMediaPreview({ file, url: URL.createObjectURL(file) });
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setMediaPreviews((prev) => [
+      ...prev,
+      ...files.map((f) => ({ file: f, url: URL.createObjectURL(f) })),
+    ]);
     e.target.value = "";
   };
 
@@ -303,20 +308,35 @@ export default function ChatWindow({ userId }: { userId: string }) {
       </div>
 
       {/* Media preview */}
-      {mediaPreview && (
-        <div className="relative px-2 py-1.5 border-t border-[#333] bg-[#111]">
-          <img src={mediaPreview.url} alt="Preview" className="h-20 rounded-lg object-cover" />
-          <button onClick={() => { URL.revokeObjectURL(mediaPreview.url); setMediaPreview(null); }} className="absolute top-2 right-3 text-white/80 hover:text-white">
-            <IoCloseCircle size={18} />
-          </button>
-          <button
-            onClick={handleSendMedia}
-            disabled={uploading}
-            className="absolute bottom-2 right-3 p-1.5 rounded-full transition-colors"
-            style={{ background: color, opacity: uploading ? 0.5 : 1 }}
-          >
-            <IoSend size={12} className="text-white" />
-          </button>
+      {mediaPreviews.length > 0 && (
+        <div className="px-2 py-1.5 border-t border-[#333] bg-[#111]">
+          <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+            {mediaPreviews.map((p, i) => (
+              <div key={i} className="relative flex-shrink-0">
+                <img src={p.url} alt="Preview" className="h-12 w-12 rounded-md object-cover" />
+                <button
+                  onClick={() => {
+                    URL.revokeObjectURL(p.url);
+                    setMediaPreviews((prev) => prev.filter((_, j) => j !== i));
+                  }}
+                  className="absolute -top-1 -right-1 text-white/80 hover:text-white"
+                >
+                  <IoCloseCircle size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleSendMedia}
+              disabled={uploading}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-[11px] font-semibold transition-opacity disabled:opacity-50"
+              style={{ background: color }}
+            >
+              <IoSend size={11} />
+              {uploading ? "Sending…" : `Send ${mediaPreviews.length > 1 ? `(${mediaPreviews.length})` : ""}`}
+            </button>
+          </div>
         </div>
       )}
 
@@ -345,7 +365,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
         <button onClick={() => fileRef.current?.click()} className="p-1 text-white/40 hover:text-white/70 transition-colors">
           <IoImageOutline size={16} />
         </button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+        <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
         <input
           ref={inputRef}
           type="text"
@@ -357,7 +377,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
         />
         <button
           onClick={handleSend}
-          disabled={!text.trim()}
+          disabled={!text.trim() || uploading}
           className="p-1 rounded-full hover:bg-white/5 disabled:text-white/20 transition-colors"
           style={{ color: text.trim() ? color : undefined }}
         >

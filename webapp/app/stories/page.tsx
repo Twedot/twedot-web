@@ -37,6 +37,7 @@ import type { StatusPost } from "@/lib/types";
 import VideoPlayer from "@/components/VideoPlayer";
 import RankBadge from "@/components/RankBadge";
 import LinkText from "@/components/LinkText";
+import CommentsDrawer from "@/components/CommentsDrawer";
 import { LoginBanner } from "@/components/LoginGate";
 import { markFeedSeen } from "@/lib/unseenStories";
 import { feedStateStore } from "@/lib/feedStateStore";
@@ -80,7 +81,7 @@ function timeAgo(iso: string) {
 }
 
 /* ── Single Shorts-style card ── */
-function ShortsCard({ items }: { items: StatusPost[] }) {
+function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () => void }) {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const { notify } = useUi();
@@ -168,19 +169,19 @@ function ShortsCard({ items }: { items: StatusPost[] }) {
 
   return (
     <div className="flex h-[calc(100vh-56px)] w-full flex-col bg-black">
-      {/* ── Main row: media (centered) + action rail (right) ── */}
-      <div className="flex flex-1 min-h-0 items-center justify-center">
+      {/* ── Main row: media (top-aligned) + action rail (right) ── */}
+      <div className="flex flex-1 min-h-0 items-start justify-center pt-4">
         {/* Media column — keeps original PostCard dimensions */}
-        <div className="relative flex-shrink-0 overflow-hidden rounded-xl max-w-[480px] max-h-[calc(100vh-200px)]">
+        <div className="relative flex-shrink-0 overflow-hidden rounded-xl w-full max-w-[480px]" style={{ maxHeight: "calc(100vh - 190px)" }}>
           {active.type === "video" && active.content ? (
             <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
           ) : active.type === "image" && (active.content || active.thumbnailUrl) ? (
-            <div className="cursor-pointer" onClick={openDetail}>
+            <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={active.content || active.thumbnailUrl!} alt="" className="max-h-[calc(100vh-200px)] max-w-[480px] object-cover" />
+              <img src={active.content || active.thumbnailUrl!} alt="" className="w-full object-cover" style={{ maxHeight: "calc(100vh - 190px)" }} />
             </div>
           ) : (
-            <div className="flex items-center justify-center bg-zinc-900 px-8 py-16 min-h-[300px] max-w-[480px] cursor-pointer" onClick={openDetail}>
+            <div className="flex items-center justify-center bg-zinc-900 px-8 py-16 min-h-[300px] w-full max-w-[480px]">
               <p className="max-w-lg text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap">
                 <LinkText text={active.caption ?? active.content ?? ""} />
               </p>
@@ -218,7 +219,7 @@ function ShortsCard({ items }: { items: StatusPost[] }) {
             <span className="text-[11px] font-bold text-white/70">{fmt(likeCount)}</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <button onClick={openDetail} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
+            <button onClick={onComment} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
               <IoChatbubbleEllipsesOutline size={24} />
             </button>
             <span className="text-[11px] font-bold text-white/70">{fmt(active.commentCount ?? 0)}</span>
@@ -387,6 +388,8 @@ function FeedContent() {
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [commentPanelPostId, setCommentPanelPostId] = useState<string | null>(null);
+  const [commentPanelCount, setCommentPanelCount] = useState(0);
   const hasMoreRef = useRef(hasMore);
   const isFetchingRef = useRef(isFetching);
   const pageRef = useRef(page);
@@ -494,7 +497,22 @@ function FeedContent() {
         </div>
       )}
 
-      {currentGroup && <ShortsCard key={currentGroup[0].id} items={currentGroup} />}
+      {currentGroup && (
+        <ShortsCard
+          key={currentGroup[0].id}
+          items={currentGroup}
+          onComment={() => {
+            setCommentPanelPostId(currentGroup[0].id);
+            setCommentPanelCount(currentGroup[0].commentCount ?? 0);
+          }}
+        />
+      )}
+
+      <CommentsDrawer
+        postId={commentPanelPostId}
+        commentCount={commentPanelCount}
+        onClose={() => setCommentPanelPostId(null)}
+      />
 
       {/* Up/Down navigation arrows */}
       {groupedPosts.length > 1 && (
