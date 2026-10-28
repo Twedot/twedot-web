@@ -19,6 +19,8 @@ import { useUi } from "@/lib/UiContext";
 import { useJobSocket } from "@/lib/jobSocket";
 import { apiGet } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
+import { useChatStore } from "@/lib/chatStore";
 
 interface UserResult {
   id: string;
@@ -344,6 +346,7 @@ export default function TopBar() {
           </button>
           {user ? (
             <>
+              <ChatDropdown />
               <button onClick={() => router.push("/inbox")} className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg">
                 <IoNotificationsOutline size={20} />
                 {unreadNotifCount > 0 && (
@@ -415,5 +418,106 @@ function SeeMore({ label, onPress }: { label: string; onPress: () => void }) {
       See more {label}
       <IoChevronForwardOutline size={12} />
     </button>
+  );
+}
+
+const AVATAR_BORDER_COLORS = [
+  "#6B4EFF", "#E04E6A", "#2EA87E", "#E08C3A", "#3A8FE0",
+  "#9B59B6", "#E06B4E", "#1ABC9C", "#F39C12", "#8E44AD",
+];
+function avatarBorder(userId: string) {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
+  return AVATAR_BORDER_COLORS[Math.abs(hash) % AVATAR_BORDER_COLORS.length];
+}
+
+function ChatDropdown() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const threads = useChatStore((s) => s.threads);
+  const openChat = useChatStore((s) => s.openChat);
+
+  const totalUnread = Array.from(threads.values()).reduce((sum, t) => sum + t.unreadCount, 0);
+  const chatList = Array.from(threads.values())
+    .filter((t) => t.messages.length > 0 || t.unreadCount > 0)
+    .sort((a, b) => {
+      const aTime = a.lastMessage?.timestamp ?? 0;
+      const bTime = b.lastMessage?.timestamp ?? 0;
+      return (typeof bTime === "number" ? bTime : new Date(bTime).getTime()) - (typeof aTime === "number" ? aTime : new Date(aTime).getTime());
+    });
+
+  useEffect(() => {
+    function onMouseDown(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
+      >
+        <IoChatbubbleEllipsesOutline size={20} />
+        {totalUnread > 0 && (
+          <span className="absolute right-0.5 top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#FF3B30] px-[3px] text-[9px] font-bold leading-none text-white">
+            {totalUnread > 99 ? "99+" : totalUnread}
+          </span>
+        )}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.25)] overflow-hidden z-50">
+          <div className="px-3 py-2 border-b border-border">
+            <p className="text-[12px] font-semibold text-text">Messages</p>
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            {chatList.length === 0 ? (
+              <div className="px-3 py-6 text-center text-[12px] text-light-text">No conversations yet</div>
+            ) : (
+              chatList.map((thread) => {
+                const { contact, lastMessage, unreadCount, isOnline } = thread;
+                const borderColor = avatarBorder(contact.userId);
+                return (
+                  <button
+                    key={contact.userId}
+                    onClick={() => { openChat(contact); setOpen(false); }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 hover:bg-feed-bg transition-colors text-left"
+                  >
+                    <div className="relative flex-shrink-0">
+                      {contact.photo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={contact.photo} alt="" className="w-9 h-9 rounded-full object-cover" style={{ border: `2px solid ${borderColor}` }} />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ background: borderColor, border: `2px solid ${borderColor}` }}>
+                          {contact.name?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
+                      {isOnline && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[12px] truncate ${unreadCount > 0 ? "font-bold text-text" : "font-medium text-text"}`}>{contact.name}</p>
+                      {lastMessage && (
+                        <p className={`text-[11px] truncate ${unreadCount > 0 ? "font-semibold text-text" : "text-light-text"}`}>
+                          {lastMessage.content}
+                        </p>
+                      )}
+                    </div>
+                    {unreadCount > 0 && (
+                      <span className="flex-shrink-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

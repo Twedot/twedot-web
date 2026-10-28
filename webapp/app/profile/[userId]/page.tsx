@@ -25,6 +25,7 @@ import type { UserProfile, StatusPost } from "@/lib/types";
 import { postDetailStore } from "@/lib/postDetailStore";
 import { postUrl } from "@/lib/url";
 import ErrorState from "@/components/ErrorState";
+import { useChatStore } from "@/lib/chatStore";
 
 const WEEK_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -265,7 +266,16 @@ export default function OtherUserProfilePage() {
           {isFollowing ? "Following" : "Follow"}
         </button>
         <button
-          onClick={() => router.push(`/inbox?userId=${userId}`)}
+          onClick={() => {
+            if (profile) {
+              useChatStore.getState().openChat({
+                userId: profile.id,
+                name: profile.name,
+                photo: profile.profile_photo_url ?? null,
+                occupation: profile.occupation ?? null,
+              });
+            }
+          }}
           className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
         >
           Message
