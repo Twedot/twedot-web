@@ -213,8 +213,8 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
           </>
         )}
 
-        {/* ── Bottom overlay: author + caption (overlaid inside card) ── */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent px-4 pt-16 pb-4 z-10">
+        {/* ── Left overlay: author + caption ── */}
+        <div className="absolute bottom-0 left-0 w-[70%] bg-gradient-to-t from-black/85 via-black/30 to-transparent pl-4 pr-2 pt-16 pb-4 z-10">
           {/* Search suggestion */}
           {head.caption && (
             <button
@@ -273,7 +273,7 @@ function ShortsCard({ items, onComment }: { items: StatusPost[]; onComment: () =
       </div>
 
       {/* ── Action rail — immediately to the right of media ── */}
-      <div className="flex flex-col items-center gap-4 flex-shrink-0 self-end pb-6">
+      <div className="flex flex-col items-center gap-4 flex-shrink-0 self-center">
         <div className="flex flex-col items-center gap-1">
           <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
             {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
@@ -527,9 +527,9 @@ function FeedContent() {
         onClose={() => setCommentPanelPostId(null)}
       />
 
-      {/* Up/Down navigation arrows — left side, away from action rail */}
+      {/* Up/Down navigation arrows — right side */}
       {groupedPosts.length > 1 && (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
           <button
             onClick={goPrev}
             disabled={currentIdx === 0}
