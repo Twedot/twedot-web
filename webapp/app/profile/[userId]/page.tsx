@@ -270,7 +270,7 @@ export default function OtherUserProfilePage() {
             if (profile) {
               useChatStore.getState().openChat({
                 userId: profile.id,
-                name: profile.name,
+                name: profile.name ?? "User",
                 photo: profile.profile_photo_url ?? null,
                 occupation: profile.occupation ?? null,
               });
