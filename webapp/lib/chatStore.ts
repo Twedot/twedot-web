@@ -19,6 +19,29 @@ export interface ChatThread {
   isOnline: boolean;
 }
 
+const CONTACTS_KEY = "twedot_chat_contacts";
+
+function loadSavedContacts(): Map<string, ChatThread> {
+  const threads = new Map<string, ChatThread>();
+  try {
+    const raw = localStorage.getItem(CONTACTS_KEY);
+    if (raw) {
+      const contacts: ChatContact[] = JSON.parse(raw);
+      for (const c of contacts) {
+        threads.set(c.userId, { contact: c, messages: [], lastMessage: null, unreadCount: 0, isTyping: false, isOnline: false });
+      }
+    }
+  } catch {}
+  return threads;
+}
+
+function saveContacts(threads: Map<string, ChatThread>) {
+  try {
+    const contacts = Array.from(threads.values()).map((t) => t.contact);
+    localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
+  } catch {}
+}
+
 interface ChatState {
   threads: Map<string, ChatThread>;
   openChatIds: string[];
@@ -37,8 +60,10 @@ interface ChatState {
   restoreChat: (userId: string) => void;
 }
 
+const initialThreads = typeof window !== "undefined" ? loadSavedContacts() : new Map<string, ChatThread>();
+
 export const useChatStore = create<ChatState>((set, get) => ({
-  threads: new Map(),
+  threads: initialThreads,
   openChatIds: [],
   minimizedChatIds: [],
 
@@ -66,6 +91,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isOnline: existing?.isOnline ?? false,
     };
     threads.set(chatUserId, thread);
+    if (!existing) saveContacts(threads);
     return { threads };
   }),
 
@@ -146,6 +172,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const t = threads.get(contact.userId)!;
       threads.set(contact.userId, { ...t, contact });
     }
+    saveContacts(threads);
     const openChatIds = state.openChatIds.filter((id) => id !== contact.userId);
     openChatIds.push(contact.userId);
     if (openChatIds.length > 3) openChatIds.shift();

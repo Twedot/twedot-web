@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useChatStore } from "@/lib/chatStore";
 import { chatSocket } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
@@ -17,18 +18,8 @@ function userColor(userId: string) {
   return HEADER_COLORS[Math.abs(hash) % HEADER_COLORS.length];
 }
 
-function formatTime(ts: string | number) {
-  if (!ts) return "";
-  const d = new Date(typeof ts === "number" ? ts : ts);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  if (diff < 60_000) return "now";
-  if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m`;
-  if (diff < 86400_000) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
 export default function ChatWindow({ userId }: { userId: string }) {
+  const router = useRouter();
   const thread = useChatStore((s) => s.threads.get(userId));
   const closeChat = useChatStore((s) => s.closeChat);
   const minimizeChat = useChatStore((s) => s.minimizeChat);
@@ -95,9 +86,12 @@ export default function ChatWindow({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-col w-[260px] h-[320px] bg-[#1a1a1a] rounded-t-lg shadow-2xl border border-[#333] overflow-hidden">
-      {/* Header */}
+      {/* Header — click avatar/name to go to profile */}
       <div className="flex items-center gap-2 px-2 py-1.5 shrink-0" style={{ background: color }}>
-        <div className="relative">
+        <button
+          onClick={() => { closeChat(userId); router.push(`/profile/${userId}`); }}
+          className="relative flex-shrink-0"
+        >
           {contact.photo ? (
             <img src={contact.photo} alt="" className="w-6 h-6 rounded-full object-cover border border-white/20" />
           ) : (
@@ -108,13 +102,16 @@ export default function ChatWindow({ userId }: { userId: string }) {
           {isOnline && (
             <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-400 border-[1.5px]" style={{ borderColor: color }} />
           )}
-        </div>
-        <div className="flex-1 min-w-0">
+        </button>
+        <button
+          onClick={() => { closeChat(userId); router.push(`/profile/${userId}`); }}
+          className="flex-1 min-w-0 text-left"
+        >
           <p className="text-[11px] font-semibold text-white truncate leading-tight">{contact.name}</p>
           <p className="text-[9px] text-white/70 leading-tight">
             {!wsConnected ? "Connecting..." : isTyping ? "typing..." : isOnline ? "Active now" : ""}
           </p>
-        </div>
+        </button>
         <button onClick={() => minimizeChat(userId)} className="p-0.5 text-white/60 hover:text-white transition-colors">
           <IoChevronDown size={12} />
         </button>
@@ -123,46 +120,48 @@ export default function ChatWindow({ userId }: { userId: string }) {
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-2 py-1.5 space-y-0.5">
-        {messages.length === 0 && (
-          <div className="flex items-center justify-center h-full text-white/30 text-[11px]">
-            Start a conversation
-          </div>
-        )}
-        {messages.map((msg) => {
-          const isMine = msg.senderId === myUserId;
-          return (
-            <div key={msg.id ?? msg.clientMessageId} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
-                isMine
-                  ? "text-white rounded-br-sm"
-                  : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
-              }`} style={isMine ? { background: color } : undefined}>
-                {msg.messageType === "image" ? (
-                  <img src={msg.content} alt="" className="max-w-full rounded-lg" />
-                ) : (
-                  <span>{msg.content}</span>
-                )}
-                <span className={`block text-[8px] mt-0.5 ${msg.status === "failed" ? "text-red-400" : isMine ? "text-white/50" : "text-white/30"}`}>
-                  {msg.status === "failed" ? "Not connected" : formatTime(msg.timestamp)}
-                </span>
+      {/* Messages — flex-col-reverse so content anchors to the bottom */}
+      <div className="flex-1 overflow-y-auto px-2 py-1.5 flex flex-col-reverse">
+        <div className="flex flex-col gap-0.5">
+          {messages.length === 0 && (
+            <div className="flex items-center justify-center py-16 text-white/30 text-[11px]">
+              Start a conversation
+            </div>
+          )}
+          {messages.map((msg) => {
+            const isMine = msg.senderId === myUserId;
+            return (
+              <div key={msg.id ?? msg.clientMessageId} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[80%] px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
+                  isMine
+                    ? "text-white rounded-br-sm"
+                    : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
+                }`} style={isMine ? { background: color } : undefined}>
+                  {msg.messageType === "image" ? (
+                    <img src={msg.content} alt="" className="max-w-full rounded-lg" />
+                  ) : (
+                    <span>{msg.content}</span>
+                  )}
+                  {msg.status === "failed" && (
+                    <span className="block text-[8px] mt-0.5 text-red-400">Not connected</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="px-2 py-1 rounded-2xl bg-[#2a2a2a] rounded-bl-sm">
+                <div className="flex gap-1">
+                  <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:300ms]" />
+                </div>
               </div>
             </div>
-          );
-        })}
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="px-2 py-1 rounded-2xl bg-[#2a2a2a] rounded-bl-sm">
-              <div className="flex gap-1">
-                <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:0ms]" />
-                <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:150ms]" />
-                <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:300ms]" />
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
       {/* Input */}

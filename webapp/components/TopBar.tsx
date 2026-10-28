@@ -465,45 +465,42 @@ function ChatDropdown() {
 
       {/* Vertical avatar sidebar — fixed to the right edge, always visible when there are chats */}
       {chatList.length > 0 && (
-        <div className="fixed right-3 top-16 z-[9998] flex flex-col items-center gap-3 py-2">
+        <div className="fixed right-3 top-16 z-[9998] flex flex-col items-end gap-2.5 py-2">
           {chatList.map((thread) => {
-            const { contact, lastMessage, unreadCount, isOnline } = thread;
+            const { contact, unreadCount, isOnline } = thread;
             const borderColor = avatarBorder(contact.userId);
             return (
-              <div key={contact.userId} className="group relative">
-                <button
-                  onClick={() => { openChat(contact); setOpen(false); }}
-                  className="relative block"
-                >
+              <button
+                key={contact.userId}
+                onClick={() => { openChat(contact); }}
+                className="flex items-center gap-2"
+              >
+                {/* Name label — always visible, pointing left */}
+                <div className="relative rounded-lg bg-[#222] px-2 py-0.5 shadow-lg border border-[#333]">
+                  <p className="text-[10px] font-semibold text-white whitespace-nowrap max-w-[120px] truncate">{contact.name}</p>
+                  {unreadCount > 0 && (
+                    <span className="ml-1 inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#FF3B30] px-[2px] text-[8px] font-bold text-white">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                  {/* Arrow pointing right */}
+                  <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 rotate-45 bg-[#222] border-r border-t border-[#333]" />
+                </div>
+                {/* Avatar */}
+                <div className="relative flex-shrink-0">
                   {contact.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={contact.photo} alt="" className="w-10 h-10 rounded-full object-cover" style={{ border: `2.5px solid ${borderColor}` }} />
+                    <img src={contact.photo} alt="" className="w-9 h-9 rounded-full object-cover" style={{ border: `2.5px solid ${borderColor}` }} />
                   ) : (
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: borderColor, border: `2.5px solid ${borderColor}` }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ background: borderColor, border: `2.5px solid ${borderColor}` }}>
                       {contact.name?.[0]?.toUpperCase() ?? "?"}
                     </div>
                   )}
                   {isOnline && (
                     <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background" />
                   )}
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -left-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#FF3B30] px-[2px] text-[8px] font-bold text-white">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </button>
-                {/* Tooltip — points left */}
-                <div className="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  <div className="relative rounded-lg bg-[#222] px-2.5 py-1 shadow-lg border border-[#333]">
-                    <p className="text-[11px] font-semibold text-white">{contact.name}</p>
-                    {lastMessage && (
-                      <p className="text-[10px] text-white/50 max-w-[150px] truncate">{lastMessage.content}</p>
-                    )}
-                    {/* Arrow pointing right */}
-                    <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 rotate-45 bg-[#222] border-r border-t border-[#333]" />
-                  </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
