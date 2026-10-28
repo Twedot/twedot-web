@@ -47,8 +47,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   addMessage: (chatUserId, msg, isMine) => set((state) => {
     const threads = new Map(state.threads);
     const existing = threads.get(chatUserId);
-    const messages = existing?.messages ?? [];
+    let messages = existing?.messages ?? [];
     if (messages.some((m) => m.id === msg.id)) return state;
+    if (msg.clientMessageId) {
+      messages = messages.filter((m) => m.clientMessageId !== msg.clientMessageId || m.id !== m.clientMessageId);
+    }
     const updated = [...messages, msg].sort((a, b) => {
       const ta = typeof a.timestamp === "number" ? a.timestamp : new Date(a.timestamp).getTime();
       const tb = typeof b.timestamp === "number" ? b.timestamp : new Date(b.timestamp).getTime();

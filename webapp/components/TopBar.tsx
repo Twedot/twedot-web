@@ -433,7 +433,6 @@ function avatarBorder(userId: string) {
 
 function ChatDropdown() {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
   const threads = useChatStore((s) => s.threads);
   const openChat = useChatStore((s) => s.openChat);
 
@@ -446,16 +445,8 @@ function ChatDropdown() {
       return (typeof bTime === "number" ? bTime : new Date(bTime).getTime()) - (typeof aTime === "number" ? aTime : new Date(aTime).getTime());
     });
 
-  useEffect(() => {
-    function onMouseDown(e: MouseEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open]);
-
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
         onClick={() => setOpen((p) => !p)}
         className="relative flex h-9 w-9 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
@@ -467,57 +458,52 @@ function ChatDropdown() {
           </span>
         )}
       </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.25)] overflow-hidden z-50">
-          <div className="px-3 py-2 border-b border-border">
-            <p className="text-[12px] font-semibold text-text">Messages</p>
-          </div>
-          <div className="max-h-80 overflow-y-auto">
-            {chatList.length === 0 ? (
-              <div className="px-3 py-6 text-center text-[12px] text-light-text">No conversations yet</div>
-            ) : (
-              chatList.map((thread) => {
-                const { contact, lastMessage, unreadCount, isOnline } = thread;
-                const borderColor = avatarBorder(contact.userId);
-                return (
-                  <button
-                    key={contact.userId}
-                    onClick={() => { openChat(contact); setOpen(false); }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 hover:bg-feed-bg transition-colors text-left"
-                  >
-                    <div className="relative flex-shrink-0">
-                      {contact.photo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={contact.photo} alt="" className="w-9 h-9 rounded-full object-cover" style={{ border: `2px solid ${borderColor}` }} />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[11px] font-bold" style={{ background: borderColor, border: `2px solid ${borderColor}` }}>
-                          {contact.name?.[0]?.toUpperCase() ?? "?"}
-                        </div>
-                      )}
-                      {isOnline && (
-                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background" />
-                      )}
+
+      {/* Vertical avatar sidebar — fixed to the right edge */}
+      {open && chatList.length > 0 && (
+        <div className="fixed right-3 top-16 z-[9998] flex flex-col items-center gap-3 py-2">
+          {chatList.map((thread) => {
+            const { contact, lastMessage, unreadCount, isOnline } = thread;
+            const borderColor = avatarBorder(contact.userId);
+            return (
+              <div key={contact.userId} className="group relative">
+                <button
+                  onClick={() => { openChat(contact); setOpen(false); }}
+                  className="relative block"
+                >
+                  {contact.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={contact.photo} alt="" className="w-10 h-10 rounded-full object-cover" style={{ border: `2.5px solid ${borderColor}` }} />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: borderColor, border: `2.5px solid ${borderColor}` }}>
+                      {contact.name?.[0]?.toUpperCase() ?? "?"}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-[12px] truncate ${unreadCount > 0 ? "font-bold text-text" : "font-medium text-text"}`}>{contact.name}</p>
-                      {lastMessage && (
-                        <p className={`text-[11px] truncate ${unreadCount > 0 ? "font-semibold text-text" : "text-light-text"}`}>
-                          {lastMessage.content}
-                        </p>
-                      )}
-                    </div>
-                    {unreadCount > 0 && (
-                      <span className="flex-shrink-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
+                  )}
+                  {isOnline && (
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background" />
+                  )}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -left-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#FF3B30] px-[2px] text-[8px] font-bold text-white">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                {/* Tooltip — points left */}
+                <div className="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  <div className="relative rounded-lg bg-[#222] px-2.5 py-1 shadow-lg border border-[#333]">
+                    <p className="text-[11px] font-semibold text-white">{contact.name}</p>
+                    {lastMessage && (
+                      <p className="text-[10px] text-white/50 max-w-[150px] truncate">{lastMessage.content}</p>
                     )}
-                  </button>
-                );
-              })
-            )}
-          </div>
+                    {/* Arrow pointing right */}
+                    <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 rotate-45 bg-[#222] border-r border-t border-[#333]" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
-    </div>
+    </>
   );
 }
