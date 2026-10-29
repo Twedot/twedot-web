@@ -185,10 +185,10 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
         {head.caption && (
           <button
             onClick={() => router.push(`/search?q=${encodeURIComponent(head.caption!.split(/\s+/).slice(0, 3).join(" "))}`)}
-            className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 w-fit hover:bg-white/15 transition-colors"
+            className="flex items-center gap-2 rounded-full bg-foreground/10 px-3 py-1 w-fit hover:bg-foreground/15 transition-colors"
           >
-            <IoSearchOutline size={12} className="text-white/60 flex-shrink-0" />
-            <span className="text-[11px] text-white/60 truncate">
+            <IoSearchOutline size={12} className="text-light-text flex-shrink-0" />
+            <span className="text-[11px] text-light-text truncate">
               Search &quot;{head.caption.split(/\s+/).slice(0, 4).join(" ")}&quot;
             </span>
           </button>
@@ -201,13 +201,13 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover" />
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
-                <IoPersonOutline size={16} className="text-white" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/20">
+                <IoPersonOutline size={16} className="text-foreground" />
               </div>
             )}
           </button>
           <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 text-left">
-            <span className="text-[13px] font-bold text-white">{head.userName}</span>
+            <span className="text-[13px] font-bold text-text">{head.userName}</span>
             <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
           </button>
           {!isOwnPost && (
@@ -215,8 +215,8 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
               onClick={handleToggleFollow}
               className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
                 isFollowing
-                  ? "border border-white/20 text-white hover:bg-white/10"
-                  : "bg-white text-black hover:bg-white/90"
+                  ? "border border-border text-text hover:bg-foreground/10"
+                  : "bg-foreground text-background hover:opacity-90"
               }`}
             >
               {isFollowing ? "Following" : "Follow"}
@@ -228,7 +228,7 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
         {active.caption && active.type !== "text" && (
           <p
             onClick={() => setCaptionExpanded(e => !e)}
-            className={`text-[14px] leading-[20px] text-white font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
+            className={`text-[14px] leading-[20px] text-text font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
           >
             {active.caption}
           </p>
@@ -280,19 +280,19 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
       {/* ── Action rail + nav arrows (z-50 to stay above comment drawer backdrop) ── */}
       <div className="relative z-50 flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2">
         <div className="flex flex-col items-center gap-1">
-          <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
+          <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-foreground/10 ${isLiked ? "text-red-500" : "text-light-text"}`}>
             {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
           </button>
-          <span className="text-[11px] font-bold text-white/70">{fmt(likeCount)}</span>
+          <span className="text-[11px] font-bold text-light-text">{fmt(likeCount)}</span>
         </div>
         <div className="flex flex-col items-center gap-1">
-          <button onClick={onComment} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
+          <button onClick={onComment} className="flex h-11 w-11 items-center justify-center rounded-full text-light-text transition-colors hover:bg-foreground/10">
             <IoChatbubbleEllipsesOutline size={24} />
           </button>
-          <span className="text-[11px] font-bold text-white/70">{fmt(active.commentCount ?? 0)}</span>
+          <span className="text-[11px] font-bold text-light-text">{fmt(active.commentCount ?? 0)}</span>
         </div>
         <div className="flex flex-col items-center gap-1">
-          <button onClick={() => { if (requireLogin()) toggleBookmark(); }} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isBookmarked ? "text-[#D4A400]" : "text-white/80"}`}>
+          <button onClick={() => { if (requireLogin()) toggleBookmark(); }} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-foreground/10 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
             {isBookmarked ? <IoBookmark size={24} /> : <IoBookmarkOutline size={24} />}
           </button>
         </div>
@@ -302,76 +302,76 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
               const url = window.location.origin + postUrl(head.id);
               try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-light-text transition-colors hover:bg-foreground/10"
           >
             <IoShareOutline size={24} />
           </button>
-          <span className="text-[11px] font-bold text-white/70">Share</span>
+          <span className="text-[11px] font-bold text-light-text">Share</span>
         </div>
         <div className="relative">
-          <button onClick={() => setMenuOpen(o => !o)} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
+          <button onClick={() => setMenuOpen(o => !o)} className="flex h-11 w-11 items-center justify-center rounded-full text-light-text transition-colors hover:bg-foreground/10">
             <IoEllipsisHorizontal size={24} />
           </button>
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setConfirmDelete(false); }} />
-              <div className="fixed right-auto bottom-auto z-20 w-[240px] max-h-[60vh] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl" style={{ bottom: 80, right: 60 }}>
+              <div className="fixed right-auto bottom-auto z-20 w-[240px] max-h-[60vh] overflow-y-auto rounded-2xl border border-border bg-feed-bg shadow-2xl" style={{ bottom: 80, right: 60 }}>
                 {isOwnPost ? (
                   <>
-                    <button onClick={() => { setMenuOpen(false); router.push(`/boost/${head.id}`); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
+                    <button onClick={() => { setMenuOpen(false); router.push(`/boost/${head.id}`); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
                       <IoRocketOutline size={16} className="text-primary flex-shrink-0" /><span className="truncate">Boost Post</span>
                     </button>
-                    <button onClick={handlePin} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      <IoPinOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">Pin to your profile</span>
+                    <button onClick={handlePin} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      <IoPinOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Pin to your profile</span>
                     </button>
-                    <button onClick={handleViewActivity} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      <IoStatsChartOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">View post activity</span>
+                    <button onClick={handleViewActivity} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      <IoStatsChartOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">View post activity</span>
                     </button>
                     {!confirmDelete ? (
-                      <button onClick={() => setConfirmDelete(true)} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-red-400 hover:bg-white/10">
+                      <button onClick={() => setConfirmDelete(true)} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-red-400 hover:bg-foreground/10">
                         <IoTrashOutline size={16} className="flex-shrink-0" />Delete post
                       </button>
                     ) : (
-                      <div className="border-t border-white/10 px-4 py-3">
-                        <p className="mb-2.5 text-[12px] text-white/60">Delete this post?</p>
+                      <div className="border-t border-border px-4 py-3">
+                        <p className="mb-2.5 text-[12px] text-light-text">Delete this post?</p>
                         <div className="flex gap-2">
                           <button onClick={handleDelete} className="flex-1 rounded-lg bg-red-500 py-1.5 text-[12px] font-bold text-white hover:opacity-90">Delete</button>
-                          <button onClick={() => setConfirmDelete(false)} className="flex-1 rounded-lg bg-white/10 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20">Cancel</button>
+                          <button onClick={() => setConfirmDelete(false)} className="flex-1 rounded-lg bg-foreground/10 py-1.5 text-[12px] font-semibold text-text hover:bg-foreground/20">Cancel</button>
                         </div>
                       </div>
                     )}
                   </>
                 ) : (
                   <>
-                    <button onClick={handleNotInterested} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      <IoThumbsDownOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">Not interested</span>
+                    <button onClick={handleNotInterested} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      <IoThumbsDownOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Not interested</span>
                     </button>
-                    <button onClick={handleMoreLikeThis} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      <IoThumbsUpOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">More like this</span>
+                    <button onClick={handleMoreLikeThis} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      <IoThumbsUpOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">More like this</span>
                     </button>
-                    <button onClick={(e) => { handleToggleFollow(e); setMenuOpen(false); }} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      {isFollowing ? <IoPersonRemoveOutline size={16} className="text-white/60 flex-shrink-0" /> : <IoPersonAddOutline size={16} className="text-white/60 flex-shrink-0" />}
+                    <button onClick={(e) => { handleToggleFollow(e); setMenuOpen(false); }} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      {isFollowing ? <IoPersonRemoveOutline size={16} className="text-light-text flex-shrink-0" /> : <IoPersonAddOutline size={16} className="text-light-text flex-shrink-0" />}
                       <span className="truncate">{isFollowing ? `Unfollow @${head.userName}` : `Follow @${head.userName}`}</span>
                     </button>
-                    <button onClick={() => { setMenuOpen(false); useChatStore.getState().openChat({ userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null }); }} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      <IoChatbubbleEllipsesOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">Message @{head.userName}</span>
+                    <button onClick={() => { setMenuOpen(false); useChatStore.getState().openChat({ userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null }); }} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      <IoChatbubbleEllipsesOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Message @{head.userName}</span>
                     </button>
-                    <button onClick={handleMute} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      <IoVolumeMuteOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">Mute @{head.userName}</span>
+                    <button onClick={handleMute} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      <IoVolumeMuteOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Mute @{head.userName}</span>
                     </button>
-                    <button onClick={handleBlock} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      <IoBanOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">Block @{head.userName}</span>
+                    <button onClick={handleBlock} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      <IoBanOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Block @{head.userName}</span>
                     </button>
-                    <button onClick={handleEmbedPost} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                      <IoCodeSlashOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">Embed post</span>
+                    <button onClick={handleEmbedPost} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                      <IoCodeSlashOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Embed post</span>
                     </button>
-                    <button onClick={handleReport} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-red-400 hover:bg-white/10">
+                    <button onClick={handleReport} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-red-400 hover:bg-foreground/10">
                       <IoFlagOutline size={16} className="flex-shrink-0" /><span className="truncate">Report post</span>
                     </button>
                   </>
                 )}
-                <button onClick={handleCopyLink} className="flex w-full items-center gap-3 border-t border-white/10 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
-                  <IoShareOutline size={16} className="text-white/60 flex-shrink-0" /><span className="truncate">Copy link</span>
+                <button onClick={handleCopyLink} className="flex w-full items-center gap-3 border-t border-border px-4 py-3 text-left text-[13px] font-semibold text-text hover:bg-foreground/10">
+                  <IoShareOutline size={16} className="text-light-text flex-shrink-0" /><span className="truncate">Copy link</span>
                 </button>
               </div>
             </>
@@ -379,10 +379,10 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
         </div>
         {/* Nav arrows */}
         <div className="flex flex-col items-center gap-1 mt-2">
-          <button onClick={onPrev} disabled={!hasPrev} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
+          <button onClick={onPrev} disabled={!hasPrev} className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10 text-foreground transition-colors hover:bg-foreground/20 disabled:opacity-30 disabled:cursor-not-allowed">
             <IoChevronUp size={20} />
           </button>
-          <button onClick={onNext} disabled={!hasNext} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
+          <button onClick={onNext} disabled={!hasNext} className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10 text-foreground transition-colors hover:bg-foreground/20 disabled:opacity-30 disabled:cursor-not-allowed">
             <IoChevronDown size={20} />
           </button>
         </div>
@@ -712,17 +712,17 @@ function FeedContent() {
   return (
     <>
       {/* ── Desktop view ── */}
-      <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden bg-[#0f1117] ${drawerOpen ? "pr-[400px]" : ""}`}>
+      <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden ${drawerOpen ? "pr-[400px]" : ""}`}>
         {!isAuthenticated && <LoginBanner />}
         {query && (
-          <div className="absolute top-0 left-0 right-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
-            Results for <span className="font-semibold text-white">{query}</span>
+          <div className="absolute top-0 left-0 right-0 z-20 border-b border-border bg-background/80 backdrop-blur px-4 py-3 text-sm text-light-text">
+            Results for <span className="font-semibold text-text">{query}</span>
           </div>
         )}
 
         {isFetching && posts.length === 0 && (
           <div className="flex h-full items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
           </div>
         )}
         {!isFetching && posts.length === 0 && error && (
@@ -735,7 +735,7 @@ function FeedContent() {
         )}
         {!isFetching && posts.length === 0 && !error && (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-white/40">Nothing here yet.</p>
+            <p className="text-sm text-light-text">Nothing here yet.</p>
           </div>
         )}
 
@@ -759,7 +759,7 @@ function FeedContent() {
 
         {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
           </div>
         )}
       </div>
