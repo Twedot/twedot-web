@@ -231,6 +231,9 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
             className={`text-[14px] leading-[20px] text-text font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
           >
             {active.caption}
+            {!captionExpanded && active.caption.length > 80 && (
+              <span className="text-light-text font-normal"> more</span>
+            )}
           </p>
         )}
       </div>
@@ -463,7 +466,7 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
 
   return (
     <div
-      className="relative h-[calc(100vh-112px)] w-full overflow-hidden bg-black p-2"
+      className="relative h-[calc(100vh-112px)] w-full overflow-hidden bg-background p-2"
       onTouchStart={(e) => { swipeStartX.current = e.touches[0].clientX; swipeStartY.current = e.touches[0].clientY; }}
       onTouchEnd={(e) => {
         const dx = e.changedTouches[0].clientX - swipeStartX.current;
@@ -485,21 +488,21 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
         <img src={active.content || active.thumbnailUrl!} alt="" className="absolute inset-2 h-[calc(100%-16px)] w-[calc(100%-16px)] object-contain rounded-2xl" />
       )}
       {isText && (
-        <div className="absolute inset-2 flex items-center justify-center bg-zinc-900 px-6 rounded-2xl">
-          <p className="max-w-sm text-center text-[18px] leading-[26px] text-white whitespace-pre-wrap">
+        <div className="absolute inset-2 flex items-center justify-center bg-feed-bg px-6 rounded-2xl">
+          <p className="max-w-sm text-center text-[18px] leading-[26px] text-text whitespace-pre-wrap">
             <LinkText text={active.content ?? active.caption ?? ""} />
           </p>
         </div>
       )}
 
       {/* Bottom gradient */}
-      <div className="absolute bottom-0 left-0 right-0 h-[250px] bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-[250px] bg-gradient-to-t from-background/90 via-background/40 to-transparent pointer-events-none" />
 
       {/* Carousel dots */}
       {items.length > 1 && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
           {items.map((_, i) => (
-            <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === activeIndex ? "bg-white" : "bg-white/40"}`} />
+            <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === activeIndex ? "bg-foreground" : "bg-foreground/40"}`} />
           ))}
         </div>
       )}
@@ -510,15 +513,15 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
           <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
             {head.userPhoto ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover border-2 border-white/30" />
+              <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover border-2 border-border" />
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
-                <IoPersonOutline size={16} className="text-white" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/20">
+                <IoPersonOutline size={16} className="text-foreground" />
               </div>
             )}
           </button>
           <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="text-left">
-            <span className="text-[13px] font-bold text-white">{head.userName}</span>
+            <span className="text-[13px] font-bold text-text">{head.userName}</span>
             <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
           </button>
           {!isOwnPost && (
@@ -526,8 +529,8 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
               onClick={handleToggleFollow}
               className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
                 isFollowing
-                  ? "border border-white/30 text-white hover:bg-white/10"
-                  : "bg-white text-black hover:bg-white/90"
+                  ? "border border-border text-text hover:bg-foreground/10"
+                  : "bg-foreground text-background hover:opacity-90"
               }`}
             >
               {isFollowing ? "Following" : "Follow"}
@@ -537,9 +540,12 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
         {active.caption && !isText && (
           <p
             onClick={() => setCaptionExpanded(e => !e)}
-            className={`text-[13px] leading-[18px] text-white font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
+            className={`text-[13px] leading-[18px] text-text font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
           >
             {active.caption}
+            {!captionExpanded && active.caption.length > 80 && (
+              <span className="text-light-text font-normal"> more</span>
+            )}
           </p>
         )}
       </div>
@@ -547,18 +553,18 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
       {/* Action buttons — right side, overlaid */}
       <div className="absolute right-3 bottom-20 z-10 flex flex-col items-center gap-4">
         <div className="flex flex-col items-center gap-0.5">
-          <button onClick={handleLike} className={`flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${isLiked ? "text-red-500" : "text-white"}`}>
+          <button onClick={handleLike} className={`flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10 backdrop-blur-sm ${isLiked ? "text-red-500" : "text-light-text"}`}>
             {isLiked ? <IoHeart size={22} /> : <IoHeartOutline size={22} />}
           </button>
-          <span className="text-[11px] font-bold text-white">{fmt(likeCount)}</span>
+          <span className="text-[11px] font-bold text-light-text">{fmt(likeCount)}</span>
         </div>
         <div className="flex flex-col items-center gap-0.5">
-          <button onClick={onComment} className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white">
+          <button onClick={onComment} className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10 backdrop-blur-sm text-light-text">
             <IoChatbubbleEllipsesOutline size={22} />
           </button>
-          <span className="text-[11px] font-bold text-white">{fmt(active.commentCount ?? 0)}</span>
+          <span className="text-[11px] font-bold text-light-text">{fmt(active.commentCount ?? 0)}</span>
         </div>
-        <button onClick={() => { if (isAuthenticated) toggleBookmark(); else router.push("/login"); }} className={`flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${isBookmarked ? "text-[#D4A400]" : "text-white"}`}>
+        <button onClick={() => { if (isAuthenticated) toggleBookmark(); else router.push("/login"); }} className={`flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10 backdrop-blur-sm ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
           {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
         </button>
         <button
@@ -566,16 +572,16 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
             const url = window.location.origin + postUrl(head.id);
             try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10 backdrop-blur-sm text-light-text"
         >
           <IoShareOutline size={22} />
         </button>
         {/* Nav arrows */}
         <div className="flex flex-col items-center gap-1.5 mt-2">
-          <button onClick={onPrev} disabled={!hasPrev} className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white disabled:opacity-30">
+          <button onClick={onPrev} disabled={!hasPrev} className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/10 text-foreground disabled:opacity-30">
             <IoChevronUp size={18} />
           </button>
-          <button onClick={onNext} disabled={!hasNext} className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white disabled:opacity-30">
+          <button onClick={onNext} disabled={!hasNext} className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/10 text-foreground disabled:opacity-30">
             <IoChevronDown size={18} />
           </button>
         </div>
@@ -771,12 +777,12 @@ function FeedContent() {
         {!isAuthenticated && <LoginBanner />}
 
         {isFetching && posts.length === 0 && (
-          <div className="flex h-full items-center justify-center bg-black">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
+          <div className="flex h-full items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
           </div>
         )}
         {!isFetching && posts.length === 0 && error && (
-          <div className="flex h-full items-center justify-center px-4 bg-black">
+          <div className="flex h-full items-center justify-center px-4">
             <ErrorState
               isOffline={error.toLowerCase().includes("no internet") || error.toLowerCase().includes("network")}
               onRetry={() => loadPage(1)}
@@ -784,8 +790,8 @@ function FeedContent() {
           </div>
         )}
         {!isFetching && posts.length === 0 && !error && (
-          <div className="flex h-full items-center justify-center bg-black">
-            <p className="text-sm text-white/40">Nothing here yet.</p>
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-light-text">Nothing here yet.</p>
           </div>
         )}
 
@@ -809,7 +815,7 @@ function FeedContent() {
 
         {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
           </div>
         )}
       </div>
