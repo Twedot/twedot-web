@@ -99,8 +99,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const fallbackContact: ChatContact = isMine
       ? { userId: chatUserId, name: "Unknown", photo: null }
       : { userId: chatUserId, name: msg.senderName ?? "Unknown", photo: msg.senderPhoto ?? null };
+    const contact = existing?.contact
+      ? (!isMine && msg.senderName && (existing.contact.name === "Unknown" || existing.contact.name !== msg.senderName)
+          ? { ...existing.contact, name: msg.senderName, photo: msg.senderPhoto ?? existing.contact.photo }
+          : existing.contact)
+      : fallbackContact;
     const thread: ChatThread = {
-      contact: existing?.contact ?? fallbackContact,
+      contact,
       messages: updated,
       lastMessage: updated[updated.length - 1],
       unreadCount: isMine ? (existing?.unreadCount ?? 0) : (existing?.unreadCount ?? 0) + 1,
@@ -108,7 +113,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isOnline: existing?.isOnline ?? false,
     };
     threads.set(chatUserId, thread);
-    if (!existing) saveContacts(threads);
+    if (!existing || thread.contact !== existing.contact) saveContacts(threads);
     return { threads };
   }),
 
