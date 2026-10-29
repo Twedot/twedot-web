@@ -6,6 +6,7 @@ import {
   IoChatbubbleEllipsesOutline,
   IoPersonOutline,
   IoArrowUndoOutline,
+  IoSend,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
@@ -175,7 +176,7 @@ export default function CommentsDrawer({
       <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 z-50 flex flex-col w-full max-w-[400px] bg-[#111] border-l border-white/10 shadow-2xl">
+      <div className="fixed right-0 top-0 bottom-0 z-50 flex flex-col w-full max-w-[400px] bg-[#0f1117] border-l border-white/10 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -222,16 +223,16 @@ export default function CommentsDrawer({
               <button onClick={() => setReplyTo(null)} className="ml-auto hover:text-white/60">✕</button>
             </div>
           )}
-          <div className="flex items-end gap-2.5">
+          <div className="flex items-center gap-2">
             {user?.profile_photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.profile_photo_url} alt="" className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+              <img src={user.profile_photo_url} alt="" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
             ) : (
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/10">
-                <IoPersonOutline size={15} className="text-white/60" />
+              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10">
+                <IoPersonOutline size={13} className="text-white/60" />
               </div>
             )}
-            <div className="flex-1 min-w-0 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
+            <div className="flex-1 min-w-0 rounded-full bg-white/5 border border-white/10 px-3 py-1.5">
               <textarea
                 ref={inputRef}
                 value={text}
@@ -241,15 +242,15 @@ export default function CommentsDrawer({
                 disabled={!isAuthenticated}
                 rows={1}
                 className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-white placeholder-white/30 outline-none"
-                style={{ minHeight: 24 }}
+                style={{ minHeight: 20, maxHeight: 80 }}
               />
             </div>
             <button
               onClick={handleSubmit}
               disabled={!text.trim() || submitting || !isAuthenticated}
-              className="flex-shrink-0 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white disabled:opacity-40 transition-opacity"
+              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white disabled:opacity-40 transition-opacity"
             >
-              {submitting ? "…" : "Post"}
+              <IoSend size={14} />
             </button>
           </div>
         </div>

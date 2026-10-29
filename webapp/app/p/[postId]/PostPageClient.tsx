@@ -30,6 +30,7 @@ import {
   IoBanOutline,
   IoFlagOutline,
   IoCodeSlashOutline,
+  IoSend,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useAuth } from "@/lib/AuthContext";
@@ -560,7 +561,7 @@ export default function PostPageClient() {
   const mediaH = "calc(100vh - 56px - 110px)";
 
   return (
-    <div className="flex h-[calc(100vh-56px)] bg-black overflow-hidden">
+    <div className="flex h-[calc(100vh-56px)] bg-[#0f1117] overflow-hidden">
 
       {/* ── Left: media card (same layout as stories) ── */}
       <div className="flex flex-col flex-shrink-0 items-center" style={{ width: MEDIA_W + 80 }}>
@@ -896,16 +897,16 @@ export default function PostPageClient() {
 
         {/* Composer */}
         <div className="flex-shrink-0 border-t border-white/10 px-4 py-3">
-          <div className="flex items-end gap-2">
+          <div className="flex items-center gap-2">
             {user?.profile_photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.profile_photo_url} alt="" className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+              <img src={user.profile_photo_url} alt="" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
             ) : (
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
-                <IoPersonOutline size={16} className="text-light-text" />
+              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
+                <IoPersonOutline size={13} className="text-light-text" />
               </div>
             )}
-            <div className="flex-1 min-w-0 rounded-2xl bg-white/5 border border-white/10 px-3 py-2">
+            <div className="flex-1 min-w-0 rounded-full bg-white/5 border border-white/10 px-3 py-1.5">
               <textarea
                 ref={inputRef}
                 value={replyText}
@@ -914,15 +915,15 @@ export default function PostPageClient() {
                 placeholder="Write a comment…"
                 rows={1}
                 className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
-                style={{ minHeight: 24 }}
+                style={{ minHeight: 20, maxHeight: 80 }}
               />
             </div>
             <button
               onClick={handleSubmit}
               disabled={!replyText.trim() || submitting}
-              className="flex-shrink-0 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white disabled:opacity-40"
+              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white disabled:opacity-40"
             >
-              {submitting ? "…" : "Post"}
+              <IoSend size={14} />
             </button>
           </div>
         </div>
