@@ -415,6 +415,8 @@ function MobileShortsCard({ items, onComment }: {
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(head.id);
 
   const isOwnPost = user?.id === head.userId;
+  const swipeStartX = useRef(0);
+  const swipeStartY = useRef(0);
 
   useEffect(() => {
     if (!socket) return;
@@ -507,7 +509,18 @@ function MobileShortsCard({ items, onComment }: {
       {/* Media + vertical actions */}
       {!isText ? (
         <div className="flex gap-4">
-          <div className="min-w-0 shrink">
+          <div
+            className="min-w-0 shrink"
+            onTouchStart={(e) => { swipeStartX.current = e.touches[0].clientX; swipeStartY.current = e.touches[0].clientY; }}
+            onTouchEnd={(e) => {
+              const dx = e.changedTouches[0].clientX - swipeStartX.current;
+              const dy = e.changedTouches[0].clientY - swipeStartY.current;
+              if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && items.length > 1) {
+                if (dx < 0 && activeIndex < items.length - 1) setActiveIndex((i) => i + 1);
+                else if (dx > 0 && activeIndex > 0) setActiveIndex((i) => i - 1);
+              }
+            }}
+          >
             {isImage && (active.content || active.thumbnailUrl) && (
               <div className="relative overflow-hidden rounded-2xl bg-zinc-900 mb-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -770,7 +783,15 @@ function FeedContent() {
       </div>
 
       {/* ── Mobile view ── */}
-      <div className="hidden max-sm:block relative h-[calc(100vh-56px)] overflow-hidden">
+      <div
+        className="hidden max-sm:block relative h-[calc(100vh-56px)] overflow-y-auto"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          if (el.scrollHeight - el.scrollTop - el.clientHeight < 300 && hasMoreRef.current && !isFetchingRef.current) {
+            loadPage(pageRef.current + 1);
+          }
+        }}
+      >
         {!isAuthenticated && <LoginBanner />}
         {query && (
           <div className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur px-4 py-3 text-sm text-light-text">
@@ -797,12 +818,24 @@ function FeedContent() {
           </div>
         )}
 
-        {currentGroup && (
+        {groupedPosts.map((group) => (
           <MobileShortsCard
-            key={currentGroup[0].id}
-            items={currentGroup}
-            onComment={openComment}
+            key={group[0].id}
+            items={group}
+            onComment={() => {
+              const id = group[0].id;
+              const count = group[0].commentCount ?? 0;
+              setCommentPanelPostId(id);
+              setCommentPanelCount(count);
+              try { sessionStorage.setItem("stories_comment_post", id); sessionStorage.setItem("stories_comment_count", String(count)); } catch {}
+            }}
           />
+        ))}
+
+        {isFetching && (
+          <div className="flex justify-center py-6">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-primary" />
+          </div>
         )}
 
         <CommentsDrawer
@@ -810,12 +843,6 @@ function FeedContent() {
           commentCount={commentPanelCount}
           onClose={closeComment}
         />
-
-        {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-primary" />
-          </div>
-        )}
       </div>
     </>
   );
