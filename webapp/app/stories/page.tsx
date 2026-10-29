@@ -463,7 +463,7 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
 
   return (
     <div
-      className="relative h-[calc(100vh-56px)] w-full overflow-hidden bg-black"
+      className="relative h-[calc(100vh-112px)] w-full overflow-hidden bg-black p-2"
       onTouchStart={(e) => { swipeStartX.current = e.touches[0].clientX; swipeStartY.current = e.touches[0].clientY; }}
       onTouchEnd={(e) => {
         const dx = e.changedTouches[0].clientX - swipeStartX.current;
@@ -476,16 +476,16 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
     >
       {/* Full-screen media */}
       {isVideo && active.content && (
-        <div className="absolute inset-0 [&_video]:!h-full [&_video]:!w-full [&_video]:!max-h-none [&_video]:!max-w-none [&_video]:!object-cover [&>div]:!h-full [&>div]:!w-full">
+        <div className="absolute inset-2 rounded-2xl overflow-hidden [&_video]:!h-full [&_video]:!w-full [&_video]:!max-h-none [&_video]:!max-w-none [&_video]:!object-contain [&>div]:!h-full [&>div]:!w-full">
           <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
         </div>
       )}
       {isImage && (active.content || active.thumbnailUrl) && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={active.content || active.thumbnailUrl!} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={active.content || active.thumbnailUrl!} alt="" className="absolute inset-2 h-[calc(100%-16px)] w-[calc(100%-16px)] object-contain rounded-2xl" />
       )}
       {isText && (
-        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 px-6">
+        <div className="absolute inset-2 flex items-center justify-center bg-zinc-900 px-6 rounded-2xl">
           <p className="max-w-sm text-center text-[18px] leading-[26px] text-white whitespace-pre-wrap">
             <LinkText text={active.content ?? active.caption ?? ""} />
           </p>
@@ -712,7 +712,7 @@ function FeedContent() {
   return (
     <>
       {/* ── Desktop view ── */}
-      <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden ${drawerOpen ? "pr-[400px]" : ""}`}>
+      <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden bg-[#0f1117] ${drawerOpen ? "pr-[400px]" : ""}`}>
         {!isAuthenticated && <LoginBanner />}
         {query && (
           <div className="absolute top-0 left-0 right-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
@@ -765,7 +765,7 @@ function FeedContent() {
       </div>
 
       {/* ── Mobile view (TikTok fullscreen, one post at a time) ── */}
-      <div className="hidden max-sm:block relative h-[calc(100vh-56px)]">
+      <div className="hidden max-sm:block relative h-[calc(100vh-112px)]">
         {!isAuthenticated && <LoginBanner />}
 
         {isFetching && posts.length === 0 && (

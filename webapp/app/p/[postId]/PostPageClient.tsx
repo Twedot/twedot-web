@@ -565,19 +565,19 @@ export default function PostPageClient() {
   return (
     <>
     {/* ── Mobile TikTok fullscreen view ── */}
-    <div className="sm:hidden relative h-[calc(100vh-56px)] w-full overflow-hidden bg-black">
+    <div className="sm:hidden relative h-[calc(100vh-112px)] w-full overflow-hidden bg-black p-2">
       {/* Full-screen media */}
       {isVideo && activeItem.content && (
-        <div className="absolute inset-0 [&_video]:!h-full [&_video]:!w-full [&_video]:!max-h-none [&_video]:!max-w-none [&_video]:!object-cover [&>div]:!h-full [&>div]:!w-full">
+        <div className="absolute inset-2 rounded-2xl overflow-hidden [&_video]:!h-full [&_video]:!w-full [&_video]:!max-h-none [&_video]:!max-w-none [&_video]:!object-contain [&>div]:!h-full [&>div]:!w-full">
           <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
         </div>
       )}
       {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="absolute inset-2 h-[calc(100%-16px)] w-[calc(100%-16px)] object-contain rounded-2xl" />
       )}
       {isText && (
-        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 px-6">
+        <div className="absolute inset-2 flex items-center justify-center bg-zinc-900 px-6 rounded-2xl">
           <p className="max-w-sm text-center text-[18px] leading-[26px] text-white whitespace-pre-wrap">
             <LinkText text={post.content || post.caption || ""} />
           </p>
