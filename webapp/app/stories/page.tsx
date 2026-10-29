@@ -391,10 +391,14 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
   );
 }
 
-/* ── Mobile card (status-page style: author top, media + actions, scrollable) ── */
-function MobileShortsCard({ items, onComment }: {
+/* ── Mobile card (TikTok fullscreen style: media fills screen, overlaid UI) ── */
+function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
   items: StatusPost[];
   onComment: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
 }) {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
@@ -413,6 +417,7 @@ function MobileShortsCard({ items, onComment }: {
   const [isFollowing, setIsFollowing] = useState(head.isFollowingAuthor ?? false);
   const followLoadingRef = useRef(false);
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(head.id);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
 
   const isOwnPost = user?.id === head.userId;
   const swipeStartX = useRef(0);
@@ -457,147 +462,124 @@ function MobileShortsCard({ items, onComment }: {
   };
 
   return (
-    <div className="h-full overflow-y-auto px-4 pt-3 pb-20">
-      {/* Author header */}
-      <div className="mb-2 flex items-center gap-2">
-        <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
-          {head.userPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={head.userPhoto} alt={head.userName} className="h-8 w-8 rounded-full object-cover" />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-border/40">
-              <IoPersonOutline size={16} className="text-light-text" />
-            </div>
-          )}
-        </button>
-        <div className="min-w-0 flex-1">
-          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="text-left">
-            <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[13px] font-semibold text-text">{head.userName}</span>
-              {head.userOccupation && (
-                <>
-                  <span className="text-[11px] text-light-text">·</span>
-                  <span className="truncate text-[11px] text-light-text">{head.userOccupation}</span>
-                </>
-              )}
-              <span className="text-[11px] text-light-text">· {timeAgo(head.createdAt)}</span>
-            </div>
-          </button>
-          <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="mt-0.5" />
+    <div
+      className="relative h-[calc(100vh-56px)] w-full overflow-hidden bg-black"
+      onTouchStart={(e) => { swipeStartX.current = e.touches[0].clientX; swipeStartY.current = e.touches[0].clientY; }}
+      onTouchEnd={(e) => {
+        const dx = e.changedTouches[0].clientX - swipeStartX.current;
+        const dy = e.changedTouches[0].clientY - swipeStartY.current;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && items.length > 1) {
+          if (dx < 0 && activeIndex < items.length - 1) setActiveIndex((i) => i + 1);
+          else if (dx > 0 && activeIndex > 0) setActiveIndex((i) => i - 1);
+        }
+      }}
+    >
+      {/* Full-screen media */}
+      {isVideo && active.content && (
+        <div className="absolute inset-0 [&_video]:!h-full [&_video]:!w-full [&_video]:!max-h-none [&_video]:!max-w-none [&_video]:!object-cover [&>div]:!h-full [&>div]:!w-full">
+          <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
         </div>
-        {!isOwnPost && (
-          <button
-            onClick={handleToggleFollow}
-            className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
-              isFollowing
-                ? "bg-primary/10 text-primary hover:bg-primary/20"
-                : "bg-primary/15 text-primary hover:bg-primary/25"
-            }`}
-          >
-            {isFollowing ? "Following" : "Follow"}
+      )}
+      {isImage && (active.content || active.thumbnailUrl) && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={active.content || active.thumbnailUrl!} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      )}
+      {isText && (
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 px-6">
+          <p className="max-w-sm text-center text-[18px] leading-[26px] text-white whitespace-pre-wrap">
+            <LinkText text={active.content ?? active.caption ?? ""} />
+          </p>
+        </div>
+      )}
+
+      {/* Bottom gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-[250px] bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+
+      {/* Carousel dots */}
+      {items.length > 1 && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          {items.map((_, i) => (
+            <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === activeIndex ? "bg-white" : "bg-white/40"}`} />
+          ))}
+        </div>
+      )}
+
+      {/* Author + Caption — bottom left, overlaid */}
+      <div className="absolute bottom-4 left-4 right-16 z-10">
+        <div className="flex items-center gap-2 mb-2">
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
+            {head.userPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover border-2 border-white/30" />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                <IoPersonOutline size={16} className="text-white" />
+              </div>
+            )}
           </button>
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="text-left">
+            <span className="text-[13px] font-bold text-white">{head.userName}</span>
+            <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="" />
+          </button>
+          {!isOwnPost && (
+            <button
+              onClick={handleToggleFollow}
+              className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
+                isFollowing
+                  ? "border border-white/30 text-white hover:bg-white/10"
+                  : "bg-white text-black hover:bg-white/90"
+              }`}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          )}
+        </div>
+        {active.caption && !isText && (
+          <p
+            onClick={() => setCaptionExpanded(e => !e)}
+            className={`text-[13px] leading-[18px] text-white font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
+          >
+            {active.caption}
+          </p>
         )}
       </div>
 
-      {/* Caption */}
-      {active.caption && !isText && !active.caption.startsWith("http") && (
-        <p className="mb-2 whitespace-pre-wrap text-[13px] font-medium leading-[18px] text-text">
-          <LinkText text={active.caption} />
-        </p>
-      )}
-
-      {/* Media + vertical actions */}
-      {!isText ? (
-        <div className="flex gap-4">
-          <div
-            className="min-w-0 shrink"
-            onTouchStart={(e) => { swipeStartX.current = e.touches[0].clientX; swipeStartY.current = e.touches[0].clientY; }}
-            onTouchEnd={(e) => {
-              const dx = e.changedTouches[0].clientX - swipeStartX.current;
-              const dy = e.changedTouches[0].clientY - swipeStartY.current;
-              if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && items.length > 1) {
-                if (dx < 0 && activeIndex < items.length - 1) setActiveIndex((i) => i + 1);
-                else if (dx > 0 && activeIndex > 0) setActiveIndex((i) => i - 1);
-              }
-            }}
-          >
-            {isImage && (active.content || active.thumbnailUrl) && (
-              <div className="relative overflow-hidden rounded-2xl bg-zinc-900 mb-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={active.content || active.thumbnailUrl!} alt="" className="relative max-h-[500px] max-w-full object-cover" />
-              </div>
-            )}
-            {isVideo && active.content && (
-              <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
-            )}
-            {items.length > 1 && (
-              <div className="mt-1.5 flex justify-center gap-1.5">
-                {items.map((_, i) => (
-                  <button key={i} onClick={() => setActiveIndex(i)} className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeIndex ? "bg-primary" : "bg-border"}`} />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Vertical action buttons */}
-          <div className="flex flex-shrink-0 flex-col items-center justify-center self-stretch gap-3">
-            <div className="flex flex-col items-center gap-0.5">
-              <button onClick={handleLike} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
-                {isLiked ? <IoHeart size={20} /> : <IoHeartOutline size={20} />}
-              </button>
-              <span className="text-[11px] font-bold tabular-nums text-light-text">{fmt(likeCount)}</span>
-            </div>
-            <div className="flex flex-col items-center gap-0.5">
-              <button onClick={onComment} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors">
-                <IoChatbubbleEllipsesOutline size={20} />
-              </button>
-              <span className="text-[11px] font-bold tabular-nums text-light-text">{fmt(active.commentCount ?? 0)}</span>
-            </div>
-            <button onClick={() => { if (isAuthenticated) toggleBookmark(); else router.push("/login"); }} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isBookmarked ? "text-[#D4A400]" : "text-text"}`}>
-              {isBookmarked ? <IoBookmark size={20} /> : <IoBookmarkOutline size={20} />}
-            </button>
-            <button
-              onClick={async () => {
-                const url = window.location.origin + postUrl(head.id);
-                try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
-              }}
-              className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors"
-            >
-              <IoShareOutline size={20} />
-            </button>
-          </div>
+      {/* Action buttons — right side, overlaid */}
+      <div className="absolute right-3 bottom-20 z-10 flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-0.5">
+          <button onClick={handleLike} className={`flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${isLiked ? "text-red-500" : "text-white"}`}>
+            {isLiked ? <IoHeart size={22} /> : <IoHeartOutline size={22} />}
+          </button>
+          <span className="text-[11px] font-bold text-white">{fmt(likeCount)}</span>
         </div>
-      ) : (
-        /* Text post */
-        <>
-          <div className="mb-2 whitespace-pre-wrap text-[15px] leading-[22px] text-text">
-            <LinkText text={active.content ?? active.caption ?? ""} />
-          </div>
-          <footer className="flex items-center gap-2 pt-0.5 pb-2.5 border-b border-border">
-            <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
-              {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
-              {likeCount}
-            </button>
-            <button onClick={onComment} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50">
-              <IoChatbubbleEllipsesOutline size={18} />
-              {active.commentCount ?? 0}
-            </button>
-            <button onClick={() => { if (isAuthenticated) toggleBookmark(); else router.push("/login"); }} className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-text"}`}>
-              {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
-            </button>
-            <button
-              onClick={async () => {
-                const url = window.location.origin + postUrl(head.id);
-                try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
-              }}
-              className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
-            >
-              <IoShareOutline size={18} />
-              Share
-            </button>
-          </footer>
-        </>
-      )}
+        <div className="flex flex-col items-center gap-0.5">
+          <button onClick={onComment} className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white">
+            <IoChatbubbleEllipsesOutline size={22} />
+          </button>
+          <span className="text-[11px] font-bold text-white">{fmt(active.commentCount ?? 0)}</span>
+        </div>
+        <button onClick={() => { if (isAuthenticated) toggleBookmark(); else router.push("/login"); }} className={`flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${isBookmarked ? "text-[#D4A400]" : "text-white"}`}>
+          {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
+        </button>
+        <button
+          onClick={async () => {
+            const url = window.location.origin + postUrl(head.id);
+            try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
+        >
+          <IoShareOutline size={22} />
+        </button>
+        {/* Nav arrows */}
+        <div className="flex flex-col items-center gap-1.5 mt-2">
+          <button onClick={onPrev} disabled={!hasPrev} className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white disabled:opacity-30">
+            <IoChevronUp size={18} />
+          </button>
+          <button onClick={onNext} disabled={!hasNext} className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white disabled:opacity-30">
+            <IoChevronDown size={18} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -782,30 +764,17 @@ function FeedContent() {
         )}
       </div>
 
-      {/* ── Mobile view ── */}
-      <div
-        className="hidden max-sm:block relative h-[calc(100vh-56px)] overflow-y-auto"
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          if (el.scrollHeight - el.scrollTop - el.clientHeight < 300 && hasMoreRef.current && !isFetchingRef.current) {
-            loadPage(pageRef.current + 1);
-          }
-        }}
-      >
+      {/* ── Mobile view (TikTok fullscreen, one post at a time) ── */}
+      <div className="hidden max-sm:block relative h-[calc(100vh-56px)]">
         {!isAuthenticated && <LoginBanner />}
-        {query && (
-          <div className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur px-4 py-3 text-sm text-light-text">
-            Results for <span className="font-semibold text-text">{query}</span>
-          </div>
-        )}
 
         {isFetching && posts.length === 0 && (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
+          <div className="flex h-full items-center justify-center bg-black">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
           </div>
         )}
         {!isFetching && posts.length === 0 && error && (
-          <div className="flex h-full items-center justify-center px-4">
+          <div className="flex h-full items-center justify-center px-4 bg-black">
             <ErrorState
               isOffline={error.toLowerCase().includes("no internet") || error.toLowerCase().includes("network")}
               onRetry={() => loadPage(1)}
@@ -813,29 +782,21 @@ function FeedContent() {
           </div>
         )}
         {!isFetching && posts.length === 0 && !error && (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-light-text">Nothing here yet.</p>
+          <div className="flex h-full items-center justify-center bg-black">
+            <p className="text-sm text-white/40">Nothing here yet.</p>
           </div>
         )}
 
-        {groupedPosts.map((group) => (
+        {currentGroup && (
           <MobileShortsCard
-            key={group[0].id}
-            items={group}
-            onComment={() => {
-              const id = group[0].id;
-              const count = group[0].commentCount ?? 0;
-              setCommentPanelPostId(id);
-              setCommentPanelCount(count);
-              try { sessionStorage.setItem("stories_comment_post", id); sessionStorage.setItem("stories_comment_count", String(count)); } catch {}
-            }}
+            key={currentGroup[0].id}
+            items={currentGroup}
+            onComment={openComment}
+            onPrev={goPrev}
+            onNext={goNext}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < groupedPosts.length - 1 || hasMore}
           />
-        ))}
-
-        {isFetching && (
-          <div className="flex justify-center py-6">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-primary" />
-          </div>
         )}
 
         <CommentsDrawer
@@ -843,6 +804,12 @@ function FeedContent() {
           commentCount={commentPanelCount}
           onClose={closeComment}
         />
+
+        {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
+          </div>
+        )}
       </div>
     </>
   );

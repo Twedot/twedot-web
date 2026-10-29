@@ -43,6 +43,7 @@ import { feedStateStore } from "@/lib/feedStateStore";
 import RankBadge from "@/components/RankBadge";
 import LinkText from "@/components/LinkText";
 import VideoPlayer from "@/components/VideoPlayer";
+import CommentsDrawer from "@/components/CommentsDrawer";
 import type { StatusPost } from "@/lib/types";
 import { profileUrl, postUrl } from "@/lib/url";
 
@@ -231,6 +232,8 @@ export default function PostPageClient() {
   const savedScrollY = useRef(0);
   const prevThreadId = useRef<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [mobileCommentOpen, setMobileCommentOpen] = useState(false);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
   const swipeStartX = useRef(0);
   const swipeStartY = useRef(0);
 
@@ -560,7 +563,136 @@ export default function PostPageClient() {
   const maxH = "calc(100vh - 56px - 40px)";
 
   return (
-    <div className="flex h-[calc(100vh-56px)] bg-[#0f1117] overflow-hidden">
+    <>
+    {/* ── Mobile TikTok fullscreen view ── */}
+    <div className="sm:hidden relative h-[calc(100vh-56px)] w-full overflow-hidden bg-black">
+      {/* Full-screen media */}
+      {isVideo && activeItem.content && (
+        <div className="absolute inset-0 [&_video]:!h-full [&_video]:!w-full [&_video]:!max-h-none [&_video]:!max-w-none [&_video]:!object-cover [&>div]:!h-full [&>div]:!w-full">
+          <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
+        </div>
+      )}
+      {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      )}
+      {isText && (
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 px-6">
+          <p className="max-w-sm text-center text-[18px] leading-[26px] text-white whitespace-pre-wrap">
+            <LinkText text={post.content || post.caption || ""} />
+          </p>
+        </div>
+      )}
+
+      {/* Bottom gradient */}
+      <div className="absolute bottom-0 left-0 right-0 h-[250px] bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+
+      {/* Back button */}
+      <button
+        onClick={() => router.back()}
+        className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
+      >
+        <IoArrowBack size={16} />
+      </button>
+
+      {/* Carousel dots */}
+      {groupItems.length > 1 && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          {groupItems.map((_, i) => (
+            <span key={i} className={`h-1.5 w-1.5 rounded-full ${i === activeGroupIdx ? "bg-white" : "bg-white/40"}`} />
+          ))}
+        </div>
+      )}
+
+      {/* Author + Caption — bottom left */}
+      <div
+        className="absolute bottom-4 left-4 right-16 z-10"
+        onTouchStart={(e) => { swipeStartX.current = e.touches[0].clientX; swipeStartY.current = e.touches[0].clientY; }}
+        onTouchEnd={(e) => {
+          const dx = e.changedTouches[0].clientX - swipeStartX.current;
+          const dy = e.changedTouches[0].clientY - swipeStartY.current;
+          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40 && groupItems.length > 1) {
+            if (dx < 0 && activeGroupIdx < groupItems.length - 1) setActiveGroupIdx((i) => i + 1);
+            else if (dx > 0 && activeGroupIdx > 0) setActiveGroupIdx((i) => i - 1);
+          }
+        }}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
+            {post.userPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={post.userPhoto} alt={post.userName} className="h-9 w-9 rounded-full object-cover border-2 border-white/30" />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                <IoPersonOutline size={16} className="text-white" />
+              </div>
+            )}
+          </button>
+          <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="text-left">
+            <span className="text-[13px] font-bold text-white">{post.userName}</span>
+            <RankBadge activityScore={post.userGlobalActivityScore ?? 0} rankVisible={post.userRankVisible !== false} plain className="" />
+          </button>
+          {user?.id !== post.userId && (
+            <button
+              onClick={handleToggleFollow}
+              className={`flex-shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
+                isFollowingAuthor
+                  ? "border border-white/30 text-white hover:bg-white/10"
+                  : "bg-white text-black hover:bg-white/90"
+              }`}
+            >
+              {isFollowingAuthor ? "Following" : "Follow"}
+            </button>
+          )}
+        </div>
+        {!isText && post.caption && (
+          <p
+            onClick={() => setCaptionExpanded(e => !e)}
+            className={`text-[13px] leading-[18px] text-white font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
+          >
+            {post.caption}
+          </p>
+        )}
+      </div>
+
+      {/* Action buttons — right side */}
+      <div className="absolute right-3 bottom-20 z-10 flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-0.5">
+          <button onClick={handleLike} className={`flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${isLiked ? "text-red-500" : "text-white"}`}>
+            {isLiked ? <IoHeart size={22} /> : <IoHeartOutline size={22} />}
+          </button>
+          <span className="text-[11px] font-bold text-white">{fmt(likeCount)}</span>
+        </div>
+        <div className="flex flex-col items-center gap-0.5">
+          <button onClick={() => setMobileCommentOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white">
+            <IoChatbubbleEllipsesOutline size={22} />
+          </button>
+          <span className="text-[11px] font-bold text-white">{fmt(commentCount)}</span>
+        </div>
+        <button onClick={toggleBookmark} className={`flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm ${isBookmarked ? "text-[#D4A400]" : "text-white"}`}>
+          {isBookmarked ? <IoBookmark size={22} /> : <IoBookmarkOutline size={22} />}
+        </button>
+        <button
+          onClick={async () => {
+            const url = window.location.href;
+            try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white"
+        >
+          <IoShareOutline size={22} />
+        </button>
+      </div>
+
+      {/* Mobile comments drawer */}
+      <CommentsDrawer
+        postId={mobileCommentOpen ? statusId : null}
+        commentCount={commentCount}
+        onClose={() => setMobileCommentOpen(false)}
+      />
+    </div>
+
+    {/* ── Desktop 3-column layout ── */}
+    <div className="hidden sm:flex h-[calc(100vh-56px)] bg-[#0f1117] overflow-hidden">
 
       {/* ── Left section: stories-style layout ── */}
       <div className="flex flex-1 min-w-0 items-center justify-center gap-5 pt-5 pb-5 relative">
@@ -979,5 +1111,6 @@ export default function PostPageClient() {
       )}
 
     </div>
+    </>
   );
 }
