@@ -96,8 +96,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const tb = typeof b.timestamp === "number" ? b.timestamp : new Date(b.timestamp).getTime();
       return ta - tb;
     });
+    const fallbackContact: ChatContact = isMine
+      ? { userId: chatUserId, name: "Unknown", photo: null }
+      : { userId: chatUserId, name: msg.senderName ?? "Unknown", photo: msg.senderPhoto ?? null };
     const thread: ChatThread = {
-      contact: existing?.contact ?? { userId: chatUserId, name: msg.senderName ?? "Unknown", photo: msg.senderPhoto ?? null },
+      contact: existing?.contact ?? fallbackContact,
       messages: updated,
       lastMessage: updated[updated.length - 1],
       unreadCount: isMine ? (existing?.unreadCount ?? 0) : (existing?.unreadCount ?? 0) + 1,

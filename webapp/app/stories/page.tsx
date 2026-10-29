@@ -685,6 +685,8 @@ function FeedContent() {
   // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
       if (e.key === "ArrowDown" || e.key === "j") { e.preventDefault(); goNext(); }
       if (e.key === "ArrowUp" || e.key === "k") { e.preventDefault(); goPrev(); }
     };

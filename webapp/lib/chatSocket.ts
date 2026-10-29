@@ -39,6 +39,7 @@ class ChatSocket {
   private reconnectDelay = 1000;
   private maxReconnectDelay = 30000;
   private intentionalClose = false;
+  private visibilityBound = false;
 
   private onMessage: MessageHandler[] = [];
   private onMessageSent: MessageHandler[] = [];
@@ -60,6 +61,17 @@ class ChatSocket {
 
     this.intentionalClose = false;
     const url = `${CHAT_WS_URL}?token=${encodeURIComponent(token)}&deviceId=${encodeURIComponent(getDeviceId())}`;
+
+    if (!this.visibilityBound) {
+      this.visibilityBound = true;
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && !this.intentionalClose) {
+          if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            this.connect();
+          }
+        }
+      });
+    }
 
     try {
       this.ws = new WebSocket(url);
