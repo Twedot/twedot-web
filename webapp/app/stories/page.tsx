@@ -391,6 +391,204 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
   );
 }
 
+/* ── Mobile card (status-page style: author top, media + actions, scrollable) ── */
+function MobileShortsCard({ items, onComment }: {
+  items: StatusPost[];
+  onComment: () => void;
+}) {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
+  const { notify } = useUi();
+  const { socket } = useJobSocket();
+  const head = items[0];
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const active = items[activeIndex] ?? head;
+  const isText = active.type === "text";
+  const isImage = active.type === "image";
+  const isVideo = active.type === "video";
+
+  const [likeCount, setLikeCount] = useState(head.likeCount ?? 0);
+  const [isLiked, setIsLiked] = useState(head.isLiked ?? false);
+  const [isFollowing, setIsFollowing] = useState(head.isFollowingAuthor ?? false);
+  const followLoadingRef = useRef(false);
+  const { isBookmarked, toggle: toggleBookmark } = useBookmark(head.id);
+
+  const isOwnPost = user?.id === head.userId;
+
+  useEffect(() => {
+    if (!socket) return;
+    const onLikeAck = (data: { statusId: string; liked: boolean; likeCount: number }) => {
+      if (data.statusId !== head.id) return;
+      setIsLiked(data.liked);
+      setLikeCount(data.likeCount);
+    };
+    const onLikeUpdate = (data: { statusId: string; likeCount: number }) => {
+      if (data.statusId !== head.id) return;
+      setLikeCount(data.likeCount);
+    };
+    socket.on("like_status_ack", onLikeAck);
+    socket.on("status_like_update", onLikeUpdate);
+    return () => { socket.off("like_status_ack", onLikeAck); socket.off("status_like_update", onLikeUpdate); };
+  }, [socket, head.id]);
+
+  const handleLike = () => {
+    if (!isAuthenticated) { router.push("/login"); return; }
+    if (!socket) return;
+    const nowLiked = !isLiked;
+    setIsLiked(nowLiked);
+    setLikeCount((c) => c + (nowLiked ? 1 : -1));
+    socket.emit("like_status", { statusId: head.id, statusOwnerId: head.userId });
+  };
+
+  const handleToggleFollow = async () => {
+    if (!isAuthenticated) { router.push("/login"); return; }
+    if (followLoadingRef.current) return;
+    followLoadingRef.current = true;
+    const was = isFollowing;
+    setIsFollowing(!was);
+    try {
+      if (was) await apiDelete(`/users/follow/${head.userId}`);
+      else await apiPost(`/users/follow/${head.userId}`, {});
+    } catch { setIsFollowing(was); }
+    finally { followLoadingRef.current = false; }
+  };
+
+  return (
+    <div className="h-full overflow-y-auto px-4 pt-3 pb-20">
+      {/* Author header */}
+      <div className="mb-2 flex items-center gap-2">
+        <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
+          {head.userPhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={head.userPhoto} alt={head.userName} className="h-8 w-8 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-border/40">
+              <IoPersonOutline size={16} className="text-light-text" />
+            </div>
+          )}
+        </button>
+        <div className="min-w-0 flex-1">
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="text-left">
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[13px] font-semibold text-text">{head.userName}</span>
+              {head.userOccupation && (
+                <>
+                  <span className="text-[11px] text-light-text">·</span>
+                  <span className="truncate text-[11px] text-light-text">{head.userOccupation}</span>
+                </>
+              )}
+              <span className="text-[11px] text-light-text">· {timeAgo(head.createdAt)}</span>
+            </div>
+          </button>
+          <RankBadge activityScore={head.userGlobalActivityScore ?? 0} rankVisible={head.userRankVisible !== false} plain className="mt-0.5" />
+        </div>
+        {!isOwnPost && (
+          <button
+            onClick={handleToggleFollow}
+            className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
+              isFollowing
+                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                : "bg-primary/15 text-primary hover:bg-primary/25"
+            }`}
+          >
+            {isFollowing ? "Following" : "Follow"}
+          </button>
+        )}
+      </div>
+
+      {/* Caption */}
+      {active.caption && !isText && !active.caption.startsWith("http") && (
+        <p className="mb-2 whitespace-pre-wrap text-[13px] font-medium leading-[18px] text-text">
+          <LinkText text={active.caption} />
+        </p>
+      )}
+
+      {/* Media + vertical actions */}
+      {!isText ? (
+        <div className="flex gap-4">
+          <div className="min-w-0 shrink">
+            {isImage && (active.content || active.thumbnailUrl) && (
+              <div className="relative overflow-hidden rounded-2xl bg-zinc-900 mb-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={active.content || active.thumbnailUrl!} alt="" className="relative max-h-[500px] max-w-full object-cover" />
+              </div>
+            )}
+            {isVideo && active.content && (
+              <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
+            )}
+            {items.length > 1 && (
+              <div className="mt-1.5 flex justify-center gap-1.5">
+                {items.map((_, i) => (
+                  <button key={i} onClick={() => setActiveIndex(i)} className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeIndex ? "bg-primary" : "bg-border"}`} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Vertical action buttons */}
+          <div className="flex flex-shrink-0 flex-col items-center justify-center self-stretch gap-3">
+            <div className="flex flex-col items-center gap-0.5">
+              <button onClick={handleLike} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
+                {isLiked ? <IoHeart size={20} /> : <IoHeartOutline size={20} />}
+              </button>
+              <span className="text-[11px] font-bold tabular-nums text-light-text">{fmt(likeCount)}</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              <button onClick={onComment} className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors">
+                <IoChatbubbleEllipsesOutline size={20} />
+              </button>
+              <span className="text-[11px] font-bold tabular-nums text-light-text">{fmt(active.commentCount ?? 0)}</span>
+            </div>
+            <button onClick={() => { if (isAuthenticated) toggleBookmark(); else router.push("/login"); }} className={`flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 transition-colors ${isBookmarked ? "text-[#D4A400]" : "text-text"}`}>
+              {isBookmarked ? <IoBookmark size={20} /> : <IoBookmarkOutline size={20} />}
+            </button>
+            <button
+              onClick={async () => {
+                const url = window.location.origin + postUrl(head.id);
+                try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
+              }}
+              className="flex items-center justify-center rounded-2xl bg-feed-bg/60 p-2.5 text-text transition-colors"
+            >
+              <IoShareOutline size={20} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Text post */
+        <>
+          <div className="mb-2 whitespace-pre-wrap text-[15px] leading-[22px] text-text">
+            <LinkText text={active.content ?? active.caption ?? ""} />
+          </div>
+          <footer className="flex items-center gap-2 pt-0.5 pb-2.5 border-b border-border">
+            <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold hover:bg-border/50 transition-colors ${isLiked ? "text-red-500" : "text-text"}`}>
+              {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
+              {likeCount}
+            </button>
+            <button onClick={onComment} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50">
+              <IoChatbubbleEllipsesOutline size={18} />
+              {active.commentCount ?? 0}
+            </button>
+            <button onClick={() => { if (isAuthenticated) toggleBookmark(); else router.push("/login"); }} className={`flex items-center justify-center rounded-full bg-feed-bg p-1.5 hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-text"}`}>
+              {isBookmarked ? <IoBookmark size={18} /> : <IoBookmarkOutline size={18} />}
+            </button>
+            <button
+              onClick={async () => {
+                const url = window.location.origin + postUrl(head.id);
+                try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
+              }}
+              className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-sm font-bold text-text hover:bg-border/50"
+            >
+              <IoShareOutline size={18} />
+              Share
+            </button>
+          </footer>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── Feed ── */
 function FeedContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -500,65 +698,133 @@ function FeedContent() {
   }, [goNext, goPrev]);
 
   const currentGroup = groupedPosts[currentIdx];
+  const touchStartY = useRef(0);
+
+  const openComment = useCallback(() => {
+    if (!currentGroup) return;
+    const id = currentGroup[0].id;
+    const count = currentGroup[0].commentCount ?? 0;
+    setCommentPanelPostId(id);
+    setCommentPanelCount(count);
+    try { sessionStorage.setItem("stories_comment_post", id); sessionStorage.setItem("stories_comment_count", String(count)); } catch {}
+  }, [currentGroup]);
+
+  const closeComment = useCallback(() => {
+    setCommentPanelPostId(null);
+    try { sessionStorage.removeItem("stories_comment_post"); sessionStorage.removeItem("stories_comment_count"); } catch {}
+  }, []);
 
   return (
-    <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 ${drawerOpen ? "pr-[400px]" : ""}`}>
-      {!isAuthenticated && <LoginBanner />}
-      {query && (
-        <div className="absolute top-0 left-0 right-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
-          Results for <span className="font-semibold text-white">{query}</span>
-        </div>
-      )}
+    <>
+      {/* ── Desktop view ── */}
+      <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden ${drawerOpen ? "pr-[400px]" : ""}`}>
+        {!isAuthenticated && <LoginBanner />}
+        {query && (
+          <div className="absolute top-0 left-0 right-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
+            Results for <span className="font-semibold text-white">{query}</span>
+          </div>
+        )}
 
-      {isFetching && posts.length === 0 && (
-        <div className="flex h-full items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
-        </div>
-      )}
-      {!isFetching && posts.length === 0 && error && (
-        <div className="flex h-full items-center justify-center px-4">
-          <ErrorState
-            isOffline={error.toLowerCase().includes("no internet") || error.toLowerCase().includes("network")}
-            onRetry={() => loadPage(1)}
+        {isFetching && posts.length === 0 && (
+          <div className="flex h-full items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
+          </div>
+        )}
+        {!isFetching && posts.length === 0 && error && (
+          <div className="flex h-full items-center justify-center px-4">
+            <ErrorState
+              isOffline={error.toLowerCase().includes("no internet") || error.toLowerCase().includes("network")}
+              onRetry={() => loadPage(1)}
+            />
+          </div>
+        )}
+        {!isFetching && posts.length === 0 && !error && (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-white/40">Nothing here yet.</p>
+          </div>
+        )}
+
+        {currentGroup && (
+          <ShortsCard
+            key={currentGroup[0].id}
+            items={currentGroup}
+            onComment={openComment}
+            onPrev={goPrev}
+            onNext={goNext}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < groupedPosts.length - 1 || hasMore}
           />
-        </div>
-      )}
-      {!isFetching && posts.length === 0 && !error && (
-        <div className="flex h-full items-center justify-center">
-          <p className="text-sm text-white/40">Nothing here yet.</p>
-        </div>
-      )}
+        )}
 
-      {currentGroup && (
-        <ShortsCard
-          key={currentGroup[0].id}
-          items={currentGroup}
-          onComment={() => {
-            const id = currentGroup[0].id;
-            const count = currentGroup[0].commentCount ?? 0;
-            setCommentPanelPostId(id);
-            setCommentPanelCount(count);
-            try { sessionStorage.setItem("stories_comment_post", id); sessionStorage.setItem("stories_comment_count", String(count)); } catch {}
-          }}
-          onPrev={goPrev}
-          onNext={goNext}
-          hasPrev={currentIdx > 0}
-          hasNext={currentIdx < groupedPosts.length - 1 || hasMore}
+        <CommentsDrawer
+          postId={commentPanelPostId}
+          commentCount={commentPanelCount}
+          onClose={closeComment}
         />
-      )}
 
-      <CommentsDrawer
-        postId={commentPanelPostId}
-        commentCount={commentPanelCount}
-        onClose={() => { setCommentPanelPostId(null); try { sessionStorage.removeItem("stories_comment_post"); sessionStorage.removeItem("stories_comment_count"); } catch {} }}
-      />
+        {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
+          </div>
+        )}
+      </div>
 
-      {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-primary" />
-        </div>
-      )}
-    </div>
+      {/* ── Mobile view ── */}
+      <div
+        className="hidden max-sm:block relative h-[calc(100vh-56px)] overflow-hidden"
+        onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
+        onTouchEnd={(e) => {
+          const dy = e.changedTouches[0].clientY - touchStartY.current;
+          if (Math.abs(dy) > 60) { if (dy < 0) goNext(); else goPrev(); }
+        }}
+      >
+        {!isAuthenticated && <LoginBanner />}
+        {query && (
+          <div className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur px-4 py-3 text-sm text-light-text">
+            Results for <span className="font-semibold text-text">{query}</span>
+          </div>
+        )}
+
+        {isFetching && posts.length === 0 && (
+          <div className="flex h-full items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary" />
+          </div>
+        )}
+        {!isFetching && posts.length === 0 && error && (
+          <div className="flex h-full items-center justify-center px-4">
+            <ErrorState
+              isOffline={error.toLowerCase().includes("no internet") || error.toLowerCase().includes("network")}
+              onRetry={() => loadPage(1)}
+            />
+          </div>
+        )}
+        {!isFetching && posts.length === 0 && !error && (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-light-text">Nothing here yet.</p>
+          </div>
+        )}
+
+        {currentGroup && (
+          <MobileShortsCard
+            key={currentGroup[0].id}
+            items={currentGroup}
+            onComment={openComment}
+          />
+        )}
+
+        <CommentsDrawer
+          postId={commentPanelPostId}
+          commentCount={commentPanelCount}
+          onClose={closeComment}
+        />
+
+        {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-primary" />
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
