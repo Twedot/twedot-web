@@ -45,6 +45,7 @@ import LinkText from "@/components/LinkText";
 import VideoPlayer from "@/components/VideoPlayer";
 import type { StatusPost } from "@/lib/types";
 import { profileUrl, postUrl } from "@/lib/url";
+import CommentsDrawer from "@/components/CommentsDrawer";
 
 interface Comment {
   id: string;
@@ -231,6 +232,7 @@ export default function PostPageClient() {
   const savedScrollY = useRef(0);
   const prevThreadId = useRef<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [mobileCommentsOpen, setMobileCommentsOpen] = useState(false);
   const swipeStartX = useRef(0);
   const swipeStartY = useRef(0);
 
@@ -562,8 +564,8 @@ export default function PostPageClient() {
   return (
     <div className="flex h-[calc(100vh-56px)] bg-[#0f1117] overflow-hidden">
 
-      {/* ── Left section: stories-style layout ── */}
-      <div className="flex flex-1 min-w-0 items-center justify-center gap-5 pt-5 pb-5 relative">
+      {/* ── Main section: full-screen mobile / 3-col desktop ── */}
+      <div className="relative flex flex-1 min-w-0 h-full sm:items-center sm:justify-center sm:gap-5 sm:pt-5 sm:pb-5">
         {/* Back button — top-left */}
         <button
           onClick={() => {
@@ -577,7 +579,7 @@ export default function PostPageClient() {
 
         {/* ── Thread view ── */}
         {threadComment ? (
-          <div className="w-full max-w-lg px-4 pt-8 overflow-y-auto max-h-full">
+          <div className="w-full max-w-lg px-4 pt-8 overflow-y-auto max-h-full mx-auto sm:mx-0">
             <div className="rounded-2xl bg-feed-bg px-3">
               <CommentItem
                 comment={threadComment}
@@ -654,8 +656,8 @@ export default function PostPageClient() {
           </div>
         ) : (
           <>
-            {/* ── Left column: caption/author (bottom-aligned, like stories) ── */}
-            <div className="flex-shrink-0 w-[280px] flex flex-col gap-2 self-end pb-2">
+            {/* ── Left column: caption/author (desktop only, bottom-aligned) ── */}
+            <div className="hidden sm:flex flex-shrink-0 w-[280px] flex-col gap-2 self-end pb-2">
               <div className="flex items-center gap-2">
                 <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
                   {post.userPhoto ? (
@@ -691,10 +693,9 @@ export default function PostPageClient() {
               )}
             </div>
 
-            {/* ── Media card — natural size, capped ── */}
+            {/* ── Media card — full-screen mobile, natural size desktop ── */}
             <div
-              className="relative flex-shrink-0 overflow-hidden rounded-2xl"
-              style={{ maxHeight: maxH, maxWidth: 480 }}
+              className="relative w-full h-full sm:w-auto sm:h-auto flex-shrink-0 overflow-hidden sm:rounded-2xl flex items-center justify-center"
               onPointerDown={(e) => { swipeStartX.current = e.clientX; swipeStartY.current = e.clientY; }}
               onPointerUp={(e) => {
                 const dx = e.clientX - swipeStartX.current;
@@ -706,18 +707,18 @@ export default function PostPageClient() {
               }}
             >
               {isImage && (activeItem.content || activeItem.thumbnailUrl) && (
-                <div className="cursor-zoom-in" onClick={() => setLightboxOpen(true)}>
+                <div className="cursor-zoom-in w-full sm:w-auto flex items-center justify-center" onClick={() => setLightboxOpen(true)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="w-auto max-w-[480px] rounded-2xl" style={{ maxHeight: maxH }} />
+                  <img src={activeItem.content || activeItem.thumbnailUrl!} alt="" className="w-full h-auto object-contain sm:w-auto sm:max-w-[480px] sm:rounded-2xl" style={{ maxHeight: maxH }} />
                 </div>
               )}
               {isVideo && activeItem.content && (
-                <div className="[&_video]:max-w-[480px] [&_video]:w-auto [&_video]:rounded-2xl [&>div]:flex [&>div]:items-center" style={{ maxHeight: maxH }}>
+                <div className="w-full sm:w-auto [&_video]:w-full sm:[&_video]:max-w-[480px] sm:[&_video]:w-auto sm:[&_video]:rounded-2xl [&>div]:flex [&>div]:items-center [&_video]:max-h-[calc(100vh-56px)] sm:[&_video]:max-h-none" style={{ maxHeight: maxH }}>
                   <VideoPlayer src={activeItem.content} poster={activeItem.thumbnailUrl ?? undefined} />
                 </div>
               )}
               {isText && (
-                <div className="flex items-center justify-center bg-zinc-900 w-[360px]" style={{ height: maxH }}>
+                <div className="flex items-center justify-center bg-zinc-900 w-full sm:w-[360px] h-full sm:h-auto" style={{ minHeight: "100%" }}>
                   <p className="max-w-sm text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap px-6">
                     <LinkText text={post.content || post.caption || ""} />
                   </p>
@@ -742,8 +743,44 @@ export default function PostPageClient() {
               )}
             </div>
 
-            {/* ── Action rail ── */}
-            <div className="flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2">
+            {/* ── Mobile overlay: caption/author at bottom-left ── */}
+            <div className="sm:hidden absolute bottom-0 left-0 right-16 z-10 px-4 pb-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent pt-16">
+              <div className="flex items-center gap-2 mb-1">
+                <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="flex-shrink-0">
+                  {post.userPhoto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={post.userPhoto} alt={post.userName} className="h-8 w-8 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                      <IoPersonOutline size={14} className="text-white" />
+                    </div>
+                  )}
+                </button>
+                <button onClick={() => router.push(profileUrl(post.userName, post.userId))} className="min-w-0 text-left">
+                  <span className="text-[13px] font-bold text-white">{post.userName}</span>
+                </button>
+                {user?.id !== post.userId && (
+                  <button
+                    onClick={handleToggleFollow}
+                    className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
+                      isFollowingAuthor
+                        ? "border border-white/20 text-white"
+                        : "bg-white text-black"
+                    }`}
+                  >
+                    {isFollowingAuthor ? "Following" : "Follow"}
+                  </button>
+                )}
+              </div>
+              {!isText && post.caption && (
+                <p className="text-[13px] leading-[18px] text-white line-clamp-2">
+                  <LinkText text={post.caption} />
+                </p>
+              )}
+            </div>
+
+            {/* ── Action rail: overlaid bottom-right on mobile, column on desktop ── */}
+            <div className="absolute right-3 bottom-4 z-10 flex flex-col items-center gap-3 sm:relative sm:right-auto sm:bottom-auto sm:flex-shrink-0 sm:self-end sm:pb-2">
               <div className="flex flex-col items-center gap-1">
                 <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
                   {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
@@ -751,7 +788,10 @@ export default function PostPageClient() {
                 <span className="text-[11px] font-bold text-white/70">{fmt(likeCount)}</span>
               </div>
               <div className="flex flex-col items-center gap-1">
-                <button onClick={() => inputRef.current?.focus()} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
+                <button onClick={() => {
+                  if (window.innerWidth < 640) setMobileCommentsOpen(true);
+                  else inputRef.current?.focus();
+                }} className="flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10">
                   <IoChatbubbleEllipsesOutline size={24} />
                 </button>
                 <span className="text-[11px] font-bold text-white/70">{fmt(commentCount)}</span>
@@ -844,8 +884,8 @@ export default function PostPageClient() {
         )}
       </div>{/* end left section */}
 
-      {/* ── Right: permanent comments panel ── */}
-      <div className="w-[400px] flex-shrink-0 border-l border-white/10 flex flex-col overflow-hidden">
+      {/* ── Right: permanent comments panel (desktop only) ── */}
+      <div className="hidden sm:flex w-[400px] flex-shrink-0 border-l border-white/10 flex-col overflow-hidden">
         {/* Header */}
         <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-white/10">
           <IoChatbubbleEllipsesOutline size={16} className="text-white/50" />
@@ -918,6 +958,15 @@ export default function PostPageClient() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* ── Mobile comments drawer ── */}
+      <div className="sm:hidden">
+        <CommentsDrawer
+          postId={mobileCommentsOpen ? statusId : null}
+          commentCount={commentCount}
+          onClose={() => setMobileCommentsOpen(false)}
+        />
       </div>
 
       {/* ── Full-screen image lightbox ── */}
