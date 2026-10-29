@@ -407,8 +407,12 @@ function FeedContent() {
   const [currentIdx, setCurrentIdx] = useState(() => {
     try { return parseInt(sessionStorage.getItem("stories_idx") ?? "0") || 0; } catch { return 0; }
   });
-  const [commentPanelPostId, setCommentPanelPostId] = useState<string | null>(null);
-  const [commentPanelCount, setCommentPanelCount] = useState(0);
+  const [commentPanelPostId, setCommentPanelPostId] = useState<string | null>(() => {
+    try { return sessionStorage.getItem("stories_comment_post") || null; } catch { return null; }
+  });
+  const [commentPanelCount, setCommentPanelCount] = useState(() => {
+    try { return parseInt(sessionStorage.getItem("stories_comment_count") ?? "0") || 0; } catch { return 0; }
+  });
   const drawerOpen = commentPanelPostId !== null;
   const hasMoreRef = useRef(hasMore);
   const isFetchingRef = useRef(isFetching);
@@ -530,8 +534,11 @@ function FeedContent() {
           key={currentGroup[0].id}
           items={currentGroup}
           onComment={() => {
-            setCommentPanelPostId(currentGroup[0].id);
-            setCommentPanelCount(currentGroup[0].commentCount ?? 0);
+            const id = currentGroup[0].id;
+            const count = currentGroup[0].commentCount ?? 0;
+            setCommentPanelPostId(id);
+            setCommentPanelCount(count);
+            try { sessionStorage.setItem("stories_comment_post", id); sessionStorage.setItem("stories_comment_count", String(count)); } catch {}
           }}
           onPrev={goPrev}
           onNext={goNext}
@@ -543,7 +550,7 @@ function FeedContent() {
       <CommentsDrawer
         postId={commentPanelPostId}
         commentCount={commentPanelCount}
-        onClose={() => setCommentPanelPostId(null)}
+        onClose={() => { setCommentPanelPostId(null); try { sessionStorage.removeItem("stories_comment_post"); sessionStorage.removeItem("stories_comment_count"); } catch {} }}
       />
 
       {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
