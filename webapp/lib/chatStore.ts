@@ -128,6 +128,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isTyping: existing?.isTyping ?? false,
       isOnline: existing?.isOnline ?? false,
     });
+    saveContacts(threads);
     return { threads };
   }),
 

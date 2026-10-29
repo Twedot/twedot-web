@@ -8,6 +8,7 @@ import { AuthStorage } from "@/lib/authStorage";
 import { apiUploadFile } from "@/lib/api";
 import { IoArrowBack, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
+import { apiGet } from "@/lib/api";
 import dynamic from "next/dynamic";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -207,6 +208,22 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       if (thread.messages.length === 0) chatSocket.requestHistory(userId);
     }
   }, [userId, thread?.contact]);
+
+  useEffect(() => {
+    apiGet<{ id: string; name: string; profile_photo_url: string | null; occupation?: string; activity_score?: number }>(`/users/by-short/${userId}`)
+      .then((p) => {
+        if (p?.name) {
+          useChatStore.getState().setContact({
+            userId,
+            name: p.name,
+            photo: p.profile_photo_url ?? null,
+            occupation: p.occupation ?? null,
+            activityScore: p.activity_score ?? 0,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [userId]);
 
   const [wsConnected, setWsConnected] = useState(chatSocket.connected);
   useEffect(() => {
