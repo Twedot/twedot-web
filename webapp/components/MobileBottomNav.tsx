@@ -15,7 +15,7 @@ import { useJobSocket } from "@/lib/jobSocket";
 
 const NAV_ITEMS = [
   { href: "/stories",                 label: "Stories",  icon: IoPlayOutline,          activeIcon: IoPlay,          external: false, liveDot: false },
-  { href: "https://world.twedot.com", label: "Live",     icon: IoRadioOutline,         activeIcon: IoRadio,         external: true,  liveDot: true  },
+  { href: "/live/broadcast",            label: "Live",     icon: IoRadioOutline,         activeIcon: IoRadio,         external: false, liveDot: true  },
   { href: "/channels",                label: "Channels", icon: IoChatbubbleOutline,    activeIcon: IoChatbubble,    external: false, liveDot: false },
   { href: "/job-request",             label: "Jobs",     icon: IoNotificationsOutline, activeIcon: IoNotifications, external: false, liveDot: false },
   { href: "/profile",                 label: "Profile",  icon: IoPersonOutline,        activeIcon: IoPerson,        external: false, liveDot: false },
