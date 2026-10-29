@@ -178,9 +178,9 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
   const maxH = "calc(100vh - 56px - 40px)";
 
   return (
-    <div className="flex h-[calc(100vh-56px)] w-full items-center justify-center gap-5 pb-5 pt-5">
-      {/* ── Left column: caption / author / follow (bottom-aligned) ── */}
-      <div className="flex-shrink-0 w-[300px] flex flex-col gap-2 self-end pb-2">
+    <div className="flex h-[calc(100vh-56px)] w-full items-center justify-center gap-5 pb-5 pt-5 max-sm:gap-0 max-sm:pb-0 max-sm:pt-0 relative">
+      {/* ── Left column: caption / author / follow (desktop only) ── */}
+      <div className="flex-shrink-0 w-[300px] flex flex-col gap-2 self-end pb-2 max-sm:hidden">
         {/* Search suggestion */}
         {head.caption && (
           <button
@@ -237,18 +237,18 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
 
       {/* ── Media card — natural size, capped to viewport ── */}
       <div
-        className="relative flex-shrink-0 overflow-hidden rounded-2xl"
+        className="relative flex-shrink-0 overflow-hidden rounded-2xl max-sm:w-full max-sm:h-full max-sm:rounded-none max-sm:flex max-sm:items-center max-sm:justify-center"
         style={{ maxHeight: maxH, maxWidth: 480 }}
       >
         {active.type === "video" && active.content ? (
-          <div className="[&_video]:max-w-[480px] [&_video]:w-auto [&_video]:rounded-2xl [&>div]:flex [&>div]:items-center" style={{ maxHeight: maxH }}>
+          <div className="[&_video]:max-w-[480px] [&_video]:w-auto [&_video]:rounded-2xl [&>div]:flex [&>div]:items-center max-sm:[&_video]:max-w-full max-sm:[&_video]:w-full max-sm:[&_video]:rounded-none max-sm:[&_video]:max-h-[calc(100vh-56px)]" style={{ maxHeight: maxH }}>
             <VideoPlayer src={active.content} poster={active.thumbnailUrl ?? undefined} autoPlay />
           </div>
         ) : active.type === "image" && (active.content || active.thumbnailUrl) ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={active.content || active.thumbnailUrl!} alt="" className="w-auto max-w-[480px] rounded-2xl" style={{ maxHeight: maxH }} />
+          <img src={active.content || active.thumbnailUrl!} alt="" className="w-auto max-w-[480px] rounded-2xl max-sm:w-full max-sm:max-w-full max-sm:rounded-none max-sm:object-contain" style={{ maxHeight: maxH }} />
         ) : (
-          <div className="flex items-center justify-center bg-zinc-900 w-[360px]" style={{ height: maxH }}>
+          <div className="flex items-center justify-center bg-zinc-900 w-[360px] max-sm:w-full max-sm:h-full" style={{ height: maxH }}>
             <p className="max-w-sm text-center text-[16px] leading-[24px] text-white whitespace-pre-wrap px-6">
               <LinkText text={active.caption ?? active.content ?? ""} />
             </p>
@@ -277,8 +277,40 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
         )}
       </div>
 
+      {/* ── Mobile overlay: caption/author at bottom-left ── */}
+      <div className="hidden max-sm:block absolute bottom-0 left-0 right-16 z-10 px-4 pb-4 bg-gradient-to-t from-black/70 via-black/30 to-transparent pt-16 pointer-events-none">
+        <div className="flex items-center gap-2 mb-1 pointer-events-auto">
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
+            {head.userPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={head.userPhoto} alt={head.userName} className="h-8 w-8 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                <IoPersonOutline size={14} className="text-white" />
+              </div>
+            )}
+          </button>
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 text-left">
+            <span className="text-[13px] font-bold text-white">{head.userName}</span>
+          </button>
+          {!isOwnPost && (
+            <button
+              onClick={handleToggleFollow}
+              className={`flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-bold transition-colors ${
+                isFollowing ? "border border-white/20 text-white" : "bg-white text-black"
+              }`}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          )}
+        </div>
+        {active.caption && active.type !== "text" && (
+          <p className="text-[13px] leading-[18px] text-white line-clamp-2 pointer-events-auto">{active.caption}</p>
+        )}
+      </div>
+
       {/* ── Action rail + nav arrows (z-50 to stay above comment drawer backdrop) ── */}
-      <div className="relative z-50 flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2">
+      <div className="relative z-50 flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2 max-sm:absolute max-sm:right-3 max-sm:bottom-4">
         <div className="flex flex-col items-center gap-1">
           <button onClick={handleLike} className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-white/10 ${isLiked ? "text-red-500" : "text-white/80"}`}>
             {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
@@ -377,8 +409,8 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
             </>
           )}
         </div>
-        {/* Nav arrows */}
-        <div className="flex flex-col items-center gap-1 mt-2">
+        {/* Nav arrows (desktop only) */}
+        <div className="flex flex-col items-center gap-1 mt-2 max-sm:hidden">
           <button onClick={onPrev} disabled={!hasPrev} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed">
             <IoChevronUp size={20} />
           </button>
@@ -500,9 +532,17 @@ function FeedContent() {
   }, [goNext, goPrev]);
 
   const currentGroup = groupedPosts[currentIdx];
+  const touchStartY = useRef(0);
 
   return (
-    <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 ${drawerOpen ? "pr-[400px]" : ""}`}>
+    <div
+      className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 ${drawerOpen ? "sm:pr-[400px]" : ""}`}
+      onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
+      onTouchEnd={(e) => {
+        const dy = e.changedTouches[0].clientY - touchStartY.current;
+        if (Math.abs(dy) > 60) { if (dy < 0) goNext(); else goPrev(); }
+      }}
+    >
       {!isAuthenticated && <LoginBanner />}
       {query && (
         <div className="absolute top-0 left-0 right-0 z-20 border-b border-white/10 bg-black/80 backdrop-blur px-4 py-3 text-sm text-white/60">
