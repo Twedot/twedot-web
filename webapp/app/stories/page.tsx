@@ -315,7 +315,7 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => { setMenuOpen(false); setConfirmDelete(false); }} />
-              <div className="absolute right-0 bottom-12 z-20 w-[240px] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
+              <div className="absolute right-0 top-12 z-20 w-[240px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
                 {isOwnPost ? (
                   <>
                     <button onClick={() => { setMenuOpen(false); router.push(`/boost/${head.id}`); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-semibold text-white hover:bg-white/10">
