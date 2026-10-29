@@ -698,7 +698,7 @@ function FeedContent() {
   }, [goNext, goPrev]);
 
   const currentGroup = groupedPosts[currentIdx];
-  const touchStartY = useRef(0);
+
 
   const openComment = useCallback(() => {
     if (!currentGroup) return;
@@ -770,14 +770,7 @@ function FeedContent() {
       </div>
 
       {/* ── Mobile view ── */}
-      <div
-        className="hidden max-sm:block relative h-[calc(100vh-56px)] overflow-hidden"
-        onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
-        onTouchEnd={(e) => {
-          const dy = e.changedTouches[0].clientY - touchStartY.current;
-          if (Math.abs(dy) > 60) { if (dy < 0) goNext(); else goPrev(); }
-        }}
-      >
+      <div className="hidden max-sm:block relative h-[calc(100vh-56px)] overflow-hidden">
         {!isAuthenticated && <LoginBanner />}
         {query && (
           <div className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur px-4 py-3 text-sm text-light-text">
