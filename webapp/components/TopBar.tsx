@@ -21,6 +21,7 @@ import { apiGet } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { useChatStore } from "@/lib/chatStore";
+import Image from "next/image";
 
 interface UserResult {
   id: string;
@@ -321,7 +322,7 @@ export default function TopBar() {
             onClick={openSearch}
             className={`flex w-full items-center gap-2 rounded-full bg-feed-bg px-4 py-2.5 transition-colors hover:bg-border/30 ${open ? "invisible" : ""}`}
           >
-            <IoSearchOutline size={17} className="flex-shrink-0 text-light-text" />
+            <Image src="/auth/mini-logo.svg" alt="" width={18} height={16} className="flex-shrink-0" />
             {activeType && <span className="flex-shrink-0 text-sm text-light-text">[{activeType}]</span>}
             {activeQuery
               ? <span className="flex-1 text-center text-sm text-text">{activeQuery}</span>
@@ -381,7 +382,7 @@ export default function TopBar() {
           onClick={openSearch}
           className="flex w-full items-center gap-2 rounded-full bg-feed-bg px-4 py-2.5 transition-colors hover:bg-border/30"
         >
-          <IoSearchOutline size={17} className="flex-shrink-0 text-light-text" />
+          <Image src="/auth/mini-logo.svg" alt="" width={18} height={16} className="flex-shrink-0" />
           {activeType && <span className="flex-shrink-0 text-sm text-light-text">[{activeType}]</span>}
           {activeQuery
             ? <span className="flex-1 text-center text-sm text-text">{activeQuery}</span>

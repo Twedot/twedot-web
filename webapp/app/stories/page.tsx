@@ -774,7 +774,7 @@ function FeedContent() {
         {currentIdx > 2 && (
           <button
             onClick={goToLatest}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-white shadow-lg hover:opacity-90 transition-opacity"
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-white shadow-lg hover:opacity-90 transition-opacity"
           >
             <IoArrowUpOutline size={16} />
             <span className="text-[13px] font-semibold">Latest</span>
@@ -832,7 +832,7 @@ function FeedContent() {
         {currentIdx > 2 && (
           <button
             onClick={goToLatest}
-            className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-white shadow-lg active:opacity-80 transition-opacity"
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-white shadow-lg active:opacity-80 transition-opacity"
           >
             <IoArrowUpOutline size={16} />
             <span className="text-[13px] font-semibold">Latest</span>
