@@ -29,6 +29,7 @@ import {
   IoChevronUp,
   IoChevronDown,
   IoSearchOutline,
+  IoArrowUpOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useAuth } from "@/lib/AuthContext";
@@ -702,6 +703,11 @@ function FeedContent() {
 
   const currentGroup = groupedPosts[currentIdx];
 
+  const goToLatest = useCallback(async () => {
+    setCurrentIdx(0);
+    try { sessionStorage.setItem("stories_idx", "0"); } catch {}
+    await loadPage(1);
+  }, [loadPage]);
 
   const openComment = useCallback(() => {
     if (!currentGroup) return;
@@ -765,6 +771,16 @@ function FeedContent() {
           onClose={closeComment}
         />
 
+        {currentIdx > 2 && (
+          <button
+            onClick={goToLatest}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-white shadow-lg hover:opacity-90 transition-opacity"
+          >
+            <IoArrowUpOutline size={16} />
+            <span className="text-[13px] font-semibold">Latest</span>
+          </button>
+        )}
+
         {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
@@ -812,6 +828,16 @@ function FeedContent() {
           commentCount={commentPanelCount}
           onClose={closeComment}
         />
+
+        {currentIdx > 2 && (
+          <button
+            onClick={goToLatest}
+            className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-white shadow-lg active:opacity-80 transition-opacity"
+          >
+            <IoArrowUpOutline size={16} />
+            <span className="text-[13px] font-semibold">Latest</span>
+          </button>
+        )}
 
         {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
