@@ -50,6 +50,7 @@ import { postDetailStore } from "@/lib/postDetailStore";
 import { profileUrl, postUrl } from "@/lib/url";
 import { useChatStore } from "@/lib/chatStore";
 import ErrorState from "@/components/ErrorState";
+import LiveStoriesStrip from "@/components/LiveStoriesStrip";
 
 const PAGE_SIZE = 20;
 
@@ -727,6 +728,7 @@ function FeedContent() {
     <>
       {/* ── Desktop view ── */}
       <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden ${drawerOpen ? "pr-[400px]" : ""}`}>
+        <LiveStoriesStrip />
         {!isAuthenticated && <LoginBanner />}
         {query && (
           <div className="absolute top-0 left-0 right-0 z-20 border-b border-border bg-background/80 backdrop-blur px-4 py-3 text-sm text-light-text">
@@ -790,6 +792,7 @@ function FeedContent() {
 
       {/* ── Mobile view (TikTok fullscreen, one post at a time) ── */}
       <div className="hidden max-sm:block relative h-[calc(100vh-112px)]">
+        <LiveStoriesStrip />
         {!isAuthenticated && <LoginBanner />}
 
         {isFetching && posts.length === 0 && (

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
+import LiveStreamPlayer from "./LiveStreamPlayer";
 
 interface LiveStream {
   roomId: string;
@@ -44,10 +45,11 @@ function useLiveStreams() {
   return streams;
 }
 
+export { useLiveStreams };
+
 export default function LiveStoriesStrip() {
   const streams = useLiveStreams();
   const [active, setActive] = useState<LiveStream | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Close on Escape
   useEffect(() => {
@@ -136,17 +138,15 @@ export default function LiveStoriesStrip() {
           {/* Header */}
           <div className="flex items-center gap-3 bg-black px-4 py-3">
             <span className="flex items-center gap-1.5 rounded bg-red-500 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-white">
-              <span className="h-1.5 w-1.5 rounded-full bg-white" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
               LIVE
             </span>
             <span className="flex-1 truncate text-[15px] font-bold text-white">{active.hostName}</span>
             <a
-              href={`https://world.twedot.com/?stream=${active.roomId}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`/live/watch/${active.roomId}`}
               className="mr-2 text-[12px] font-semibold text-purple-300 hover:text-purple-200"
             >
-              Open in World ↗
+              Full Screen ↗
             </a>
             <button
               onClick={() => setActive(null)}
@@ -156,14 +156,10 @@ export default function LiveStoriesStrip() {
             </button>
           </div>
 
-          {/* iframe player */}
-          <iframe
-            ref={iframeRef}
-            src={`https://world.twedot.com/?stream=${active.roomId}`}
-            className="flex-1 border-none bg-black"
-            allow="camera; microphone; autoplay; fullscreen"
-            title={`${active.hostName} — Live`}
-          />
+          {/* LiveKit player */}
+          <div className="flex-1">
+            <LiveStreamPlayer roomId={active.roomId} hostPhoto={active.hostPhoto} />
+          </div>
         </div>
       )}
 
