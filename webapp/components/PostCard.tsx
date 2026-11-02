@@ -25,6 +25,7 @@ import {
   IoPinOutline,
   IoThumbsUpOutline,
   IoPlay,
+  IoCartOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useRouter } from "next/navigation";
@@ -563,6 +564,62 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Product overlay — price badge + Buy button ── */}
+      {head.product && (
+        <div className="sm:ml-[46px] mb-2">
+          <button
+            onClick={() => { postDetailStore.setGroup(items); postDetailStore.set(head); router.push(postUrl(head.id)); }}
+            className="w-full rounded-xl border border-border bg-feed-bg p-3 text-left transition-colors hover:bg-border/40"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-bold text-text truncate">{head.product.name}</p>
+                {head.product.description && (
+                  <p className="mt-0.5 text-[12px] text-light-text line-clamp-2">{head.product.description}</p>
+                )}
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <span className="rounded-full bg-primary px-3 py-1 text-[13px] font-bold text-white">
+                    ₦{Number(head.product.price).toLocaleString()}
+                  </span>
+                  {head.product.condition === "used" && (
+                    <span className="rounded-full bg-orange-500/10 border border-orange-500/30 px-2 py-0.5 text-[10px] font-semibold text-orange-600">Used</span>
+                  )}
+                  {head.product.availableQuantity > 0 ? (
+                    <span className="text-[11px] text-light-text">{head.product.availableQuantity} available</span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-red-500">Sold out</span>
+                  )}
+                </div>
+              </div>
+              {head.product.availableQuantity > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!requireLogin()) return;
+                    useChatStore.getState().openChat({
+                      userId: head.userId,
+                      name: head.userName,
+                      photo: head.userPhoto ?? null,
+                      occupation: head.userOccupation ?? null,
+                    });
+                  }}
+                  className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white hover:opacity-90 transition-opacity flex-shrink-0"
+                >
+                  <IoCartOutline size={14} />
+                  Buy
+                </button>
+              )}
+            </div>
+            <div className="mt-2 flex items-center gap-3 text-[11px] text-light-text">
+              {head.product.deliveryAvailable && <span>Delivery</span>}
+              {head.product.pickupAvailable && <span>Pickup</span>}
+              {head.product.locationLabel && <span>{head.product.locationLabel}</span>}
+              <span className="capitalize">{head.product.category}</span>
+            </div>
+          </button>
         </div>
       )}
 

@@ -31,6 +31,7 @@ import {
   IoFlagOutline,
   IoCodeSlashOutline,
   IoSend,
+  IoCartOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useAuth } from "@/lib/AuthContext";
@@ -46,6 +47,7 @@ import VideoPlayer from "@/components/VideoPlayer";
 import CommentsDrawer from "@/components/CommentsDrawer";
 import type { StatusPost } from "@/lib/types";
 import { profileUrl, postUrl } from "@/lib/url";
+import { useChatStore } from "@/lib/chatStore";
 
 interface Comment {
   id: string;
@@ -655,6 +657,36 @@ export default function PostPageClient() {
         )}
       </div>
 
+      {/* Product card — mobile */}
+      {post.product && (
+        <div className="absolute bottom-4 left-4 right-16 z-10" style={{ bottom: post.caption && !isText ? 100 : 60 }}>
+          <div className="rounded-xl bg-black/60 backdrop-blur-md border border-white/10 p-3">
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-bold text-white truncate">{post.product.name}</p>
+                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                  <span className="rounded-full bg-primary px-3 py-1 text-[13px] font-bold text-white">
+                    ₦{Number(post.product.price).toLocaleString()}
+                  </span>
+                  {post.product.condition === "used" && (
+                    <span className="rounded-full bg-orange-500/20 border border-orange-500/40 px-2 py-0.5 text-[10px] font-semibold text-orange-300">Used</span>
+                  )}
+                </div>
+              </div>
+              {post.product.availableQuantity > 0 && (
+                <button
+                  onClick={() => useChatStore.getState().openChat({ userId: post.userId, name: post.userName, photo: post.userPhoto ?? null, occupation: post.userOccupation ?? null })}
+                  className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white hover:opacity-90 flex-shrink-0"
+                >
+                  <IoCartOutline size={14} />
+                  Buy
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action buttons — right side */}
       <div className="absolute right-3 bottom-20 z-10 flex flex-col items-center gap-4">
         <div className="flex flex-col items-center gap-0.5">
@@ -820,6 +852,47 @@ export default function PostPageClient() {
                 <p className="text-[14px] leading-[20px] text-white font-semibold line-clamp-2">
                   <LinkText text={post.caption} />
                 </p>
+              )}
+              {/* Product card — desktop */}
+              {post.product && (
+                <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-bold text-white truncate">{post.product.name}</p>
+                      {post.product.description && (
+                        <p className="mt-0.5 text-[12px] text-white/60 line-clamp-2">{post.product.description}</p>
+                      )}
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        <span className="rounded-full bg-primary px-3 py-1 text-[13px] font-bold text-white">
+                          ₦{Number(post.product.price).toLocaleString()}
+                        </span>
+                        {post.product.condition === "used" && (
+                          <span className="rounded-full bg-orange-500/20 border border-orange-500/40 px-2 py-0.5 text-[10px] font-semibold text-orange-300">Used</span>
+                        )}
+                        {post.product.availableQuantity > 0 ? (
+                          <span className="text-[11px] text-white/50">{post.product.availableQuantity} available</span>
+                        ) : (
+                          <span className="text-[11px] font-semibold text-red-400">Sold out</span>
+                        )}
+                      </div>
+                    </div>
+                    {post.product.availableQuantity > 0 && (
+                      <button
+                        onClick={() => useChatStore.getState().openChat({ userId: post.userId, name: post.userName, photo: post.userPhoto ?? null, occupation: post.userOccupation ?? null })}
+                        className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white hover:opacity-90 flex-shrink-0"
+                      >
+                        <IoCartOutline size={14} />
+                        Buy
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-center gap-3 text-[11px] text-white/40">
+                    {post.product.deliveryAvailable && <span>Delivery</span>}
+                    {post.product.pickupAvailable && <span>Pickup</span>}
+                    {post.product.locationLabel && <span>{post.product.locationLabel}</span>}
+                    <span className="capitalize">{post.product.category}</span>
+                  </div>
+                </div>
               )}
             </div>
 

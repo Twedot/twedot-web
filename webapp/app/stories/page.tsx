@@ -30,6 +30,7 @@ import {
   IoChevronDown,
   IoSearchOutline,
   IoArrowUpOutline,
+  IoCartOutline,
 } from "react-icons/io5";
 import { FaRetweet } from "react-icons/fa";
 import { useAuth } from "@/lib/AuthContext";
@@ -288,6 +289,35 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
         )}
       </div>
 
+      {/* ── Product bar ── */}
+      {head.product && (
+        <button
+          onClick={() => router.push(postUrl(head.id))}
+          className="w-full max-w-[480px] rounded-xl border border-border bg-feed-bg p-2.5 text-left transition-colors hover:bg-border/40 flex-shrink-0"
+        >
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-text truncate">{head.product.name}</p>
+              <span className="text-[14px] font-bold text-primary">₦{Number(head.product.price).toLocaleString()}</span>
+              {head.product.condition === "used" && <span className="ml-2 text-[10px] text-orange-500 font-semibold">Used</span>}
+            </div>
+            {head.product.availableQuantity > 0 && !isOwnPost && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!requireLogin()) return;
+                  useChatStore.getState().openChat({ userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null });
+                }}
+                className="flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white hover:opacity-90 cursor-pointer"
+              >
+                <IoCartOutline size={13} />
+                Buy
+              </span>
+            )}
+          </div>
+        </button>
+      )}
+
       {/* ── Action rail + nav arrows (z-50 to stay above comment drawer backdrop) ── */}
       <div className="relative z-50 flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2">
         <div className="flex flex-col items-center gap-1">
@@ -518,7 +548,7 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
       )}
 
       {/* Author + Caption — bottom left, overlaid */}
-      <div className="absolute bottom-4 left-4 right-16 z-10">
+      <div className={`absolute left-4 right-16 z-10 ${head.product ? "bottom-[80px]" : "bottom-4"}`}>
         <div className="flex items-center gap-2 mb-2">
           <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0 relative">
             <div className={`rounded-full ${authorIsLive ? "p-[2.5px]" : ""}`} style={authorIsLive ? { background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" } : undefined}>
@@ -562,6 +592,34 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
           </p>
         )}
       </div>
+
+      {/* Product strip — overlaid above action buttons */}
+      {head.product && (
+        <button
+          onClick={() => router.push(postUrl(head.id))}
+          className="absolute bottom-4 left-4 right-16 z-20 rounded-xl bg-background/90 backdrop-blur-sm border border-border p-2.5 text-left"
+          style={{ bottom: head.product ? 16 : undefined }}
+        >
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold text-text truncate">{head.product.name}</p>
+              <span className="text-[14px] font-bold text-primary">₦{Number(head.product.price).toLocaleString()}</span>
+            </div>
+            {head.product.availableQuantity > 0 && !isOwnPost && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  useChatStore.getState().openChat({ userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null });
+                }}
+                className="flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white"
+              >
+                <IoCartOutline size={12} />
+                Buy
+              </span>
+            )}
+          </div>
+        </button>
+      )}
 
       {/* Action buttons — right side, overlaid */}
       <div className="absolute right-3 bottom-20 z-10 flex flex-col items-center gap-4">

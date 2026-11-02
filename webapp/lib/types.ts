@@ -68,4 +68,19 @@ export interface StatusPost {
   // not live until that change is deployed, so this will read undefined until then.
   userOccupation?: string | null;
   isFollowingAuthor?: boolean;
+  productId?: string | null;
+  product?: {
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    quantity: number;
+    availableQuantity: number;
+    condition: "new" | "used";
+    category: string;
+    deliveryAvailable: boolean;
+    pickupAvailable: boolean;
+    locationLabel?: string;
+    images: { id: string; imageUrl: string; thumbnailUrl?: string; sortOrder: number }[];
+  } | null;
 }

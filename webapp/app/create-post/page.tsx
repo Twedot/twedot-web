@@ -21,6 +21,9 @@ import {
   IoPause,
   IoVolumeHigh,
   IoVolumeMute,
+  IoPricetagOutline,
+  IoLocationOutline,
+  IoChevronDown,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { apiPost, apiUploadFile } from "@/lib/api";
@@ -201,6 +204,18 @@ export default function CreatePostPage() {
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Commerce — "Sell this item"
+  const [isSelling, setIsSelling] = useState(false);
+  const [productName, setProductName] = useState("");
+  const [productDesc, setProductDesc] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [productQty, setProductQty] = useState("1");
+  const [productCondition, setProductCondition] = useState<"new" | "used">("new");
+  const [productCategory, setProductCategory] = useState("other");
+  const [deliveryAvailable, setDeliveryAvailable] = useState(false);
+  const [pickupAvailable, setPickupAvailable] = useState(true);
+  const [productLocation, setProductLocation] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addMoreRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -285,8 +300,9 @@ export default function CreatePostPage() {
 
   const current = mediaItems[currentIndex] ?? null;
 
+  const productValid = !isSelling || (productName.trim().length > 0 && parseFloat(productPrice) > 0);
   const canPost =
-    !posting &&
+    !posting && productValid &&
     (mode === "text" ? textContent.trim().length > 0 : mediaItems.length > 0);
 
   const handlePost = () => {
@@ -297,6 +313,21 @@ export default function CreatePostPage() {
     // Navigate to stories immediately — upload continues in the background
     router.push("/stories");
 
+    const productPayload = isSelling && productName.trim() && parseFloat(productPrice) > 0
+      ? {
+          name: productName.trim(),
+          description: productDesc.trim() || undefined,
+          price: parseFloat(productPrice),
+          quantity: parseInt(productQty, 10) || 1,
+          condition: productCondition,
+          category: productCategory,
+          deliveryAvailable,
+          pickupAvailable,
+          locationLabel: productLocation.trim() || undefined,
+          imageUrls: mediaItems.map((m) => m.preview),
+        }
+      : undefined;
+
     if (mode === "text") {
       uploadStore.set({ total: 1, done: 0, failed: false, label: "text" });
       apiPost("/status/", {
@@ -304,6 +335,7 @@ export default function CreatePostPage() {
         content: textContent.trim(),
         isPrivate: false,
         allowComments,
+        product: productPayload,
       })
         .then(() => {
           uploadStore.set({ total: 1, done: 1, failed: false, label: "text" });
@@ -335,6 +367,7 @@ export default function CreatePostPage() {
           fd.append("isPrivate", "false");
           fd.append("allowComments", allowComments ? "true" : "false");
           if (groupId) fd.append("groupId", groupId);
+          if (productPayload) fd.append("productJson", JSON.stringify(productPayload));
           await apiUploadFile("/media/upload/direct", fd, (pct) => {
             uploadStore.set({ total: items.length, done: i, failed: false, label: "media", progress: pct });
           });
@@ -544,6 +577,134 @@ export default function CreatePostPage() {
           )}
         </>
       )}
+
+      {/* Sell this item toggle + form */}
+      <div className="mt-5 border-t border-border pt-4">
+        <button
+          onClick={() => setIsSelling((v) => !v)}
+          className="flex w-full items-center gap-2 text-[13px] font-semibold text-text transition-colors"
+        >
+          <IoPricetagOutline size={16} className={isSelling ? "text-primary" : "text-light-text"} />
+          Sell this item
+          <span className={`relative ml-auto inline-flex h-5 w-9 flex-shrink-0 rounded-full transition-colors ${isSelling ? "bg-primary" : "bg-border"}`}>
+            <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${isSelling ? "translate-x-4" : "translate-x-0.5"}`} />
+          </span>
+        </button>
+
+        {isSelling && (
+          <div className="mt-4 flex flex-col gap-3">
+            <input
+              type="text"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+              placeholder="Product name *"
+              className="w-full rounded-xl bg-feed-bg px-3 py-2.5 text-[13px] text-text outline-none placeholder-light-text border border-transparent focus:border-primary/50"
+            />
+            <textarea
+              value={productDesc}
+              onChange={(e) => setProductDesc(e.target.value.slice(0, 500))}
+              placeholder="Product description"
+              rows={2}
+              className="w-full resize-none rounded-xl bg-feed-bg px-3 py-2.5 text-[13px] text-text outline-none placeholder-light-text border border-transparent focus:border-primary/50"
+            />
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="mb-1 block text-[11px] font-medium text-light-text">Price (₦) *</label>
+                <input
+                  type="number"
+                  value={productPrice}
+                  onChange={(e) => setProductPrice(e.target.value)}
+                  placeholder="0.00"
+                  min="1"
+                  step="0.01"
+                  className="w-full rounded-xl bg-feed-bg px-3 py-2.5 text-[13px] text-text outline-none placeholder-light-text border border-transparent focus:border-primary/50"
+                />
+              </div>
+              <div className="w-24">
+                <label className="mb-1 block text-[11px] font-medium text-light-text">Qty</label>
+                <input
+                  type="number"
+                  value={productQty}
+                  onChange={(e) => setProductQty(e.target.value)}
+                  min="1"
+                  className="w-full rounded-xl bg-feed-bg px-3 py-2.5 text-[13px] text-text outline-none placeholder-light-text border border-transparent focus:border-primary/50"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="mb-1 block text-[11px] font-medium text-light-text">Condition</label>
+                <div className="flex gap-2">
+                  {(["new", "used"] as const).map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setProductCondition(c)}
+                      className={`flex-1 rounded-lg py-2 text-[12px] font-semibold transition-colors ${
+                        productCondition === c ? "bg-primary text-white" : "bg-feed-bg text-light-text hover:text-text"
+                      }`}
+                    >
+                      {c === "new" ? "New" : "Used"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1">
+                <label className="mb-1 block text-[11px] font-medium text-light-text">Category</label>
+                <select
+                  value={productCategory}
+                  onChange={(e) => setProductCategory(e.target.value)}
+                  className="w-full rounded-xl bg-feed-bg px-3 py-2.5 text-[12px] text-text outline-none border border-transparent focus:border-primary/50"
+                >
+                  <option value="electronics">Electronics</option>
+                  <option value="fashion">Fashion</option>
+                  <option value="home">Home & Garden</option>
+                  <option value="vehicles">Vehicles</option>
+                  <option value="phones">Phones & Tablets</option>
+                  <option value="computing">Computing</option>
+                  <option value="health">Health & Beauty</option>
+                  <option value="sports">Sports</option>
+                  <option value="food">Food & Drinks</option>
+                  <option value="services">Services</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setDeliveryAvailable((v) => !v)}
+                className="flex items-center gap-1.5 text-[12px] font-normal text-light-text"
+              >
+                <span className={`relative inline-flex h-4 w-7 flex-shrink-0 rounded-full transition-colors ${deliveryAvailable ? "bg-primary" : "bg-border"}`}>
+                  <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${deliveryAvailable ? "translate-x-3.5" : "translate-x-0.5"}`} />
+                </span>
+                Delivery
+              </button>
+              <button
+                onClick={() => setPickupAvailable((v) => !v)}
+                className="flex items-center gap-1.5 text-[12px] font-normal text-light-text"
+              >
+                <span className={`relative inline-flex h-4 w-7 flex-shrink-0 rounded-full transition-colors ${pickupAvailable ? "bg-primary" : "bg-border"}`}>
+                  <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${pickupAvailable ? "translate-x-3.5" : "translate-x-0.5"}`} />
+                </span>
+                Pickup
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <IoLocationOutline size={14} className="text-light-text flex-shrink-0" />
+              <input
+                type="text"
+                value={productLocation}
+                onChange={(e) => setProductLocation(e.target.value)}
+                placeholder="Location (e.g. Lagos, Ikeja)"
+                className="flex-1 rounded-xl bg-feed-bg px-3 py-2 text-[12px] text-text outline-none placeholder-light-text border border-transparent focus:border-primary/50"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Actions — two rows, same text-light-text style, no borders */}
       <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4">
