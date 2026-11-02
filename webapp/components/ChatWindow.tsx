@@ -6,7 +6,7 @@ import { useChatStore } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage, type ProductInquiryMeta } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
 import { apiUploadFile, apiPost, apiGet } from "@/lib/api";
-import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle } from "react-icons/io5";
+import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle, IoShieldCheckmarkOutline, IoAlertCircleOutline } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import dynamic from "next/dynamic";
 
@@ -43,6 +43,15 @@ interface ReceiptMeta {
   amount: number;
   buyerName: string;
   sellerName: string;
+}
+
+interface EscrowMeta {
+  orderId: string;
+  productId: string;
+  productName: string;
+  amount: number;
+  escrowEvent: string;
+  reason: string;
 }
 
 function toDate(ts: string | number): Date {
@@ -231,6 +240,20 @@ export default function ChatWindow({ userId }: { userId: string }) {
     }
   }, [myUserId, thread?.productContext, buyingProduct]);
 
+  const handleConfirmDelivery = useCallback(async (orderId: string) => {
+    try {
+      await apiPost(`/commerce/orders/${orderId}/confirm-delivery`, {});
+    } catch {}
+  }, []);
+
+  const handleDispute = useCallback(async (orderId: string) => {
+    const reason = window.prompt("Reason for dispute:");
+    if (!reason) return;
+    try {
+      await apiPost(`/commerce/orders/${orderId}/dispute`, { reason });
+    } catch {}
+  }, []);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
@@ -379,11 +402,12 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             (() => {
                               const meta = parseMeta<ReceiptMeta>(msg);
                               if (!meta) return <span>{msg.content}</span>;
+                              const isBuyer = thread?.productContext ? myUserId !== thread.productContext.sellerId : true;
                               return (
                                 <div className="p-1.5 rounded bg-black/20 border border-green-600/30">
                                   <div className="flex items-center gap-1 mb-1">
-                                    <IoCheckmarkCircle size={12} className="text-green-400" />
-                                    <span className="text-[9px] font-semibold text-green-400">Payment Successful</span>
+                                    <IoShieldCheckmarkOutline size={12} className="text-green-400" />
+                                    <span className="text-[9px] font-semibold text-green-400">Payment Held in Escrow</span>
                                   </div>
                                   <div className="flex items-center gap-1.5 mb-1">
                                     {meta.productImage && (
@@ -392,6 +416,39 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                     <span className="text-[9px] font-semibold truncate">{meta.productName}</span>
                                   </div>
                                   <p className="text-[11px] font-bold text-green-300">{formatPrice(meta.amount)}</p>
+                                  <p className="text-[8px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
+                                  <p className="text-[8px] text-white/50 mt-0.5">Funds held safely — released when delivery is confirmed</p>
+                                  {isBuyer && (
+                                    <div className="flex gap-1 mt-1.5">
+                                      <button onClick={() => handleConfirmDelivery(meta.orderId)} className="flex-1 text-[8px] px-1.5 py-0.5 rounded bg-green-600 hover:bg-green-500 text-white font-semibold">
+                                        Confirm Delivery
+                                      </button>
+                                      <button onClick={() => handleDispute(meta.orderId)} className="flex-1 text-[8px] px-1.5 py-0.5 rounded bg-red-600/70 hover:bg-red-500 text-white font-semibold">
+                                        Dispute
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()
+                          ) : msg.messageType === "escrow_update" ? (
+                            (() => {
+                              const meta = parseMeta<EscrowMeta>(msg);
+                              if (!meta) return <span>{msg.content}</span>;
+                              const isReleased = meta.escrowEvent === "released";
+                              const isDisputed = meta.escrowEvent === "disputed";
+                              const isRefunded = meta.escrowEvent === "refunded";
+                              const borderColor = isReleased ? "border-green-600/30" : isDisputed ? "border-yellow-600/30" : isRefunded ? "border-red-600/30" : "border-white/10";
+                              const textColor = isReleased ? "text-green-400" : isDisputed ? "text-yellow-400" : isRefunded ? "text-red-400" : "text-white/60";
+                              const label = isReleased ? "Funds Released" : isDisputed ? "Dispute Opened" : isRefunded ? "Order Refunded" : "Escrow Update";
+                              return (
+                                <div className={`p-1.5 rounded bg-black/20 border ${borderColor}`}>
+                                  <div className="flex items-center gap-1 mb-1">
+                                    {isReleased ? <IoCheckmarkCircle size={12} className={textColor} /> : <IoAlertCircleOutline size={12} className={textColor} />}
+                                    <span className={`text-[9px] font-semibold ${textColor}`}>{label}</span>
+                                  </div>
+                                  <span className="text-[9px] font-semibold truncate">{meta.productName}</span>
+                                  <p className={`text-[11px] font-bold ${textColor}`}>{formatPrice(meta.amount)}</p>
                                   <p className="text-[8px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
                                 </div>
                               );
