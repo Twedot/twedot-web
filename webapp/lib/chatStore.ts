@@ -18,6 +18,8 @@ export interface ChatThread {
   unreadCount: number;
   isTyping: boolean;
   isOnline: boolean;
+  requestStatus?: "pending" | "accepted" | null;
+  isRequester?: boolean;
 }
 
 const CONTACTS_KEY = "twedot_chat_contacts";
@@ -67,6 +69,8 @@ interface ChatState {
   setOnline: (userId: string, online: boolean) => void;
   markRead: (userId: string) => void;
   loadHistory: (userId: string, messages: ChatMessage[], hasMore: boolean) => void;
+  setRequestThread: (contact: ChatContact) => void;
+  acceptRequest: (userId: string) => void;
   openChat: (contact: ChatContact) => void;
   closeChat: (userId: string) => void;
   minimizeChat: (userId: string) => void;
@@ -177,6 +181,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isOnline: existing?.isOnline ?? false,
     };
     threads.set(userId, thread);
+    return { threads };
+  }),
+
+  setRequestThread: (contact) => set((state) => {
+    const threads = new Map(state.threads);
+    if (threads.has(contact.userId)) return state;
+    threads.set(contact.userId, {
+      contact,
+      messages: [],
+      lastMessage: null,
+      unreadCount: 1,
+      isTyping: false,
+      isOnline: false,
+      requestStatus: "pending",
+      isRequester: false,
+    });
+    saveContacts(threads);
+    return { threads };
+  }),
+
+  acceptRequest: (userId) => set((state) => {
+    const threads = new Map(state.threads);
+    const existing = threads.get(userId);
+    if (!existing) return state;
+    threads.set(userId, { ...existing, requestStatus: "accepted" });
     return { threads };
   }),
 

@@ -27,6 +27,27 @@ export default function ChatProvider() {
       }
     }));
 
+    // Fetch pending message requests so they show on web even if mobile acked the
+    // offline queue first.
+    fetch("/twedot-api/api/v1/messages/requests", { credentials: "include" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        const items = json?.data;
+        if (!Array.isArray(items)) return;
+        const store = useChatStore.getState();
+        for (const req of items) {
+          if (!store.threads.has(req.userId)) {
+            store.setRequestThread({
+              userId: req.userId,
+              name: req.name || "Unknown",
+              photo: req.photo || null,
+              occupation: req.occupation || null,
+            });
+          }
+        }
+      })
+      .catch(() => {});
+
     unsubs.push(chatSocket.on("message", (msg) => {
       const chatUserId = msg.senderId === myUserId ? msg.recipientId : msg.senderId;
       const isMine = msg.senderId === myUserId;

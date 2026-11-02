@@ -128,8 +128,9 @@ export default function MessagesPage() {
           </div>
         ) : (
           chatList.map((thread) => {
-            const { contact, lastMessage, unreadCount, isOnline } = thread;
+            const { contact, lastMessage, unreadCount, isOnline, requestStatus } = thread;
             const borderColor = userColor(contact.userId);
+            const isPending = requestStatus === "pending";
             return (
               <button
                 key={contact.userId}
@@ -151,18 +152,22 @@ export default function MessagesPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className={`text-[13px] truncate ${unreadCount > 0 ? "font-bold text-text" : "font-medium text-text"}`}>{contact.name}</p>
+                    <p className={`text-[13px] truncate ${unreadCount > 0 || isPending ? "font-bold text-text" : "font-medium text-text"}`}>{contact.name}</p>
                     <span className="text-[10px] text-light-text flex-shrink-0 ml-2">{lastMsgTime(lastMessage)}</span>
                   </div>
-                  <p className={`text-[12px] truncate ${unreadCount > 0 ? "font-semibold text-text" : "text-light-text"}`}>
-                    {lastMsgPreview(lastMessage)}
+                  <p className={`text-[12px] truncate ${isPending ? "font-semibold text-text" : unreadCount > 0 ? "font-semibold text-text" : "text-light-text"}`}>
+                    {isPending ? "New message request" : lastMsgPreview(lastMessage)}
                   </p>
                 </div>
-                {unreadCount > 0 && (
+                {isPending ? (
+                  <span className="flex-shrink-0 rounded-full bg-red-500/20 border border-red-500 px-2 py-0.5 text-[10px] font-bold text-red-500">
+                    Request
+                  </span>
+                ) : unreadCount > 0 ? (
                   <span className="flex-shrink-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white px-1">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
-                )}
+                ) : null}
               </button>
             );
           })
@@ -350,7 +355,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col-reverse">
         <div className="flex flex-col gap-0.5">
-          {messages.length === 0 && (
+          {messages.length === 0 && !thread.requestStatus && (
             <div className="flex items-center justify-center py-24 text-light-text text-[13px]">
               Start a conversation
             </div>
@@ -443,32 +448,63 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       )}
 
       {/* Input */}
-      <div className="flex items-center gap-2 px-3 py-2 border-t border-border bg-background shrink-0">
-        <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-light-text hover:text-text transition-colors">
-          <IoHappyOutline size={22} />
-        </button>
-        <button onClick={() => fileRef.current?.click()} className="p-1 text-light-text hover:text-text transition-colors">
-          <IoImageOutline size={22} />
-        </button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
-        <input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={(e) => handleTyping(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          placeholder="Write a message..."
-          className="flex-1 bg-feed-bg text-text text-[13px] px-4 py-2 rounded-full outline-none placeholder:text-light-text border border-transparent focus:border-primary/50"
-        />
-        <button
-          onClick={handleSend}
-          disabled={!text.trim()}
-          className="p-2 rounded-full disabled:text-light-text transition-colors"
-          style={{ color: text.trim() ? color : undefined }}
-        >
-          <IoSend size={18} />
-        </button>
-      </div>
+      {thread.requestStatus === "pending" ? (
+        <div className="border-t border-border bg-background shrink-0 px-4 py-3">
+          <p className="text-[12px] text-light-text text-center mb-2">
+            <span className="font-semibold text-text">{contact.name}</span> wants to send you a message
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => {
+                const state = useChatStore.getState();
+                const threads = new Map(state.threads);
+                threads.delete(userId);
+                useChatStore.setState({ threads });
+                onBack();
+              }}
+              className="px-5 py-1.5 rounded-full border border-border text-[12px] font-medium text-light-text hover:bg-feed-bg transition-colors"
+            >
+              Decline
+            </button>
+            <button
+              onClick={() => {
+                useChatStore.getState().acceptRequest(userId);
+              }}
+              className="px-5 py-1.5 rounded-full text-[12px] font-medium text-white transition-colors"
+              style={{ background: color }}
+            >
+              Accept
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 px-3 py-2 border-t border-border bg-background shrink-0">
+          <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-light-text hover:text-text transition-colors">
+            <IoHappyOutline size={22} />
+          </button>
+          <button onClick={() => fileRef.current?.click()} className="p-1 text-light-text hover:text-text transition-colors">
+            <IoImageOutline size={22} />
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+          <input
+            ref={inputRef}
+            type="text"
+            value={text}
+            onChange={(e) => handleTyping(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            placeholder="Write a message..."
+            className="flex-1 bg-feed-bg text-text text-[13px] px-4 py-2 rounded-full outline-none placeholder:text-light-text border border-transparent focus:border-primary/50"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!text.trim()}
+            className="p-2 rounded-full disabled:text-light-text transition-colors"
+            style={{ color: text.trim() ? color : undefined }}
+          >
+            <IoSend size={18} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
