@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useChatStore } from "@/lib/chatStore";
-import { chatSocket, type ChatMessage } from "@/lib/chatSocket";
+import { chatSocket, type ChatMessage, type ProductInquiryMeta } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
-import { apiUploadFile } from "@/lib/api";
-import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle } from "react-icons/io5";
+import { apiUploadFile, apiPost, apiGet } from "@/lib/api";
+import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import dynamic from "next/dynamic";
 
@@ -24,6 +24,25 @@ function userColor(userId: string) {
   let hash = 0;
   for (let i = 0; i < userId.length; i++) hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
   return HEADER_COLORS[Math.abs(hash) % HEADER_COLORS.length];
+}
+
+function parseMeta<T>(msg: ChatMessage): T | null {
+  if (!msg.metadata) return null;
+  try { return JSON.parse(msg.metadata) as T; } catch { return null; }
+}
+
+function formatPrice(n: number): string {
+  return "₦" + Number(n).toLocaleString();
+}
+
+interface ReceiptMeta {
+  orderId: string;
+  productId: string;
+  productName: string;
+  productImage?: string;
+  amount: number;
+  buyerName: string;
+  sellerName: string;
 }
 
 function toDate(ts: string | number): Date {
@@ -93,6 +112,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const [showEmoji, setShowEmoji] = useState(false);
   const [mediaPreviews, setMediaPreviews] = useState<{ file: File; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [buyingProduct, setBuyingProduct] = useState(false);
+  const pendingPaymentRef = useRef<string | null>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -131,6 +152,19 @@ export default function ChatWindow({ userId }: { userId: string }) {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showEmoji]);
+
+  useEffect(() => {
+    const onFocus = async () => {
+      const ref = pendingPaymentRef.current;
+      if (!ref) return;
+      pendingPaymentRef.current = null;
+      try {
+        await apiGet<{ status: string; orderId: string }>(`/commerce/orders/verify/${ref}`);
+      } catch {}
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
@@ -179,6 +213,23 @@ export default function ChatWindow({ userId }: { userId: string }) {
     setMediaPreviews([]);
     setUploading(false);
   }, [mediaPreviews, myUserId, userId, uploading]);
+
+  const handleBuyProduct = useCallback(async () => {
+    if (!myUserId || !thread?.productContext || buyingProduct) return;
+    setBuyingProduct(true);
+    try {
+      const pc = thread.productContext;
+      const res = await apiPost<{ authorizationUrl: string; reference: string }>("/commerce/orders/initiate", {
+        productId: pc.productId,
+        sellerId: pc.sellerId,
+      });
+      pendingPaymentRef.current = res.reference;
+      window.open(res.authorizationUrl, "_blank");
+    } catch {
+    } finally {
+      setBuyingProduct(false);
+    }
+  }, [myUserId, thread?.productContext, buyingProduct]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -247,6 +298,35 @@ export default function ChatWindow({ userId }: { userId: string }) {
         </button>
       </div>
 
+      {/* Pinned product card */}
+      {thread.productContext && (
+        <div className="flex items-center gap-2 px-2 py-1.5 border-b border-[#333] bg-[#111]">
+          {thread.productContext.productImage && (
+            <img src={thread.productContext.productImage} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold text-white truncate">{thread.productContext.productName}</p>
+            <p className="text-[10px] text-green-400 font-bold">{formatPrice(thread.productContext.productPrice)}</p>
+          </div>
+          {thread.productContext.sellerId !== myUserId && (
+            <button
+              onClick={handleBuyProduct}
+              disabled={buyingProduct}
+              className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-600 hover:bg-green-500 text-white text-[9px] font-semibold transition-colors disabled:opacity-50 flex-shrink-0"
+            >
+              <IoCartOutline size={10} />
+              {buyingProduct ? "..." : "Buy"}
+            </button>
+          )}
+          <button
+            onClick={() => useChatStore.getState().clearProductContext(userId)}
+            className="p-0.5 text-white/40 hover:text-white/70 flex-shrink-0"
+          >
+            <IoClose size={12} />
+          </button>
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-2 py-1.5 flex flex-col-reverse">
         <div className="flex flex-col gap-0.5">
@@ -275,6 +355,47 @@ export default function ChatWindow({ userId }: { userId: string }) {
                         }`} style={isMine ? { background: color } : undefined}>
                           {msg.messageType === "image" ? (
                             <img src={msg.content} alt="" className="max-w-full rounded-lg max-h-[140px] object-cover" />
+                          ) : msg.messageType === "product_inquiry" ? (
+                            (() => {
+                              const meta = parseMeta<ProductInquiryMeta>(msg);
+                              return (
+                                <div>
+                                  {meta && (
+                                    <div className="flex items-center gap-1.5 mb-1 p-1 rounded bg-black/20">
+                                      {meta.productImage && (
+                                        <img src={meta.productImage} alt="" className="w-6 h-6 rounded object-cover" />
+                                      )}
+                                      <div className="min-w-0">
+                                        <p className="text-[9px] font-semibold truncate">{meta.productName}</p>
+                                        <p className="text-[9px] text-green-300">{formatPrice(meta.productPrice)}</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                  <span>{msg.content}</span>
+                                </div>
+                              );
+                            })()
+                          ) : msg.messageType === "payment_receipt" ? (
+                            (() => {
+                              const meta = parseMeta<ReceiptMeta>(msg);
+                              if (!meta) return <span>{msg.content}</span>;
+                              return (
+                                <div className="p-1.5 rounded bg-black/20 border border-green-600/30">
+                                  <div className="flex items-center gap-1 mb-1">
+                                    <IoCheckmarkCircle size={12} className="text-green-400" />
+                                    <span className="text-[9px] font-semibold text-green-400">Payment Successful</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 mb-1">
+                                    {meta.productImage && (
+                                      <img src={meta.productImage} alt="" className="w-6 h-6 rounded object-cover" />
+                                    )}
+                                    <span className="text-[9px] font-semibold truncate">{meta.productName}</span>
+                                  </div>
+                                  <p className="text-[11px] font-bold text-green-300">{formatPrice(meta.amount)}</p>
+                                  <p className="text-[8px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
+                                </div>
+                              );
+                            })()
                           ) : (
                             <span>{msg.content}</span>
                           )}

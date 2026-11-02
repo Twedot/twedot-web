@@ -40,6 +40,8 @@ import { useBookmark } from "@/lib/bookmarks";
 import { postDetailStore } from "@/lib/postDetailStore";
 import { videoFeedStore } from "@/lib/videoFeedStore";
 import { useChatStore } from "@/lib/chatStore";
+import { chatSocket } from "@/lib/chatSocket";
+import { AuthStorage } from "@/lib/authStorage";
 import type { StatusPost } from "@/lib/types";
 import { profileUrl, postUrl } from "@/lib/url";
 import { useLoginGate } from "./LoginGate";
@@ -437,6 +439,88 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
         </div>
       </header>
 
+      {/* ── Product card — above caption ── */}
+      {head.product && (
+        <div className="sm:ml-[46px] mb-2">
+          <button
+            onClick={() => { postDetailStore.setGroup(items); postDetailStore.set(head); router.push(postUrl(head.id)); }}
+            className="w-full rounded-xl border border-border bg-feed-bg p-3 text-left transition-colors hover:bg-border/40"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-bold text-text truncate">{head.product.name}</p>
+                {head.product.description && (
+                  <p className="mt-0.5 text-[12px] text-light-text line-clamp-2">{head.product.description}</p>
+                )}
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <span className="rounded-full bg-primary px-3 py-1 text-[13px] font-bold text-white">
+                    ₦{Number(head.product.price).toLocaleString()}
+                  </span>
+                  {head.product.condition === "used" && (
+                    <span className="rounded-full bg-orange-500/10 border border-orange-500/30 px-2 py-0.5 text-[10px] font-semibold text-orange-600">Used</span>
+                  )}
+                  {head.product.availableQuantity > 0 ? (
+                    <span className="text-[11px] text-light-text">{head.product.availableQuantity} available</span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-red-500">Sold out</span>
+                  )}
+                </div>
+              </div>
+              {head.product.availableQuantity > 0 && !isOwnPost && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!requireLogin()) return;
+                    const contact = {
+                      userId: head.userId,
+                      name: head.userName,
+                      photo: head.userPhoto ?? null,
+                      occupation: head.userOccupation ?? null,
+                    };
+                    const product = {
+                      productId: head.product!.id,
+                      productName: head.product!.name,
+                      productPrice: head.product!.price,
+                      productImage: head.product!.images?.[0]?.imageUrl,
+                      sellerId: head.userId,
+                      statusId: head.id,
+                    };
+                    useChatStore.getState().openChatWithProduct(contact, product);
+                    const myUserId = AuthStorage.getProfile()?.id;
+                    if (myUserId) {
+                      const inquiryText = `Hi! I'm interested in "${head.product!.name}" for ₦${Number(head.product!.price).toLocaleString()}. Is it still available?`;
+                      const meta = JSON.stringify({ productId: product.productId, productName: product.productName, productPrice: product.productPrice, productImage: product.productImage, statusId: product.statusId });
+                      const clientMessageId = chatSocket.send(head.userId, inquiryText, "product_inquiry", { metadata: meta });
+                      useChatStore.getState().addMessage(head.userId, {
+                        id: clientMessageId ?? crypto.randomUUID(),
+                        clientMessageId: clientMessageId ?? undefined,
+                        senderId: myUserId,
+                        recipientId: head.userId,
+                        content: inquiryText,
+                        messageType: "product_inquiry",
+                        timestamp: Date.now(),
+                        status: clientMessageId ? "sending" : "failed",
+                        metadata: meta,
+                      }, true);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white hover:opacity-90 transition-opacity flex-shrink-0"
+                >
+                  <IoCartOutline size={14} />
+                  Buy
+                </button>
+              )}
+            </div>
+            <div className="mt-2 flex items-center gap-3 text-[11px] text-light-text">
+              {head.product.deliveryAvailable && <span>Delivery</span>}
+              {head.product.pickupAvailable && <span>Pickup</span>}
+              {head.product.locationLabel && <span>{head.product.locationLabel}</span>}
+              <span className="capitalize">{head.product.category}</span>
+            </div>
+          </button>
+        </div>
+      )}
+
       {/* ── Caption — full width on mobile, indented on desktop ── */}
       {(active.caption || active.type === "text") && (
         <button onClick={() => openDetail()} className="mb-2.5 block w-full text-left sm:pl-[46px]">
@@ -564,62 +648,6 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ── Product overlay — price badge + Buy button ── */}
-      {head.product && (
-        <div className="sm:ml-[46px] mb-2">
-          <button
-            onClick={() => { postDetailStore.setGroup(items); postDetailStore.set(head); router.push(postUrl(head.id)); }}
-            className="w-full rounded-xl border border-border bg-feed-bg p-3 text-left transition-colors hover:bg-border/40"
-          >
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-bold text-text truncate">{head.product.name}</p>
-                {head.product.description && (
-                  <p className="mt-0.5 text-[12px] text-light-text line-clamp-2">{head.product.description}</p>
-                )}
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <span className="rounded-full bg-primary px-3 py-1 text-[13px] font-bold text-white">
-                    ₦{Number(head.product.price).toLocaleString()}
-                  </span>
-                  {head.product.condition === "used" && (
-                    <span className="rounded-full bg-orange-500/10 border border-orange-500/30 px-2 py-0.5 text-[10px] font-semibold text-orange-600">Used</span>
-                  )}
-                  {head.product.availableQuantity > 0 ? (
-                    <span className="text-[11px] text-light-text">{head.product.availableQuantity} available</span>
-                  ) : (
-                    <span className="text-[11px] font-semibold text-red-500">Sold out</span>
-                  )}
-                </div>
-              </div>
-              {head.product.availableQuantity > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!requireLogin()) return;
-                    useChatStore.getState().openChat({
-                      userId: head.userId,
-                      name: head.userName,
-                      photo: head.userPhoto ?? null,
-                      occupation: head.userOccupation ?? null,
-                    });
-                  }}
-                  className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white hover:opacity-90 transition-opacity flex-shrink-0"
-                >
-                  <IoCartOutline size={14} />
-                  Buy
-                </button>
-              )}
-            </div>
-            <div className="mt-2 flex items-center gap-3 text-[11px] text-light-text">
-              {head.product.deliveryAvailable && <span>Delivery</span>}
-              {head.product.pickupAvailable && <span>Pickup</span>}
-              {head.product.locationLabel && <span>{head.product.locationLabel}</span>}
-              <span className="capitalize">{head.product.category}</span>
-            </div>
-          </button>
         </div>
       )}
 

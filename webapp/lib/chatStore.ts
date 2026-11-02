@@ -1,7 +1,16 @@
 "use client";
 
 import { create } from "zustand";
-import type { ChatMessage } from "./chatSocket";
+import type { ChatMessage, ProductInquiryMeta } from "./chatSocket";
+
+export interface ProductContext {
+  productId: string;
+  productName: string;
+  productPrice: number;
+  productImage?: string;
+  sellerId: string;
+  statusId?: string;
+}
 
 export interface ChatContact {
   userId: string;
@@ -20,6 +29,7 @@ export interface ChatThread {
   isOnline: boolean;
   requestStatus?: "pending" | "accepted" | null;
   isRequester?: boolean;
+  productContext?: ProductContext | null;
 }
 
 const CONTACTS_KEY = "twedot_chat_contacts";
@@ -72,6 +82,8 @@ interface ChatState {
   setRequestThread: (contact: ChatContact) => void;
   acceptRequest: (userId: string) => void;
   openChat: (contact: ChatContact) => void;
+  openChatWithProduct: (contact: ChatContact, product: ProductContext) => void;
+  clearProductContext: (userId: string) => void;
   closeChat: (userId: string) => void;
   minimizeChat: (userId: string) => void;
   restoreChat: (userId: string) => void;
@@ -231,6 +243,39 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const minimizedChatIds = state.minimizedChatIds.filter((id) => id !== contact.userId);
     saveOpenIds(openChatIds);
     return { threads, openChatIds, minimizedChatIds };
+  }),
+
+  openChatWithProduct: (contact, product) => set((state) => {
+    const threads = new Map(state.threads);
+    const existing = threads.get(contact.userId);
+    if (!existing) {
+      threads.set(contact.userId, {
+        contact,
+        messages: [],
+        lastMessage: null,
+        unreadCount: 0,
+        isTyping: false,
+        isOnline: false,
+        productContext: product,
+      });
+    } else {
+      threads.set(contact.userId, { ...existing, contact, productContext: product });
+    }
+    saveContacts(threads);
+    const openChatIds = state.openChatIds.filter((id) => id !== contact.userId);
+    openChatIds.push(contact.userId);
+    if (openChatIds.length > 3) openChatIds.shift();
+    const minimizedChatIds = state.minimizedChatIds.filter((id) => id !== contact.userId);
+    saveOpenIds(openChatIds);
+    return { threads, openChatIds, minimizedChatIds };
+  }),
+
+  clearProductContext: (userId) => set((state) => {
+    const threads = new Map(state.threads);
+    const existing = threads.get(userId);
+    if (!existing?.productContext) return state;
+    threads.set(userId, { ...existing, productContext: null });
+    return { threads };
   }),
 
   closeChat: (userId) => set((state) => {

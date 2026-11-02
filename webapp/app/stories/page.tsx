@@ -50,10 +50,37 @@ import { useBookmark } from "@/lib/bookmarks";
 import { postDetailStore } from "@/lib/postDetailStore";
 import { profileUrl, postUrl } from "@/lib/url";
 import { useChatStore } from "@/lib/chatStore";
+import { chatSocket } from "@/lib/chatSocket";
+import { AuthStorage } from "@/lib/authStorage";
 import ErrorState from "@/components/ErrorState";
 import { useLiveUsers } from "@/lib/liveUsers";
 
 const PAGE_SIZE = 20;
+
+function handleBuyClick(head: StatusPost, requireLogin: () => boolean) {
+  if (!requireLogin()) return;
+  const product = head.product!;
+  const contact = { userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null };
+  const productCtx = { productId: product.id, productName: product.name, productPrice: product.price, productImage: product.images?.[0]?.imageUrl, sellerId: head.userId, statusId: head.id };
+  useChatStore.getState().openChatWithProduct(contact, productCtx);
+  const myUserId = AuthStorage.getProfile()?.id;
+  if (myUserId) {
+    const inquiryText = `Hi! I'm interested in "${product.name}" for ₦${Number(product.price).toLocaleString()}. Is it still available?`;
+    const meta = JSON.stringify({ productId: productCtx.productId, productName: productCtx.productName, productPrice: productCtx.productPrice, productImage: productCtx.productImage, statusId: productCtx.statusId });
+    const clientMessageId = chatSocket.send(head.userId, inquiryText, "product_inquiry", { metadata: meta });
+    useChatStore.getState().addMessage(head.userId, {
+      id: clientMessageId ?? crypto.randomUUID(),
+      clientMessageId: clientMessageId ?? undefined,
+      senderId: myUserId,
+      recipientId: head.userId,
+      content: inquiryText,
+      messageType: "product_inquiry",
+      timestamp: Date.now(),
+      status: clientMessageId ? "sending" : "failed",
+      metadata: meta,
+    }, true);
+  }
+}
 
 function groupPosts(items: StatusPost[]): StatusPost[][] {
   const groups = new Map<string, StatusPost[]>();
@@ -305,8 +332,7 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
               <span
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!requireLogin()) return;
-                  useChatStore.getState().openChat({ userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null });
+                  handleBuyClick(head, requireLogin);
                 }}
                 className="flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white hover:opacity-90 cursor-pointer"
               >
@@ -467,6 +493,11 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
   const swipeStartX = useRef(0);
   const swipeStartY = useRef(0);
 
+  const requireLogin = () => {
+    if (!isAuthenticated) { router.push("/login"); return false; }
+    return true;
+  };
+
   useEffect(() => {
     if (!socket) return;
     const onLikeAck = (data: { statusId: string; liked: boolean; likeCount: number }) => {
@@ -610,7 +641,7 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
               <span
                 onClick={(e) => {
                   e.stopPropagation();
-                  useChatStore.getState().openChat({ userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null });
+                  handleBuyClick(head, requireLogin);
                 }}
                 className="flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white"
               >

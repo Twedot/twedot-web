@@ -5,6 +5,22 @@ import { getDeviceId } from "./deviceId";
 
 const CHAT_WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL ?? "wss://upload.twedot.com/ws";
 
+export interface ProductInquiryMeta {
+  productId: string;
+  productName: string;
+  productPrice: number;
+  productImage?: string;
+  statusId?: string;
+}
+
+export interface OfferMeta {
+  productId: string;
+  productName: string;
+  offerId?: string;
+  amount: number;
+  status: "pending" | "accepted" | "declined" | "countered";
+}
+
 export interface ChatMessage {
   id: string;
   clientMessageId?: string;
@@ -24,6 +40,7 @@ export interface ChatMessage {
   fileName?: string;
   fileSize?: number;
   duration?: number;
+  metadata?: string;
 }
 
 type MessageHandler = (msg: ChatMessage) => void;
@@ -172,6 +189,7 @@ class ChatSocket {
     fileSize?: number;
     duration?: number;
     clientMessageId?: string;
+    metadata?: string;
   }) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return null;
     const clientMessageId = extra?.clientMessageId ?? crypto.randomUUID();

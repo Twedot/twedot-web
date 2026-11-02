@@ -48,6 +48,32 @@ import CommentsDrawer from "@/components/CommentsDrawer";
 import type { StatusPost } from "@/lib/types";
 import { profileUrl, postUrl } from "@/lib/url";
 import { useChatStore } from "@/lib/chatStore";
+import { chatSocket } from "@/lib/chatSocket";
+import { AuthStorage as PostAuthStorage } from "@/lib/authStorage";
+
+function handlePostBuyClick(post: StatusPost) {
+  const product = post.product!;
+  const contact = { userId: post.userId, name: post.userName, photo: post.userPhoto ?? null, occupation: post.userOccupation ?? null };
+  const productCtx = { productId: product.id, productName: product.name, productPrice: product.price, productImage: product.images?.[0]?.imageUrl, sellerId: post.userId, statusId: post.id };
+  useChatStore.getState().openChatWithProduct(contact, productCtx);
+  const myUserId = PostAuthStorage.getProfile()?.id;
+  if (myUserId) {
+    const inquiryText = `Hi! I'm interested in "${product.name}" for ₦${Number(product.price).toLocaleString()}. Is it still available?`;
+    const meta = JSON.stringify({ productId: productCtx.productId, productName: productCtx.productName, productPrice: productCtx.productPrice, productImage: productCtx.productImage, statusId: productCtx.statusId });
+    const clientMessageId = chatSocket.send(post.userId, inquiryText, "product_inquiry", { metadata: meta });
+    useChatStore.getState().addMessage(post.userId, {
+      id: clientMessageId ?? crypto.randomUUID(),
+      clientMessageId: clientMessageId ?? undefined,
+      senderId: myUserId,
+      recipientId: post.userId,
+      content: inquiryText,
+      messageType: "product_inquiry",
+      timestamp: Date.now(),
+      status: clientMessageId ? "sending" : "failed",
+      metadata: meta,
+    }, true);
+  }
+}
 
 interface Comment {
   id: string;
@@ -675,7 +701,7 @@ export default function PostPageClient() {
               </div>
               {post.product.availableQuantity > 0 && (
                 <button
-                  onClick={() => useChatStore.getState().openChat({ userId: post.userId, name: post.userName, photo: post.userPhoto ?? null, occupation: post.userOccupation ?? null })}
+                  onClick={() => handlePostBuyClick(post)}
                   className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white hover:opacity-90 flex-shrink-0"
                 >
                   <IoCartOutline size={14} />
@@ -878,7 +904,7 @@ export default function PostPageClient() {
                     </div>
                     {post.product.availableQuantity > 0 && (
                       <button
-                        onClick={() => useChatStore.getState().openChat({ userId: post.userId, name: post.userName, photo: post.userPhoto ?? null, occupation: post.userOccupation ?? null })}
+                        onClick={() => handlePostBuyClick(post)}
                         className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white hover:opacity-90 flex-shrink-0"
                       >
                         <IoCartOutline size={14} />
