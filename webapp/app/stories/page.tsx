@@ -51,6 +51,7 @@ import { profileUrl, postUrl } from "@/lib/url";
 import { useChatStore } from "@/lib/chatStore";
 import ErrorState from "@/components/ErrorState";
 import LiveStoriesStrip from "@/components/LiveStoriesStrip";
+import { useLiveUsers } from "@/lib/liveUsers";
 
 const PAGE_SIZE = 20;
 
@@ -95,7 +96,9 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
   const { user, isAuthenticated } = useAuth();
   const { notify } = useUi();
   const { socket } = useJobSocket();
+  const { isLive } = useLiveUsers();
   const head = items[0];
+  const authorIsLive = isLive(head.userId);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const active = items[activeIndex] ?? head;
@@ -198,15 +201,18 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
 
         {/* Author row */}
         <div className="flex items-center gap-2">
-          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
-            {head.userPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover" />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/20">
-                <IoPersonOutline size={16} className="text-foreground" />
-              </div>
-            )}
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0 relative">
+            <div className={`rounded-full ${authorIsLive ? "p-[2.5px]" : ""}`} style={authorIsLive ? { background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" } : undefined}>
+              {head.userPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={head.userPhoto} alt={head.userName} className={`h-9 w-9 rounded-full object-cover ${authorIsLive ? "border-2 border-background" : ""}`} />
+              ) : (
+                <div className={`flex h-9 w-9 items-center justify-center rounded-full bg-foreground/20 ${authorIsLive ? "border-2 border-background" : ""}`}>
+                  <IoPersonOutline size={16} className="text-foreground" />
+                </div>
+              )}
+            </div>
+            {authorIsLive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded bg-red-500 px-1 text-[7px] font-black uppercase text-white">LIVE</span>}
           </button>
           <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="min-w-0 text-left">
             <span className="text-[13px] font-bold text-text">{head.userName}</span>
@@ -409,7 +415,9 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
   const { user, isAuthenticated } = useAuth();
   const { notify } = useUi();
   const { socket } = useJobSocket();
+  const { isLive } = useLiveUsers();
   const head = items[0];
+  const authorIsLive = isLive(head.userId);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const active = items[activeIndex] ?? head;
@@ -512,15 +520,18 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
       {/* Author + Caption — bottom left, overlaid */}
       <div className="absolute bottom-4 left-4 right-16 z-10">
         <div className="flex items-center gap-2 mb-2">
-          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0">
-            {head.userPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={head.userPhoto} alt={head.userName} className="h-9 w-9 rounded-full object-cover border-2 border-border" />
-            ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/20">
-                <IoPersonOutline size={16} className="text-foreground" />
-              </div>
-            )}
+          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0 relative">
+            <div className={`rounded-full ${authorIsLive ? "p-[2.5px]" : ""}`} style={authorIsLive ? { background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" } : undefined}>
+              {head.userPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={head.userPhoto} alt={head.userName} className={`h-9 w-9 rounded-full object-cover ${authorIsLive ? "border-2 border-background" : "border-2 border-border"}`} />
+              ) : (
+                <div className={`flex h-9 w-9 items-center justify-center rounded-full bg-foreground/20 ${authorIsLive ? "border-2 border-background" : ""}`}>
+                  <IoPersonOutline size={16} className="text-foreground" />
+                </div>
+              )}
+            </div>
+            {authorIsLive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded bg-red-500 px-1 text-[7px] font-black uppercase text-white">LIVE</span>}
           </button>
           <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="text-left">
             <span className="text-[13px] font-bold text-text">{head.userName}</span>
