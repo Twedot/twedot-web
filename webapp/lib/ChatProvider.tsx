@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { chatSocket } from "./chatSocket";
 import { useChatStore } from "./chatStore";
 import { AuthStorage } from "./authStorage";
+import { getDeviceId } from "./deviceId";
 
 export default function ChatProvider() {
   useEffect(() => {
@@ -29,7 +30,12 @@ export default function ChatProvider() {
 
     // Fetch pending message requests so they show on web even if mobile acked the
     // offline queue first.
-    fetch("/twedot-api/api/v1/messages/requests", { credentials: "include" })
+    const reqHeaders: Record<string, string> = {
+      "x-device-id": getDeviceId(),
+      "x-platform": "web",
+    };
+    if (token) reqHeaders.Authorization = `Bearer ${token}`;
+    fetch("/twedot-api/api/v1/messages/requests", { credentials: "include", headers: reqHeaders })
       .then((r) => r.ok ? r.json() : null)
       .then((json) => {
         const items = json?.data;
