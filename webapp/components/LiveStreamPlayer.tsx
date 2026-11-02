@@ -28,7 +28,6 @@ export default function LiveStreamPlayer({ roomId, hostPhoto }: Props) {
       setPhase("loading");
 
       try {
-        // Dynamic import avoids SSR crash (livekit-client uses browser APIs)
         const { Room, RoomEvent, Track } = await import("livekit-client");
 
         const res = await fetch(
@@ -49,13 +48,33 @@ export default function LiveStreamPlayer({ roomId, hostPhoto }: Props) {
 
         room = new Room({ adaptiveStream: true, dynacast: true });
 
+        // Pick the best video track: screen share > camera.
+        const attachBestVideo = () => {
+          if (cancelled || !room || !videoRef.current) return;
+          let best: any = null;
+          for (const p of room.remoteParticipants.values()) {
+            for (const pub of p.trackPublications.values()) {
+              if (!pub.isSubscribed || !pub.track || pub.track.kind !== Track.Kind.Video) continue;
+              if (pub.source === Track.Source.ScreenShare) { best = pub.track; break; }
+              if (!best) best = pub.track;
+            }
+            if (best?.source === Track.Source.ScreenShare) break;
+          }
+          if (best) best.attach(videoRef.current);
+        };
+
         room.on(RoomEvent.TrackSubscribed, (track: any) => {
           if (cancelled) return;
-          if (track.kind === Track.Kind.Video && videoRef.current) {
-            track.attach(videoRef.current);
-          } else if (track.kind === Track.Kind.Audio && audioRef.current) {
+          if (track.kind === Track.Kind.Audio && audioRef.current) {
             track.attach(audioRef.current);
+          } else if (track.kind === Track.Kind.Video) {
+            attachBestVideo();
           }
+        });
+
+        room.on(RoomEvent.TrackUnsubscribed, (track: any) => {
+          if (cancelled) return;
+          if (track.kind === Track.Kind.Video) attachBestVideo();
         });
 
         room.on(RoomEvent.Disconnected, () => {
@@ -65,15 +84,12 @@ export default function LiveStreamPlayer({ roomId, hostPhoto }: Props) {
         await room.connect(livekitUrl, token);
         if (cancelled) { room.disconnect(); return; }
 
-        // Attach any tracks already published before we connected
-        for (const participant of room.remoteParticipants.values()) {
-          for (const pub of participant.trackPublications.values()) {
-            if (pub.isSubscribed && pub.track) {
-              if (pub.track.kind === Track.Kind.Video && videoRef.current) {
-                pub.track.attach(videoRef.current);
-              } else if (pub.track.kind === Track.Kind.Audio && audioRef.current) {
-                pub.track.attach(audioRef.current);
-              }
+        // Attach tracks already published before we connected
+        attachBestVideo();
+        for (const p of room.remoteParticipants.values()) {
+          for (const pub of p.trackPublications.values()) {
+            if (pub.isSubscribed && pub.track?.kind === Track.Kind.Audio && audioRef.current) {
+              pub.track.attach(audioRef.current);
             }
           }
         }
