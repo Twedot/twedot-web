@@ -5,6 +5,7 @@ import { io, Socket } from "socket.io-client";
 import { AuthStorage } from "./authStorage";
 import { getDeviceId } from "./deviceId";
 import { apiGet } from "./api";
+import { useChatStore } from "./chatStore";
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL ?? "https://prodapi.twedot.com";
 const JOB_BADGE_KEY  = "tw_job_badge";
@@ -143,6 +144,30 @@ export function JobSocketProvider({ children }: { children: ReactNode }) {
 
     socket.on("new_notification", () => {
       setUnreadNotifCount((prev) => { const n = prev + 1; saveInt(NOTIF_BADGE_KEY, n); return n; });
+    });
+
+    socket.on("message_request_received", (data: { requesterId: string; requesterName: string; requesterPhoto: string | null }) => {
+      useChatStore.getState().setRequestThread({
+        userId: data.requesterId,
+        name: data.requesterName || "Unknown",
+        photo: data.requesterPhoto || null,
+      });
+    });
+
+    socket.on("message_request_accepted", (data: { userId: string; otherUserId: string }) => {
+      const profile = AuthStorage.getProfile();
+      const myId = profile?.id;
+      if (!myId) return;
+      const peerId = data.userId === myId ? data.otherUserId : data.userId;
+      useChatStore.getState().acceptRequest(peerId);
+    });
+
+    socket.on("message_request_withdrawn", (data: { requesterId: string }) => {
+      const threads = useChatStore.getState().threads;
+      const thread = threads.get(data.requesterId);
+      if (thread?.requestStatus === "pending") {
+        useChatStore.getState().acceptRequest(data.requesterId);
+      }
     });
 
     return () => {
