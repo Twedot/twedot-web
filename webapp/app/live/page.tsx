@@ -3,10 +3,13 @@
 import { useRouter } from "next/navigation";
 import { IoRadioOutline } from "react-icons/io5";
 import LiveStreamCard, { useLiveStreams } from "@/components/LiveStreamCard";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function LivePage() {
   const router = useRouter();
-  const streams = useLiveStreams();
+  const { user } = useAuth();
+  const allStreams = useLiveStreams();
+  const streams = allStreams.filter((s) => s.hostId !== user?.id);
 
   return (
     <div className="flex min-h-[calc(100vh-56px)] flex-col bg-background">

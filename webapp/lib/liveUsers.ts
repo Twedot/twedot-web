@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+export interface LiveStreamInfo {
+  roomId: string;
+  hostId: string;
+  hostName: string;
+  hostPhoto: string;
+  title: string;
+  viewers: number;
+}
+
 let _liveUserIds = new Set<string>();
+let _liveStreamMap = new Map<string, LiveStreamInfo>();
 let _listeners = new Set<() => void>();
 let _intervalId: ReturnType<typeof setInterval> | null = null;
 let _refCount = 0;
@@ -13,10 +23,22 @@ async function fetchLiveUsers() {
     if (!res.ok) return;
     const data: unknown = await res.json();
     if (!Array.isArray(data)) return;
+    const rows = data as Record<string, unknown>[];
     _liveUserIds = new Set(
-      (data as Record<string, unknown>[])
-        .map((r) => (r.hostId as string) ?? "")
-        .filter(Boolean)
+      rows.map((r) => (r.hostId as string) ?? "").filter(Boolean)
+    );
+    _liveStreamMap = new Map(
+      rows.filter((r) => r.hostId).map((r) => [
+        r.hostId as string,
+        {
+          roomId: (r.id as string) ?? "",
+          hostId: (r.hostId as string) ?? "",
+          hostName: (r.hostName as string) || "Live",
+          hostPhoto: (r.hostPhoto as string) || "",
+          title: (r.title as string) || "",
+          viewers: (r.viewers as number) || 0,
+        },
+      ])
     );
     _listeners.forEach((fn) => fn());
   } catch {}
@@ -37,12 +59,16 @@ function stopPolling() {
 
 export function useLiveUsers() {
   const [liveIds, setLiveIds] = useState(_liveUserIds);
+  const [streamMap, setStreamMap] = useState(_liveStreamMap);
 
   useEffect(() => {
     _refCount++;
     startPolling();
 
-    const cb = () => setLiveIds(new Set(_liveUserIds));
+    const cb = () => {
+      setLiveIds(new Set(_liveUserIds));
+      setStreamMap(new Map(_liveStreamMap));
+    };
     _listeners.add(cb);
     cb();
 
@@ -57,6 +83,8 @@ export function useLiveUsers() {
   }, []);
 
   const isLive = useCallback((userId: string) => liveIds.has(userId), [liveIds]);
+  const getStream = useCallback((userId: string) => streamMap.get(userId) ?? null, [streamMap]);
+  const allStreams = useCallback(() => Array.from(streamMap.values()), [streamMap]);
 
-  return { liveIds, isLive };
+  return { liveIds, isLive, getStream, allStreams };
 }

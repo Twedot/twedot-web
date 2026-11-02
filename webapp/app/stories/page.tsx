@@ -51,7 +51,6 @@ import { postDetailStore } from "@/lib/postDetailStore";
 import { profileUrl, postUrl } from "@/lib/url";
 import { useChatStore } from "@/lib/chatStore";
 import ErrorState from "@/components/ErrorState";
-import LiveStoriesStrip from "@/components/LiveStoriesStrip";
 import { useLiveUsers } from "@/lib/liveUsers";
 
 const PAGE_SIZE = 20;
@@ -97,9 +96,10 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
   const { user, isAuthenticated } = useAuth();
   const { notify } = useUi();
   const { socket } = useJobSocket();
-  const { isLive } = useLiveUsers();
+  const { isLive, getStream } = useLiveUsers();
   const head = items[0];
   const authorIsLive = isLive(head.userId);
+  const authorLiveStream = authorIsLive ? getStream(head.userId) : null;
 
   const [activeIndex, setActiveIndex] = useState(0);
   const active = items[activeIndex] ?? head;
@@ -202,7 +202,7 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
 
         {/* Author row */}
         <div className="flex items-center gap-2">
-          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0 relative">
+          <button onClick={() => router.push(authorLiveStream ? `/live/watch/${authorLiveStream.roomId}` : profileUrl(head.userName, head.userId))} className="flex-shrink-0 relative">
             <div className={`rounded-full ${authorIsLive ? "p-[2.5px]" : ""}`} style={authorIsLive ? { background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" } : undefined}>
               {head.userPhoto ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -445,9 +445,10 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
   const { user, isAuthenticated } = useAuth();
   const { notify } = useUi();
   const { socket } = useJobSocket();
-  const { isLive } = useLiveUsers();
+  const { isLive, getStream } = useLiveUsers();
   const head = items[0];
   const authorIsLive = isLive(head.userId);
+  const authorLiveStream = authorIsLive ? getStream(head.userId) : null;
 
   const [activeIndex, setActiveIndex] = useState(0);
   const active = items[activeIndex] ?? head;
@@ -550,7 +551,7 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
       {/* Author + Caption — bottom left, overlaid */}
       <div className={`absolute left-4 right-16 z-10 ${head.product ? "bottom-[80px]" : "bottom-4"}`}>
         <div className="flex items-center gap-2 mb-2">
-          <button onClick={() => router.push(profileUrl(head.userName, head.userId))} className="flex-shrink-0 relative">
+          <button onClick={() => router.push(authorLiveStream ? `/live/watch/${authorLiveStream.roomId}` : profileUrl(head.userName, head.userId))} className="flex-shrink-0 relative">
             <div className={`rounded-full ${authorIsLive ? "p-[2.5px]" : ""}`} style={authorIsLive ? { background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" } : undefined}>
               {head.userPhoto ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -797,7 +798,6 @@ function FeedContent() {
     <>
       {/* ── Desktop view ── */}
       <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden ${drawerOpen ? "pr-[400px]" : ""}`}>
-        <LiveStoriesStrip />
         {!isAuthenticated && <LoginBanner />}
         {query && (
           <div className="absolute top-0 left-0 right-0 z-20 border-b border-border bg-background/80 backdrop-blur px-4 py-3 text-sm text-light-text">
@@ -861,7 +861,6 @@ function FeedContent() {
 
       {/* ── Mobile view (TikTok fullscreen, one post at a time) ── */}
       <div className="hidden max-sm:block relative h-[calc(100vh-112px)]">
-        <LiveStoriesStrip />
         {!isAuthenticated && <LoginBanner />}
 
         {isFetching && posts.length === 0 && (

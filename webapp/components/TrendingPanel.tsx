@@ -6,7 +6,9 @@ import { IoPersonOutline } from "react-icons/io5";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
 import { useUi } from "@/lib/UiContext";
+import { useAuth } from "@/lib/AuthContext";
 import { postDetailStore } from "@/lib/postDetailStore";
+import { useLiveUsers } from "@/lib/liveUsers";
 import RankBadge from "./RankBadge";
 import { profileUrl, postUrl } from "@/lib/url";
 
@@ -66,6 +68,9 @@ function deduplicateByGroup(items: StatusPost[]): StatusPost[] {
 export default function TrendingPanel() {
   const router = useRouter();
   const { notify } = useUi();
+  const { user: authUser } = useAuth();
+  const { allStreams } = useLiveUsers();
+  const liveStreams = allStreams().filter((s) => s.hostId !== authUser?.id);
   const [posts, setPosts] = useState<StatusPost[]>([]);
   const [users, setUsers] = useState<SuggestedUser[]>([]);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
@@ -125,6 +130,47 @@ export default function TrendingPanel() {
 
   return (
     <aside className="no-scrollbar sticky top-14 hidden max-h-[calc(100vh-3.5rem)] w-[340px] flex-shrink-0 self-start overflow-y-auto py-4 pl-4 pr-3 lg:block xl:w-[360px] 2xl:w-[360px] 2xl:pl-8">
+
+      {/* Live Now */}
+      {liveStreams.length > 0 && (
+        <div className="mb-3 rounded-2xl bg-feed-bg">
+          <div className="flex items-center gap-1.5 px-4 py-3">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-light-text">Live Now</h2>
+          </div>
+          <div className="flex gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {liveStreams.map((s) => (
+              <button
+                key={s.roomId}
+                onClick={() => router.push(`/live/watch/${s.roomId}`)}
+                className="group relative flex-shrink-0 text-center"
+              >
+                <div
+                  className="relative rounded-full p-[2.5px]"
+                  style={{ background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" }}
+                >
+                  {s.hostPhoto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.hostPhoto} alt={s.hostName} className="h-12 w-12 rounded-full border-2 border-background object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-background bg-border/40">
+                      <IoPersonOutline size={18} className="text-light-text" />
+                    </div>
+                  )}
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded bg-red-500 px-1 text-[7px] font-black uppercase text-white">LIVE</span>
+                </div>
+                <p className="mt-1.5 w-14 truncate text-[10px] font-medium text-text">{s.hostName}</p>
+              </button>
+            ))}
+          </div>
+          <style>{`
+            @keyframes avatar-live-ring {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(255,0,64,0.5); }
+              50%       { box-shadow: 0 0 0 4px rgba(255,0,64,0); }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* Recent Posts */}
       {posts.length > 0 && (

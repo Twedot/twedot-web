@@ -75,11 +75,17 @@ export default function BroadcastPage() {
     return () => { cancelled = true; };
   }, [isAuthenticated]);
 
-  // Attach stream to video element whenever it becomes available
+  // Attach stream to video element whenever it becomes available or phase changes
   useEffect(() => {
-    if (videoRef.current && mediaStreamRef.current) {
-      videoRef.current.srcObject = mediaStreamRef.current;
-    }
+    if (!mediaStreamRef.current) return;
+    const attach = () => {
+      if (videoRef.current && mediaStreamRef.current) {
+        videoRef.current.srcObject = mediaStreamRef.current;
+      }
+    };
+    attach();
+    const t = setTimeout(attach, 100);
+    return () => clearTimeout(t);
   }, [cameraReady, phase]);
 
   useEffect(() => {
@@ -200,21 +206,19 @@ export default function BroadcastPage() {
           await svc.unpublishScreen();
           setScreenSharing(false);
         });
-      } catch {}
+      } catch (e) {
+        if (e instanceof Error && e.name !== 'NotAllowedError') {
+          setError('Screen sharing failed. Please try again.');
+        }
+      }
     }
   }, [screenSharing]);
 
   const sendChat = useCallback(() => {
     if (!chatInput.trim() || !serviceRef.current) return;
     serviceRef.current.sendChat(chatInput.trim());
-    setChatMessages((prev) => [...prev.slice(-200), {
-      userId: user?.id ?? "",
-      user: user?.name ?? "You",
-      color: "#6B4EFF",
-      text: chatInput.trim(),
-    }]);
     setChatInput("");
-  }, [chatInput, user]);
+  }, [chatInput]);
 
   const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
@@ -448,8 +452,8 @@ export default function BroadcastPage() {
           </div>
         </div>
 
-        {/* Chat — right side panel */}
-        <div className="hidden w-[320px] flex-shrink-0 flex-col border-l border-white/10 lg:flex">
+        {/* Chat */}
+        <div className="flex w-[280px] flex-shrink-0 flex-col border-l border-white/10 sm:w-[320px]">
           <div className="border-b border-white/10 px-4 py-3">
             <h3 className="text-[13px] font-bold text-white/80">Chat</h3>
           </div>
