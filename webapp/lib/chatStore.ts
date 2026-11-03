@@ -35,15 +35,42 @@ export interface ChatThread {
 
 const CONTACTS_KEY = "twedot_chat_contacts";
 const OPEN_IDS_KEY = "twedot_chat_open";
+const MESSAGES_KEY = "twedot_chat_messages";
+const MAX_STORED_MSGS = 100;
+
+function loadSavedMessages(): Map<string, ChatMessage[]> {
+  const map = new Map<string, ChatMessage[]>();
+  try {
+    const raw = localStorage.getItem(MESSAGES_KEY);
+    if (raw) {
+      const obj: Record<string, ChatMessage[]> = JSON.parse(raw);
+      for (const [uid, msgs] of Object.entries(obj)) map.set(uid, msgs);
+    }
+  } catch {}
+  return map;
+}
+
+function saveMessages(threads: Map<string, ChatThread>) {
+  try {
+    const obj: Record<string, ChatMessage[]> = {};
+    for (const [uid, t] of threads.entries()) {
+      const msgs = t.messages.slice(-MAX_STORED_MSGS).filter((m) => !m.content?.startsWith("data:"));
+      if (msgs.length > 0) obj[uid] = msgs;
+    }
+    localStorage.setItem(MESSAGES_KEY, JSON.stringify(obj));
+  } catch {}
+}
 
 function loadSavedContacts(): Map<string, ChatThread> {
   const threads = new Map<string, ChatThread>();
+  const savedMessages = loadSavedMessages();
   try {
     const raw = localStorage.getItem(CONTACTS_KEY);
     if (raw) {
       const contacts: ChatContact[] = JSON.parse(raw);
       for (const c of contacts) {
-        threads.set(c.userId, { contact: c, messages: [], lastMessage: null, unreadCount: 0, isTyping: false, isOnline: false });
+        const messages = savedMessages.get(c.userId) ?? [];
+        threads.set(c.userId, { contact: c, messages, lastMessage: messages[messages.length - 1] ?? null, unreadCount: 0, isTyping: false, isOnline: false });
       }
     }
   } catch {}
@@ -134,6 +161,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     };
     threads.set(chatUserId, thread);
     if (!existing || thread.contact !== existing.contact) saveContacts(threads);
+    saveMessages(threads);
     return { threads };
   }),
 
@@ -203,6 +231,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       isRequester: existing?.isRequester,
     };
     threads.set(userId, thread);
+    saveMessages(threads);
     return { threads };
   }),
 

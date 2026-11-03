@@ -6,7 +6,7 @@ import { useChatStore, type ChatContact } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
 import { apiUploadFile } from "@/lib/api";
-import { IoArrowBack, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle } from "react-icons/io5";
+import { IoArrowBack, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoShieldCheckmarkOutline, IoCheckmarkCircle, IoAlertCircleOutline } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import { apiGet } from "@/lib/api";
 import dynamic from "next/dynamic";
@@ -15,6 +15,16 @@ import dynamic from "next/dynamic";
 const emojiDataRaw = require("@emoji-mart/data");
 const emojiData = emojiDataRaw?.default ?? emojiDataRaw;
 const EmojiPicker = dynamic(() => import("@emoji-mart/react"), { ssr: false });
+
+interface ReceiptMeta { orderId: string; productName: string; productImage?: string; amount: number; buyerName: string; sellerName: string; }
+interface EscrowMeta { orderId: string; productName: string; amount: number; escrowEvent: string; reason?: string; }
+interface ProductInquiryMeta { productId: string; productName: string; productPrice: number; productImage?: string; postImage?: string; sellerId?: string; }
+
+function parseMeta<T>(msg: ChatMessage): T | null {
+  if (!msg.metadata) return null;
+  try { return JSON.parse(msg.metadata) as T; } catch { return null; }
+}
+function formatPrice(n: number): string { return "₦" + Number(n).toLocaleString(); }
 
 const HEADER_COLORS = [
   "#6B4EFF", "#E04E6A", "#2EA87E", "#E08C3A", "#3A8FE0",
@@ -373,18 +383,80 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                   <div key={ci} className="mb-1.5">
                     {cluster.messages.map((msg) => (
                       <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[75%] px-3 py-1 rounded-2xl text-[13px] leading-[1.4] break-words ${
+                        <div className={`max-w-[75%] rounded-2xl text-[13px] leading-[1.4] break-words ${
+                          msg.messageType === "payment_receipt" || msg.messageType === "escrow_update"
+                            ? "p-0"
+                            : "px-3 py-1"
+                        } ${
                           isMine
                             ? "text-white rounded-br-sm"
                             : "bg-feed-bg text-text rounded-bl-sm"
-                        }`} style={isMine ? { background: color } : undefined}>
+                        }`} style={isMine && msg.messageType !== "payment_receipt" && msg.messageType !== "escrow_update" ? { background: color } : undefined}>
                           {msg.messageType === "image" ? (
                             <img src={msg.content} alt="" className="max-w-full rounded-lg max-h-[200px] object-cover" />
-                          ) : (
+                          ) : msg.messageType === "payment_receipt" ? (() => {
+                            const meta = parseMeta<ReceiptMeta>(msg);
+                            if (!meta) return <span className="px-3 py-1 block">{msg.content}</span>;
+                            return (
+                              <div className="p-2 rounded-2xl bg-black/20 border border-green-600/30 min-w-[200px]">
+                                <div className="flex items-center gap-1 mb-1.5">
+                                  <IoShieldCheckmarkOutline size={13} className="text-green-400" />
+                                  <span className="text-[10px] font-semibold text-green-400">Payment Held in Escrow</span>
+                                </div>
+                                {meta.productImage && <img src={meta.productImage} alt="" className="w-full h-24 rounded-lg object-cover mb-1.5" />}
+                                <p className="text-[12px] font-semibold truncate">{meta.productName}</p>
+                                <p className="text-[13px] font-bold text-green-300">{formatPrice(meta.amount)}</p>
+                                <p className="text-[10px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
+                                <p className="text-[10px] text-white/50 mt-0.5">Funds held safely — released when delivery is confirmed</p>
+                                {isMine && (
+                                  <div className="flex gap-1.5 mt-2">
+                                    <a href="/orders" className="flex-1 text-center text-[10px] px-2 py-1 rounded bg-green-600 hover:bg-green-500 text-white font-semibold">Confirm Delivery</a>
+                                    <a href="/orders" className="flex-1 text-center text-[10px] px-2 py-1 rounded bg-red-600/70 hover:bg-red-500 text-white font-semibold">Dispute</a>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })() : msg.messageType === "escrow_update" ? (() => {
+                            const meta = parseMeta<EscrowMeta>(msg);
+                            if (!meta) return <span className="px-3 py-1 block">{msg.content}</span>;
+                            const isReleased = meta.escrowEvent === "released";
+                            const isDisputed = meta.escrowEvent === "disputed";
+                            const isRefunded = meta.escrowEvent === "refunded";
+                            const borderColor = isReleased ? "border-green-600/30" : isDisputed ? "border-yellow-600/30" : isRefunded ? "border-red-600/30" : "border-white/10";
+                            const textColor = isReleased ? "text-green-400" : isDisputed ? "text-yellow-400" : isRefunded ? "text-red-400" : "text-white/60";
+                            const label = isReleased ? "Funds Released" : isDisputed ? "Dispute Opened" : isRefunded ? "Order Refunded" : "Escrow Update";
+                            return (
+                              <div className={`p-2 rounded-2xl bg-black/20 border ${borderColor} min-w-[180px]`}>
+                                <div className="flex items-center gap-1 mb-1">
+                                  {isReleased ? <IoCheckmarkCircle size={13} className={textColor} /> : <IoAlertCircleOutline size={13} className={textColor} />}
+                                  <span className={`text-[10px] font-semibold ${textColor}`}>{label}</span>
+                                </div>
+                                <p className="text-[12px] font-semibold truncate">{meta.productName}</p>
+                                <p className={`text-[13px] font-bold ${textColor}`}>{formatPrice(meta.amount)}</p>
+                                <p className="text-[10px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
+                                {meta.reason && <p className="text-[10px] text-white/50 mt-0.5">{meta.reason}</p>}
+                              </div>
+                            );
+                          })() : (msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId) ? (() => {
+                            const meta = parseMeta<ProductInquiryMeta>(msg);
+                            const displayImage = meta?.postImage ?? meta?.productImage;
+                            return (
+                              <div className="p-1.5 rounded-xl bg-black/20 border border-white/10 min-w-[180px]">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  {displayImage && <img src={displayImage} alt="" className="w-8 h-8 rounded object-cover" />}
+                                  <div className="min-w-0">
+                                    {meta && <p className="text-[11px] font-bold truncate">{meta.productName}</p>}
+                                    {meta && <p className="text-[11px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>}
+                                  </div>
+                                </div>
+                                <p className="text-[12px]">{msg.content}</p>
+                              </div>
+                            );
+                          })() : (
                             <span>{msg.content}</span>
                           )}
                           {msg.status === "failed" && (
-                            <span className="block text-[10px] text-red-400">Not connected</span>
+                            <span className="block text-[10px] text-red-400 px-1">Not connected</span>
                           )}
                         </div>
                       </div>
