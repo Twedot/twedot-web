@@ -409,9 +409,9 @@ export default function ChatWindow({ userId }: { userId: string }) {
                       const isMedia = msg.messageType === "image" || msg.messageType === "video";
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
-                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-7" : ""}`}>
+                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-8" : ""}`}>
                         {!isMine && (
-                          <div className="absolute left-0 bottom-0 w-5 h-5" style={{ position: "relative", marginLeft: -24, alignSelf: "flex-end", marginRight: -3 }}>
+                          <div className="absolute left-0 bottom-0 w-5 h-5" style={{ position: "relative", marginLeft: -24, alignSelf: "flex-end", marginRight: 3 }}>
                             {isLastInCluster && (
                               contact.photo
                                 ? <img src={contact.photo} alt="" className="w-5 h-5 rounded-full object-cover" />
