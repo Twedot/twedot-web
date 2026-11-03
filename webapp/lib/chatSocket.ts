@@ -50,6 +50,7 @@ type TypingHandler = (data: { userId: string; isTyping: boolean }) => void;
 type PresenceHandler = (data: { userId: string }) => void;
 type PresenceBatchHandler = (statuses: Record<string, { online: boolean; lastSeen?: string }>) => void;
 type HistoryHandler = (data: { peerId: string; messages: ChatMessage[]; hasMore: boolean }) => void;
+type ConversationsListHandler = (peers: string[]) => void;
 
 class ChatSocket {
   private ws: WebSocket | null = null;
@@ -68,6 +69,7 @@ class ChatSocket {
   private onOffline: PresenceHandler[] = [];
   private onPresenceBatch: PresenceBatchHandler[] = [];
   private onHistory: HistoryHandler[] = [];
+  private onConversationsList: ConversationsListHandler[] = [];
   private onConnectionChange: ((connected: boolean) => void)[] = [];
 
   connect() {
@@ -179,6 +181,9 @@ class ChatSocket {
       case "chat_history":
         this.emit("history", { peerId: data.peerId, messages: data.messages ?? [], hasMore: !!data.hasMore });
         break;
+      case "conversations_list":
+        if (Array.isArray(data.peers)) this.emit("conversationsList", data.peers as string[]);
+        break;
     }
   }
 
@@ -225,6 +230,11 @@ class ChatSocket {
     this.ws.send(JSON.stringify({ type: "chat_history", recipientId: peerId, id: before ?? "" }));
   }
 
+  listConversations() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({ type: "list_conversations" }));
+  }
+
   subscribePresence(userIds: string[]) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !userIds.length) return;
     this.ws.send(JSON.stringify({ type: "subscribe_status", userIds }));
@@ -245,6 +255,7 @@ class ChatSocket {
   on(event: "offline", handler: PresenceHandler): () => void;
   on(event: "presenceBatch", handler: PresenceBatchHandler): () => void;
   on(event: "history", handler: HistoryHandler): () => void;
+  on(event: "conversationsList", handler: ConversationsListHandler): () => void;
   on(event: "connectionChange", handler: (connected: boolean) => void): () => void;
   on(event: string, handler: any): () => void {
     const arr = this.listeners(event);
@@ -263,6 +274,7 @@ class ChatSocket {
       case "offline": return this.onOffline;
       case "presenceBatch": return this.onPresenceBatch;
       case "history": return this.onHistory;
+      case "conversationsList": return this.onConversationsList;
       case "connectionChange": return this.onConnectionChange;
       default: return [];
     }

@@ -25,6 +25,17 @@ export default function ChatProvider() {
         for (const [peerId] of threads) {
           chatSocket.requestHistory(peerId);
         }
+        chatSocket.listConversations();
+      }
+    }));
+
+    unsubs.push(chatSocket.on("conversationsList", (peers) => {
+      const store = useChatStore.getState();
+      for (const peerId of peers) {
+        if (!store.threads.has(peerId)) {
+          store.setContact({ userId: peerId, name: "Unknown", photo: null });
+        }
+        chatSocket.requestHistory(peerId);
       }
     }));
 
