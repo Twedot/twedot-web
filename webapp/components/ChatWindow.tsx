@@ -354,7 +354,9 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             (() => {
                               const meta = parseMeta<ProductInquiryMeta>(msg);
                               const displayImage = (meta as any)?.postImage ?? meta?.productImage;
-                              const isBuyer = thread?.productContext ? myUserId !== thread.productContext.sellerId : !!meta?.productId;
+                              const isBuyer = thread?.productContext
+                                ? myUserId !== thread.productContext.sellerId
+                                : meta?.sellerId ? myUserId !== meta.sellerId : false;
                               return (
                                 <div className="w-[180px]">
                                   {displayImage && (

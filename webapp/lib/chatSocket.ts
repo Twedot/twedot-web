@@ -12,6 +12,7 @@ export interface ProductInquiryMeta {
   productImage?: string;
   postImage?: string;
   statusId?: string;
+  sellerId?: string;
 }
 
 export interface OfferMeta {

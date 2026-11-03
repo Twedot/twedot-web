@@ -37,6 +37,26 @@ export default function ChatProvider() {
         }
         chatSocket.requestHistory(peerId);
       }
+      const unknownPeers = peers.filter((id) => {
+        const t = useChatStore.getState().threads.get(id);
+        return !t || t.contact.name === "Unknown";
+      });
+      if (unknownPeers.length === 0 || !token) return;
+      unknownPeers.forEach((id) => {
+        fetch(`/twedot-api/api/v1/users/getby_id/${id}`, { credentials: "include", headers: reqHeaders })
+          .then((r) => r.ok ? r.json() : null)
+          .then((json) => {
+            const u = json?.data ?? json;
+            if (!u?.name) return;
+            useChatStore.getState().setContact({
+              userId: id,
+              name: u.name,
+              photo: u.profile_photo_url ?? null,
+              occupation: u.occupation ?? null,
+            });
+          })
+          .catch(() => {});
+      });
     }));
 
     // Fetch pending message requests so they show on web even if mobile acked the

@@ -66,7 +66,7 @@ function handleBuyClick(head: StatusPost, requireLogin: () => boolean) {
   const myUserId = AuthStorage.getProfile()?.id;
   if (myUserId) {
     const inquiryText = `Hi! I'm interested in "${product.name}" for ₦${Number(product.price).toLocaleString()}. Is it still available?`;
-    const meta = JSON.stringify({ productId: productCtx.productId, productName: productCtx.productName, productPrice: productCtx.productPrice, productImage: productCtx.productImage, postImage: productCtx.postImage, statusId: productCtx.statusId });
+    const meta = JSON.stringify({ productId: productCtx.productId, productName: productCtx.productName, productPrice: productCtx.productPrice, productImage: productCtx.productImage, postImage: productCtx.postImage, statusId: productCtx.statusId, sellerId: productCtx.sellerId });
     const clientMessageId = chatSocket.send(head.userId, inquiryText, "product_inquiry", { metadata: meta });
     useChatStore.getState().addMessage(head.userId, {
       id: clientMessageId ?? crypto.randomUUID(),

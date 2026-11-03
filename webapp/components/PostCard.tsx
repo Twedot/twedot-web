@@ -490,7 +490,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                     const myUserId = AuthStorage.getProfile()?.id;
                     if (myUserId) {
                       const inquiryText = `Hi! I'm interested in "${head.product!.name}" for ₦${Number(head.product!.price).toLocaleString()}. Is it still available?`;
-                      const meta = JSON.stringify({ productId: product.productId, productName: product.productName, productPrice: product.productPrice, productImage: product.productImage, postImage: product.postImage, statusId: product.statusId });
+                      const meta = JSON.stringify({ productId: product.productId, productName: product.productName, productPrice: product.productPrice, productImage: product.productImage, postImage: product.postImage, statusId: product.statusId, sellerId: product.sellerId });
                       const clientMessageId = chatSocket.send(head.userId, inquiryText, "product_inquiry", { metadata: meta });
                       useChatStore.getState().addMessage(head.userId, {
                         id: clientMessageId ?? crypto.randomUUID(),
