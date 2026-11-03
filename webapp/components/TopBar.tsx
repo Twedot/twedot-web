@@ -436,6 +436,7 @@ function ChatDropdown() {
   const chatRouter = useRouter();
   const threads = useChatStore((s) => s.threads);
   const openChat = useChatStore((s) => s.openChat);
+  const [labelsVisible, setLabelsVisible] = useState(true);
 
   const totalUnread = Array.from(threads.values()).reduce((sum, t) => sum + t.unreadCount, 0);
   const chatList = Array.from(threads.values())
@@ -465,6 +466,28 @@ function ChatDropdown() {
       {/* Vertical avatar sidebar — fixed to the right edge, always visible when there are chats */}
       {chatList.length > 0 && (
         <div className="fixed right-3 top-16 z-[9998] hidden sm:flex flex-col items-end gap-2.5 py-2">
+          {/* Toggle button to show/hide name+message labels */}
+          <button
+            onClick={() => setLabelsVisible(v => !v)}
+            title={labelsVisible ? "Hide labels" : "Show labels"}
+            className="w-9 h-5 rounded-full flex items-center justify-center bg-[#333]/80 text-white/50 hover:text-white/80 hover:bg-[#444]/80 transition-colors self-end mb-0.5"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              {labelsVisible ? (
+                // eye-off
+                <>
+                  <path d="M1 1l10 10M5 2.5A5.5 5.5 0 0111 6c-.4.8-1 1.6-1.8 2.2M3.5 3.5C2.2 4.3 1.3 5.1 1 6a5.5 5.5 0 007.5 3" />
+                  <circle cx="6" cy="6" r="1.5" />
+                </>
+              ) : (
+                // eye
+                <>
+                  <path d="M1 6s1.8-4 5-4 5 4 5 4-1.8 4-5 4-5-4-5-4z" />
+                  <circle cx="6" cy="6" r="1.5" />
+                </>
+              )}
+            </svg>
+          </button>
           {chatList.map((thread) => {
             const { contact, unreadCount, isOnline, lastMessage } = thread;
             const borderColor = avatarBorder(contact.userId);
@@ -477,22 +500,24 @@ function ChatDropdown() {
                 onClick={() => { openChat(contact); }}
                 className="flex items-center gap-2"
               >
-                {/* Name + last message label — always visible, pointing left */}
-                <div className="relative rounded-lg bg-[#222] px-2 py-1 shadow-lg border border-[#333] max-w-[160px]">
-                  <div className="flex items-center gap-1">
-                    <p className="text-[10px] font-semibold text-white whitespace-nowrap truncate">{contact.name}</p>
-                    {unreadCount > 0 && (
-                      <span className="flex-shrink-0 inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#FF3B30] px-[2px] text-[8px] font-bold text-white">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
+                {/* Name + last message label — hidden when labelsVisible is false */}
+                {labelsVisible && (
+                  <div className="relative rounded-lg bg-[#222] px-2 py-1 shadow-lg border border-[#333] max-w-[160px]">
+                    <div className="flex items-center gap-1">
+                      <p className="text-[10px] font-semibold text-white whitespace-nowrap truncate">{contact.name}</p>
+                      {unreadCount > 0 && (
+                        <span className="flex-shrink-0 inline-flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#FF3B30] px-[2px] text-[8px] font-bold text-white">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    {preview && (
+                      <p className="text-[9px] text-white/50 truncate leading-tight">{preview}</p>
                     )}
+                    <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 rotate-45 bg-[#222] border-r border-t border-[#333]" />
                   </div>
-                  {preview && (
-                    <p className="text-[9px] text-white/50 truncate leading-tight">{preview}</p>
-                  )}
-                  <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 rotate-45 bg-[#222] border-r border-t border-[#333]" />
-                </div>
-                {/* Avatar */}
+                )}
+                {/* Avatar — always visible; show unread badge here when labels are hidden */}
                 <div className="relative flex-shrink-0">
                   {contact.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -504,6 +529,11 @@ function ChatDropdown() {
                   )}
                   {isOnline && (
                     <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background" />
+                  )}
+                  {!labelsVisible && unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#FF3B30] px-[2px] text-[8px] font-bold text-white">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
                   )}
                 </div>
               </button>
