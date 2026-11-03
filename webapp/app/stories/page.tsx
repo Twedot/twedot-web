@@ -260,6 +260,26 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
           )}
         </div>
 
+        {/* Product info — full width row above caption */}
+        {head.product && (
+          <div className="flex items-center justify-between w-full gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[13px] font-bold text-text truncate">{head.product.name}</span>
+              <span className="text-[14px] font-bold text-primary flex-shrink-0">₦{Number(head.product.price).toLocaleString()}</span>
+              {head.product.condition === "used" && <span className="text-[10px] text-orange-500 font-semibold flex-shrink-0">Used</span>}
+            </div>
+            {head.product.availableQuantity > 0 && !isOwnPost && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
+                className="flex-shrink-0 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white hover:opacity-90"
+              >
+                <IoCartOutline size={12} />
+                Buy
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Caption — click to expand */}
         {active.caption && active.type !== "text" && (
           <p
@@ -271,24 +291,6 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
               <span className="text-light-text font-normal"> more</span>
             )}
           </p>
-        )}
-
-        {/* Product info — inline with caption, no border */}
-        {head.product && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[13px] font-bold text-text truncate">{head.product.name}</span>
-            <span className="text-[14px] font-bold text-primary">₦{Number(head.product.price).toLocaleString()}</span>
-            {head.product.condition === "used" && <span className="text-[10px] text-orange-500 font-semibold">Used</span>}
-            {head.product.availableQuantity > 0 && !isOwnPost && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
-                className="flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white hover:opacity-90"
-              >
-                <IoCartOutline size={12} />
-                Buy
-              </button>
-            )}
-          </div>
         )}
       </div>
 
@@ -602,6 +604,24 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
             </button>
           )}
         </div>
+        {head.product && (
+          <div className="flex items-center justify-between w-full gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[12px] font-bold text-text drop-shadow truncate">{head.product.name}</span>
+              <span className="text-[13px] font-bold text-primary drop-shadow flex-shrink-0">₦{Number(head.product.price).toLocaleString()}</span>
+              {head.product.condition === "used" && <span className="text-[10px] text-orange-500 font-semibold flex-shrink-0">Used</span>}
+            </div>
+            {head.product.availableQuantity > 0 && !isOwnPost && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
+                className="flex-shrink-0 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white"
+              >
+                <IoCartOutline size={12} />
+                Buy
+              </button>
+            )}
+          </div>
+        )}
         {active.caption && !isText && (
           <p
             onClick={() => setCaptionExpanded(e => !e)}
@@ -612,21 +632,6 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
               <span className="text-light-text font-normal"> more</span>
             )}
           </p>
-        )}
-        {head.product && (
-          <div className="flex items-center gap-2 flex-wrap mt-0.5">
-            <span className="text-[12px] font-bold text-text drop-shadow">{head.product.name}</span>
-            <span className="text-[13px] font-bold text-primary drop-shadow">₦{Number(head.product.price).toLocaleString()}</span>
-            {head.product.availableQuantity > 0 && !isOwnPost && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
-                className="flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white"
-              >
-                <IoCartOutline size={12} />
-                Buy
-              </button>
-            )}
-          </div>
         )}
       </div>
 
