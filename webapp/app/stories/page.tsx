@@ -61,12 +61,12 @@ function handleBuyClick(head: StatusPost, requireLogin: () => boolean) {
   if (!requireLogin()) return;
   const product = head.product!;
   const contact = { userId: head.userId, name: head.userName, photo: head.userPhoto ?? null, occupation: head.userOccupation ?? null };
-  const productCtx = { productId: product.id, productName: product.name, productPrice: product.price, productImage: product.images?.[0]?.imageUrl, sellerId: head.userId, statusId: head.id };
+  const productCtx = { productId: product.id, productName: product.name, productPrice: product.price, productImage: product.images?.[0]?.imageUrl, postImage: head.thumbnailUrl ?? (head.type === "image" ? head.content : undefined) ?? product.images?.[0]?.imageUrl, sellerId: head.userId, statusId: head.id };
   useChatStore.getState().openChatWithProduct(contact, productCtx);
   const myUserId = AuthStorage.getProfile()?.id;
   if (myUserId) {
     const inquiryText = `Hi! I'm interested in "${product.name}" for ₦${Number(product.price).toLocaleString()}. Is it still available?`;
-    const meta = JSON.stringify({ productId: productCtx.productId, productName: productCtx.productName, productPrice: productCtx.productPrice, productImage: productCtx.productImage, statusId: productCtx.statusId });
+    const meta = JSON.stringify({ productId: productCtx.productId, productName: productCtx.productName, productPrice: productCtx.productPrice, productImage: productCtx.productImage, postImage: productCtx.postImage, statusId: productCtx.statusId });
     const clientMessageId = chatSocket.send(head.userId, inquiryText, "product_inquiry", { metadata: meta });
     useChatStore.getState().addMessage(head.userId, {
       id: clientMessageId ?? crypto.randomUUID(),
@@ -260,35 +260,26 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
           )}
         </div>
 
-        {/* Product info — full width row above caption */}
-        {head.product && (
-          <div className="flex items-center justify-between w-full gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[13px] font-bold text-text truncate">{head.product.name}</span>
-              <span className="text-[14px] font-bold text-primary flex-shrink-0">₦{Number(head.product.price).toLocaleString()}</span>
-              {head.product.condition === "used" && <span className="text-[10px] text-orange-500 font-semibold flex-shrink-0">Used</span>}
-            </div>
-            {head.product.availableQuantity > 0 && !isOwnPost && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
-                className="flex-shrink-0 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white hover:opacity-90"
-              >
-                <IoCartOutline size={12} />
-                Buy
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Caption — click to expand */}
-        {active.caption && active.type !== "text" && (
-          <p
-            onClick={() => setCaptionExpanded(e => !e)}
-            className={`text-[14px] leading-[20px] text-text font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
+        {head.product && head.product.availableQuantity > 0 && !isOwnPost && (
+          <button
+            onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
+            className="w-full flex items-center justify-center gap-1.5 rounded-full bg-red-500 py-2 text-[12px] font-bold text-white hover:opacity-90"
           >
-            {active.caption}
-            {!captionExpanded && active.caption.length > 80 && (
-              <span className="text-light-text font-normal"> more</span>
+            <IoCartOutline size={13} />
+            Buy
+          </button>
+        )}
+        {head.product && (
+          <p className="text-[14px] leading-[20px] font-semibold">
+            <span className="text-text">{head.product.name} · </span>
+            <span className="text-green-500">₦{head.product.price.toLocaleString()}</span>
+          </p>
+        )}
+        {active.caption && active.type !== "text" && (
+          <p onClick={() => setCaptionExpanded(e => !e)} className="text-[14px] leading-[20px] text-text font-semibold cursor-pointer">
+            {captionExpanded ? active.caption : active.caption.slice(0, 150)}
+            {!captionExpanded && active.caption.length > 150 && (
+              <span className="text-light-text font-normal">... <span className="text-primary">more</span></span>
             )}
           </p>
         )}
@@ -604,32 +595,26 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
             </button>
           )}
         </div>
+        {head.product && head.product.availableQuantity > 0 && !isOwnPost && (
+          <button
+            onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
+            className="w-full flex items-center justify-center gap-1.5 rounded-full bg-red-500 py-2 text-[12px] font-bold text-white"
+          >
+            <IoCartOutline size={13} />
+            Buy
+          </button>
+        )}
         {head.product && (
-          <div className="flex items-center justify-between w-full gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[12px] font-bold text-text drop-shadow truncate">{head.product.name}</span>
-              <span className="text-[13px] font-bold text-primary drop-shadow flex-shrink-0">₦{Number(head.product.price).toLocaleString()}</span>
-              {head.product.condition === "used" && <span className="text-[10px] text-orange-500 font-semibold flex-shrink-0">Used</span>}
-            </div>
-            {head.product.availableQuantity > 0 && !isOwnPost && (
-              <button
-                onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
-                className="flex-shrink-0 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white"
-              >
-                <IoCartOutline size={12} />
-                Buy
-              </button>
-            )}
-          </div>
+          <p className="text-[13px] leading-[18px] font-semibold">
+            <span className="text-text">{head.product.name} · </span>
+            <span className="text-green-500">₦{head.product.price.toLocaleString()}</span>
+          </p>
         )}
         {active.caption && !isText && (
-          <p
-            onClick={() => setCaptionExpanded(e => !e)}
-            className={`text-[13px] leading-[18px] text-text font-semibold cursor-pointer ${captionExpanded ? "" : "line-clamp-2"}`}
-          >
-            {active.caption}
-            {!captionExpanded && active.caption.length > 80 && (
-              <span className="text-light-text font-normal"> more</span>
+          <p onClick={() => setCaptionExpanded(e => !e)} className="text-[13px] leading-[18px] text-text font-semibold cursor-pointer">
+            {captionExpanded ? active.caption : active.caption.slice(0, 150)}
+            {!captionExpanded && active.caption.length > 150 && (
+              <span className="text-light-text font-normal">... <span className="text-primary">more</span></span>
             )}
           </p>
         )}

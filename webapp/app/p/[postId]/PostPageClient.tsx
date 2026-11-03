@@ -54,12 +54,12 @@ import { AuthStorage as PostAuthStorage } from "@/lib/authStorage";
 function handlePostBuyClick(post: StatusPost) {
   const product = post.product!;
   const contact = { userId: post.userId, name: post.userName, photo: post.userPhoto ?? null, occupation: post.userOccupation ?? null };
-  const productCtx = { productId: product.id, productName: product.name, productPrice: product.price, productImage: product.images?.[0]?.imageUrl, sellerId: post.userId, statusId: post.id };
+  const productCtx = { productId: product.id, productName: product.name, productPrice: product.price, productImage: product.images?.[0]?.imageUrl, postImage: post.thumbnailUrl ?? (post.type === "image" ? post.content : undefined) ?? product.images?.[0]?.imageUrl, sellerId: post.userId, statusId: post.id };
   useChatStore.getState().openChatWithProduct(contact, productCtx);
   const myUserId = PostAuthStorage.getProfile()?.id;
   if (myUserId) {
     const inquiryText = `Hi! I'm interested in "${product.name}" for ₦${Number(product.price).toLocaleString()}. Is it still available?`;
-    const meta = JSON.stringify({ productId: productCtx.productId, productName: productCtx.productName, productPrice: productCtx.productPrice, productImage: productCtx.productImage, statusId: productCtx.statusId });
+    const meta = JSON.stringify({ productId: productCtx.productId, productName: productCtx.productName, productPrice: productCtx.productPrice, productImage: productCtx.productImage, postImage: productCtx.postImage, statusId: productCtx.statusId });
     const clientMessageId = chatSocket.send(post.userId, inquiryText, "product_inquiry", { metadata: meta });
     useChatStore.getState().addMessage(post.userId, {
       id: clientMessageId ?? crypto.randomUUID(),

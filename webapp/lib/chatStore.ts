@@ -8,6 +8,7 @@ export interface ProductContext {
   productName: string;
   productPrice: number;
   productImage?: string;
+  postImage?: string;
   sellerId: string;
   statusId?: string;
 }
@@ -127,6 +128,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       unreadCount: isMine ? (existing?.unreadCount ?? 0) : (existing?.unreadCount ?? 0) + 1,
       isTyping: existing?.isTyping ?? false,
       isOnline: existing?.isOnline ?? false,
+      productContext: existing?.productContext,
+      requestStatus: existing?.requestStatus,
+      isRequester: existing?.isRequester,
     };
     threads.set(chatUserId, thread);
     if (!existing || thread.contact !== existing.contact) saveContacts(threads);
@@ -143,6 +147,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       unreadCount: existing?.unreadCount ?? 0,
       isTyping: existing?.isTyping ?? false,
       isOnline: existing?.isOnline ?? false,
+      productContext: existing?.productContext,
+      requestStatus: existing?.requestStatus,
+      isRequester: existing?.isRequester,
     });
     saveContacts(threads);
     return { threads };
@@ -191,6 +198,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       unreadCount: existing?.unreadCount ?? 0,
       isTyping: existing?.isTyping ?? false,
       isOnline: existing?.isOnline ?? false,
+      productContext: existing?.productContext,
+      requestStatus: existing?.requestStatus,
+      isRequester: existing?.isRequester,
     };
     threads.set(userId, thread);
     return { threads };

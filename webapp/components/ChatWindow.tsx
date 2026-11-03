@@ -142,7 +142,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
   useEffect(() => {
     if (thread?.contact) {
       chatSocket.subscribePresence([userId]);
-      if (thread.messages.length === 0) chatSocket.requestHistory(userId);
+      chatSocket.requestHistory(userId);
     }
   }, [userId, thread?.contact]);
 
@@ -321,34 +321,6 @@ export default function ChatWindow({ userId }: { userId: string }) {
         </button>
       </div>
 
-      {/* Pinned product card */}
-      {thread.productContext && (
-        <div className="flex items-center gap-2 px-2 py-1.5 border-b border-[#333] bg-[#111]">
-          {thread.productContext.productImage && (
-            <img src={thread.productContext.productImage} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold text-white truncate">{thread.productContext.productName}</p>
-            <p className="text-[10px] text-green-400 font-bold">{formatPrice(thread.productContext.productPrice)}</p>
-          </div>
-          {thread.productContext.sellerId !== myUserId && (
-            <button
-              onClick={handleBuyProduct}
-              disabled={buyingProduct}
-              className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-600 hover:bg-green-500 text-white text-[9px] font-semibold transition-colors disabled:opacity-50 flex-shrink-0"
-            >
-              <IoCartOutline size={10} />
-              {buyingProduct ? "..." : "Buy"}
-            </button>
-          )}
-          <button
-            onClick={() => useChatStore.getState().clearProductContext(userId)}
-            className="p-0.5 text-white/40 hover:text-white/70 flex-shrink-0"
-          >
-            <IoClose size={12} />
-          </button>
-        </div>
-      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-2 py-1.5 flex flex-col-reverse">
@@ -378,23 +350,36 @@ export default function ChatWindow({ userId }: { userId: string }) {
                         }`} style={isMine ? { background: color } : undefined}>
                           {msg.messageType === "image" ? (
                             <img src={msg.content} alt="" className="max-w-full rounded-lg max-h-[140px] object-cover" />
-                          ) : msg.messageType === "product_inquiry" ? (
+                          ) : (msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId) ? (
                             (() => {
                               const meta = parseMeta<ProductInquiryMeta>(msg);
+                              const displayImage = (meta as any)?.postImage ?? meta?.productImage;
+                              const isBuyer = thread?.productContext ? myUserId !== thread.productContext.sellerId : !!meta?.productId;
                               return (
-                                <div>
+                                <div className="w-[180px]">
+                                  {displayImage && (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={displayImage} alt="" className="w-full h-[110px] object-cover rounded-t-lg mb-1" />
+                                  )}
                                   {meta && (
-                                    <div className="flex items-center gap-1.5 mb-1 p-1 rounded bg-black/20">
-                                      {meta.productImage && (
-                                        <img src={meta.productImage} alt="" className="w-6 h-6 rounded object-cover" />
-                                      )}
+                                    <div className="flex items-center justify-between gap-1 px-1 pt-1 pb-0.5">
                                       <div className="min-w-0">
-                                        <p className="text-[9px] font-semibold truncate">{meta.productName}</p>
-                                        <p className="text-[9px] text-green-300">{formatPrice(meta.productPrice)}</p>
+                                        <p className="text-[10px] font-bold truncate">{meta.productName}</p>
+                                        <p className="text-[10px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>
                                       </div>
+                                      {isBuyer && (
+                                        <button
+                                          onClick={handleBuyProduct}
+                                          disabled={buyingProduct}
+                                          className="flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-400 text-white text-[9px] font-semibold transition-colors disabled:opacity-50"
+                                        >
+                                          <IoCartOutline size={9} />
+                                          {buyingProduct ? "..." : "Buy"}
+                                        </button>
+                                      )}
                                     </div>
                                   )}
-                                  <span>{msg.content}</span>
+                                  <p className="text-[11px] leading-[1.4] px-1 pb-1">{msg.content}</p>
                                 </div>
                               );
                             })()

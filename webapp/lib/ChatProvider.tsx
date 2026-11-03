@@ -65,7 +65,16 @@ export default function ChatProvider() {
 
     unsubs.push(chatSocket.on("messageSent", (msg) => {
       const chatUserId = msg.recipientId;
-      useChatStore.getState().addMessage(chatUserId, { ...msg, senderId: myUserId }, true);
+      const state = useChatStore.getState();
+      const original = msg.clientMessageId
+        ? state.getThread(chatUserId)?.messages.find((m) => m.clientMessageId === msg.clientMessageId)
+        : undefined;
+      state.addMessage(chatUserId, {
+        ...msg,
+        senderId: myUserId,
+        messageType: msg.messageType || original?.messageType || "text",
+        metadata: msg.metadata ?? original?.metadata,
+      }, true);
     }));
 
     unsubs.push(chatSocket.on("typing", (data) => {

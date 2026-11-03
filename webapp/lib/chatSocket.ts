@@ -10,6 +10,7 @@ export interface ProductInquiryMeta {
   productName: string;
   productPrice: number;
   productImage?: string;
+  postImage?: string;
   statusId?: string;
 }
 
