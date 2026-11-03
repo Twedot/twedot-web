@@ -335,7 +335,6 @@ export default function CreatePostPage() {
         content: textContent.trim(),
         isPrivate: false,
         allowComments,
-        product: productPayload,
       })
         .then(() => {
           uploadStore.set({ total: 1, done: 1, failed: false, label: "text" });
@@ -403,7 +402,7 @@ export default function CreatePostPage() {
         {(["text", "image", "video"] as Mode[]).map((m) => (
           <button
             key={m}
-            onClick={() => setMode(m)}
+            onClick={() => { setMode(m); if (m === "text") setIsSelling(false); }}
             className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-semibold transition-colors ${
               mode === m ? "bg-primary text-white" : "bg-feed-bg text-light-text hover:text-text"
             }`}
@@ -578,8 +577,8 @@ export default function CreatePostPage() {
         </>
       )}
 
-      {/* Sell this item toggle + form */}
-      <div className="mt-5 border-t border-border pt-4">
+      {/* Sell this item toggle + form — only for image/video posts */}
+      {(mode === "image" || mode === "video") && <div className="mt-5 border-t border-border pt-4">
         <button
           onClick={() => setIsSelling((v) => !v)}
           className="flex w-full items-center gap-2 text-[13px] font-semibold text-text transition-colors"
@@ -704,7 +703,7 @@ export default function CreatePostPage() {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Actions — two rows, same text-light-text style, no borders */}
       <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4">
