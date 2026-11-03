@@ -289,6 +289,11 @@ export default function WalletPage() {
           <div className="border-t border-border px-4 py-3 space-y-2">
             {tab === "sales" ? (
               <>
+                <button onClick={() => router.push("/wallet/orders" as any)} className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
+                  <span className="flex-shrink-0 text-[15px]">📦</span>
+                  <span className="flex-1 text-[12px] font-semibold text-text">Orders — deliveries &amp; disputes</span>
+                  <IoChevronForward size={16} className="flex-shrink-0 text-light-text" />
+                </button>
                 <button onClick={() => router.push("/inventory")} className="flex w-full items-center gap-2.5 rounded-[14px] bg-feed-bg p-4 text-left hover:bg-feed-bg/70 transition-colors">
                   <IoStorefrontOutline size={18} className="flex-shrink-0 text-primary" />
                   <span className="flex-1 text-[12px] font-semibold text-text">My Inventory — manage your listings</span>
