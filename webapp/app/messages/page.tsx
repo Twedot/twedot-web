@@ -290,6 +290,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   const audioChunksRef = useRef<Blob[]>([]);
   const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
   const reactPickerRef = useRef<HTMLDivElement>(null);
   const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
 
@@ -597,7 +598,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             </div>
                           )}
                           {msg.messageType === "image" ? (
-                            <img src={msg.content} alt="" className="w-[220px] h-[270px] rounded-2xl object-cover block" style={{ borderBottomRightRadius: isMine ? 4 : undefined, borderBottomLeftRadius: !isMine ? 4 : undefined }} />
+                            <img src={msg.content} alt="" onClick={() => setViewingImage(msg.content)} className="w-[220px] h-[270px] rounded-2xl object-cover block cursor-pointer hover:opacity-90 transition-opacity" style={{ borderBottomRightRadius: isMine ? 4 : undefined, borderBottomLeftRadius: !isMine ? 4 : undefined }} />
                           ) : msg.messageType === "video" ? (
                             <video src={msg.content} controls className="w-[220px] max-h-[270px] rounded-2xl object-cover block" style={{ borderBottomRightRadius: isMine ? 4 : undefined, borderBottomLeftRadius: !isMine ? 4 : undefined }} />
                           ) : msg.messageType === "voice" ? (
@@ -838,6 +839,14 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
             </button>
           )}
           {isRecording && <span className="text-[11px] text-red-500 shrink-0">{recordingSeconds}s</span>}
+        </div>
+      )}
+      {viewingImage && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingImage(null)}>
+          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingImage(null)}>
+            <IoCloseOutline size={32} />
+          </button>
+          <img src={viewingImage} alt="" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg cursor-default" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>
