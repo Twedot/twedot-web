@@ -97,6 +97,11 @@ export default function UserPageClient() {
       try {
         await apiGet<UserProfile>(`/users/by-short/${shortId}`, authOpt)
           .then((p) => {
+            // Redirect to own profile page instead of showing visitor view
+            if (me?.id && p.id === me.id) {
+              router.replace("/profile");
+              return;
+            }
             setProfile(p);
             setIsFollowing(p.is_following ?? false);
             profileId = p.id;

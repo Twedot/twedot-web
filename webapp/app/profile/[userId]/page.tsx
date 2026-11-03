@@ -72,7 +72,7 @@ function deduplicateByGroup(items: StatusPost[]): StatusPost[] {
 export default function OtherUserProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user: me } = useAuth();
   const { notify } = useUi();
   const { socket } = useJobSocket();
 
@@ -85,6 +85,13 @@ export default function OtherUserProfilePage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
   }, [isLoading, isAuthenticated, router]);
+
+  // Redirect own profile to /profile instead of showing visitor view
+  useEffect(() => {
+    if (!isLoading && me?.id && userId && me.id === userId) {
+      router.replace("/profile");
+    }
+  }, [isLoading, me, userId, router]);
 
   useEffect(() => {
     if (!isAuthenticated || !userId) return;
