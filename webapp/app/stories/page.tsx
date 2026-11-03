@@ -676,6 +676,8 @@ function FeedContent() {
   const [currentIdx, setCurrentIdx] = useState(() => {
     try { return parseInt(sessionStorage.getItem("stories_idx") ?? "0") || 0; } catch { return 0; }
   });
+  const [hasNewPosts, setHasNewPosts] = useState(false);
+  const latestPostIdRef = useRef<string | null>(null);
   const [commentPanelPostId, setCommentPanelPostId] = useState<string | null>(() => {
     try { return sessionStorage.getItem("stories_comment_post") || null; } catch { return null; }
   });
@@ -729,6 +731,25 @@ function FeedContent() {
     return feedStateStore.subscribe(() => setPosts(feedStateStore.get().posts));
   }, []);
 
+  useEffect(() => {
+    if (posts.length > 0 && !latestPostIdRef.current) {
+      latestPostIdRef.current = posts[0].id;
+    }
+  }, [posts]);
+
+  useEffect(() => {
+    if (!isAuthenticated || query) return;
+    const interval = setInterval(async () => {
+      try {
+        const data = await apiGet<StatusPost[]>(`/status/public?page=1&limit=1`);
+        if (data.length > 0 && latestPostIdRef.current && data[0].id !== latestPostIdRef.current) {
+          setHasNewPosts(true);
+        }
+      } catch {}
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, query]);
+
   const groupedPosts = useMemo(() => groupPosts(posts), [posts]);
 
   useEffect(() => {
@@ -774,8 +795,10 @@ function FeedContent() {
 
   const goToLatest = useCallback(async () => {
     setCurrentIdx(0);
+    setHasNewPosts(false);
     try { sessionStorage.setItem("stories_idx", "0"); } catch {}
     await loadPage(1);
+    latestPostIdRef.current = null;
   }, [loadPage]);
 
   const openComment = useCallback(() => {
@@ -840,7 +863,7 @@ function FeedContent() {
           onClose={closeComment}
         />
 
-        {currentIdx > 2 && (
+        {hasNewPosts && (
           <button
             onClick={goToLatest}
             className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-white shadow-lg hover:opacity-90 transition-opacity"
@@ -898,7 +921,7 @@ function FeedContent() {
           onClose={closeComment}
         />
 
-        {currentIdx > 2 && (
+        {hasNewPosts && (
           <button
             onClick={goToLatest}
             className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-white shadow-lg active:opacity-80 transition-opacity"
