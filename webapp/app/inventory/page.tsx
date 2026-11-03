@@ -54,7 +54,8 @@ async function uploadImage(file: File): Promise<string> {
 // ─── Item Card ────────────────────────────────────────────────────────────────
 
 function ItemCard({ item, active, onClick }: { item: InventoryItem; active: boolean; onClick: () => void }) {
-  const thumb = item.images?.[0]?.thumbnail_url || item.images?.[0]?.image_url;
+  const rawThumb = item.images?.[0]?.thumbnail_url || item.images?.[0]?.image_url;
+  const thumb = rawThumb?.startsWith("http") ? rawThumb : undefined;
   const price = item.price != null ? Number(item.price) : null;
   return (
     <button
