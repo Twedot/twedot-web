@@ -26,6 +26,84 @@ function parseMeta<T>(msg: ChatMessage): T | null {
 }
 function formatPrice(n: number): string { return "₦" + Number(n).toLocaleString(); }
 
+const WAVEFORM_BARS = 25;
+const BAR_HEIGHTS = Array.from({ length: WAVEFORM_BARS }, () => 4 + Math.random() * 16);
+
+function VoiceWaveformPlayer({ src, duration, isMine, color }: { src: string; duration: number; isMine: boolean; color: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(duration);
+  const waveRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onTime = () => {
+      const dur = el.duration || totalDuration;
+      setCurrentTime(el.currentTime);
+      setProgress(dur > 0 ? el.currentTime / dur : 0);
+    };
+    const onLoaded = () => { if (el.duration && isFinite(el.duration)) setTotalDuration(el.duration); };
+    const onEnded = () => { setPlaying(false); setProgress(0); setCurrentTime(0); };
+    el.addEventListener("timeupdate", onTime);
+    el.addEventListener("loadedmetadata", onLoaded);
+    el.addEventListener("ended", onEnded);
+    return () => { el.removeEventListener("timeupdate", onTime); el.removeEventListener("loadedmetadata", onLoaded); el.removeEventListener("ended", onEnded); };
+  }, [totalDuration]);
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (playing) { el.pause(); setPlaying(false); }
+    else { el.play().then(() => setPlaying(true)).catch(() => {}); }
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = audioRef.current;
+    const bar = waveRef.current;
+    if (!el || !bar) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const dur = el.duration || totalDuration;
+    if (dur > 0) { el.currentTime = ratio * dur; setProgress(ratio); }
+  };
+
+  const fmt = (s: number) => {
+    if (!s || isNaN(s)) return "0:00";
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const activeColor = isMine ? "#fff" : "#6B4EFF";
+  const inactiveColor = isMine ? "rgba(255,255,255,0.35)" : "rgba(107,78,255,0.25)";
+
+  return (
+    <div className="flex items-center gap-2 min-w-[200px] w-[250px] py-1 px-1">
+      <audio ref={audioRef} src={src} preload="metadata" />
+      <button onClick={toggle} className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: isMine ? "#fff" : "#6B4EFF" }}>
+        {playing ? <IoPauseOutline size={14} style={{ color: isMine ? "#6B4EFF" : "#fff" }} /> : <IoPlayOutline size={14} style={{ color: isMine ? "#6B4EFF" : "#fff" }} />}
+      </button>
+      <div ref={waveRef} className="flex-1 h-9 flex flex-col justify-center cursor-pointer relative" onClick={seek}>
+        <div className="flex items-center justify-between gap-[2px]">
+          {BAR_HEIGHTS.map((h, i) => {
+            const isActive = (i / WAVEFORM_BARS) <= progress;
+            return <div key={i} className="rounded-sm" style={{ width: 2, height: h, backgroundColor: isActive ? activeColor : inactiveColor, transition: "background-color 0.15s" }} />;
+          })}
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full" style={{ backgroundColor: inactiveColor }}>
+          <div className="h-full rounded-full" style={{ width: `${progress * 100}%`, backgroundColor: activeColor, transition: "width 0.1s linear" }} />
+        </div>
+      </div>
+      <span className="text-[11px] min-w-[32px] text-right shrink-0" style={{ color: isMine ? "rgba(255,255,255,0.7)" : "#999", fontVariantNumeric: "tabular-nums" }}>
+        {fmt(playing ? currentTime : totalDuration)}
+      </span>
+    </div>
+  );
+}
+
 const HEADER_COLORS = [
   "#6B4EFF", "#E04E6A", "#2EA87E", "#E08C3A", "#3A8FE0",
   "#9B59B6", "#E06B4E", "#1ABC9C", "#F39C12", "#8E44AD",
@@ -475,7 +553,8 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                     {cluster.messages.map((msg) => {
                       let replySnap: { content: string; messageType: string; senderId: string } | null = null;
                       try { if (msg.replySnapshot) replySnap = JSON.parse(msg.replySnapshot); } catch {}
-                      const isCard = msg.messageType === "payment_receipt" || msg.messageType === "escrow_update";
+                      const isMedia = msg.messageType === "image" || msg.messageType === "video";
+                      const isCard = msg.messageType === "payment_receipt" || msg.messageType === "escrow_update" || isMedia;
                       return (
                       <div key={msg.id ?? msg.clientMessageId} className={`group relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"}`}>
                         {/* Reply button on hover */}
@@ -508,15 +587,11 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             </div>
                           )}
                           {msg.messageType === "image" ? (
-                            <img src={msg.content} alt="" className="max-w-full rounded-lg max-h-[200px] object-cover" />
+                            <img src={msg.content} alt="" className="w-[220px] h-[270px] rounded-2xl object-cover block" style={{ borderBottomRightRadius: isMine ? 4 : undefined, borderBottomLeftRadius: !isMine ? 4 : undefined }} />
                           ) : msg.messageType === "video" ? (
-                            <video src={msg.content} controls className="max-w-full rounded-lg max-h-[200px]" />
+                            <video src={msg.content} controls className="w-[220px] max-h-[270px] rounded-2xl object-cover block" style={{ borderBottomRightRadius: isMine ? 4 : undefined, borderBottomLeftRadius: !isMine ? 4 : undefined }} />
                           ) : msg.messageType === "voice" ? (
-                            <div className="flex items-center gap-2 py-1">
-                              <IoMicOutline size={14} className="shrink-0" />
-                              <audio src={msg.content} controls className="h-7 w-40" style={{ filter: isMine ? "invert(1) brightness(2)" : undefined }} />
-                              {msg.duration ? <span className="text-[10px] opacity-60">{msg.duration}s</span> : null}
-                            </div>
+                            <VoiceWaveformPlayer src={msg.content} duration={msg.duration || 0} isMine={isMine} color={color} />
                           ) : msg.messageType === "file" ? (
                             <a href={msg.content} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 py-1 ${isMine ? "text-white" : "text-primary"}`}>
                               <IoDocumentOutline size={16} className="shrink-0" />
