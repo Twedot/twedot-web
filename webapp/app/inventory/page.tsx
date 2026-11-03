@@ -47,7 +47,7 @@ async function uploadImage(file: File): Promise<string> {
   fd.append("fileName", file.name);
   fd.append("mimeType", file.type);
   fd.append("folder", "inventory");
-  const result = await apiUploadFile<{ url: string }>("/media/upload/direct", fd);
+  const result = await apiUploadFile<{ url: string }>("/upload/direct", fd);
   return result.url;
 }
 
@@ -63,15 +63,19 @@ function ItemCard({ item, active, onClick }: { item: InventoryItem; active: bool
         active ? "border-primary" : "border-border hover:border-primary/40"
       }`}
     >
-      <div className="aspect-square w-full overflow-hidden bg-feed-bg">
+      <div className="aspect-square w-full overflow-hidden bg-feed-bg relative">
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumb} alt={item.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <IoCubeOutline size={28} className="text-light-text" />
-          </div>
-        )}
+          <img
+            src={thumb}
+            alt={item.title}
+            className="h-full w-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden"); }}
+          />
+        ) : null}
+        <div className={`absolute inset-0 flex items-center justify-center${thumb ? " hidden" : ""}`}>
+          <IoCubeOutline size={28} className="text-light-text" />
+        </div>
       </div>
       <div className="p-2.5">
         <p className="truncate text-[12px] font-semibold text-text">{item.title}</p>

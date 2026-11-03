@@ -45,6 +45,7 @@ import { AuthStorage } from "@/lib/authStorage";
 import type { StatusPost } from "@/lib/types";
 import { profileUrl, postUrl } from "@/lib/url";
 import { useLoginGate } from "./LoginGate";
+import { feedStateStore } from "@/lib/feedStateStore";
 
 function MediaBackdrop({ bgSrc, children, isVideo = false }: { bgSrc?: string | null; children: ReactNode; isVideo?: boolean }) {
   return (
@@ -226,6 +227,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
     try {
       await apiDelete(`/status/${head.id}`);
       setHidden(true);
+      feedStateStore.removePost(head.id);
       notify("Post deleted");
     } catch {
       notify("Could not delete — try again");
