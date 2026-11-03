@@ -6,7 +6,7 @@ import { useChatStore, type ChatContact } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
 import { apiUploadFile } from "@/lib/api";
-import { IoArrowBack, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoShieldCheckmarkOutline, IoCheckmarkCircle, IoAlertCircleOutline } from "react-icons/io5";
+import { IoArrowBack, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoShieldCheckmarkOutline, IoCheckmarkCircle, IoAlertCircleOutline, IoVideocamOutline, IoDocumentOutline, IoMicOutline, IoStopCircleOutline, IoPlayOutline, IoPauseOutline, IoCloseOutline, IoArrowUndoOutline, IoHappySharp } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import { apiGet } from "@/lib/api";
 import dynamic from "next/dynamic";
@@ -194,14 +194,26 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   const [text, setText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
+  const docRef = useRef<HTMLInputElement>(null);
   const myUserId = AuthStorage.getProfile()?.id;
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const color = userColor(userId);
   const [showEmoji, setShowEmoji] = useState(false);
-  const [mediaPreview, setMediaPreview] = useState<{ file: File; url: string } | null>(null);
+  const [showAttach, setShowAttach] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<{ file: File; url: string; kind: "image" | "video" | "file" } | null>(null);
   const [uploading, setUploading] = useState(false);
   const emojiRef = useRef<HTMLDivElement>(null);
+  const [replyTo, setReplyTo] = useState<import("@/lib/chatSocket").ChatMessage | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
+  const reactPickerRef = useRef<HTMLDivElement>(null);
+  const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -255,25 +267,44 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showEmoji]);
 
+  useEffect(() => {
+    if (!reactingMsgId) return;
+    function handleClick(e: MouseEvent) {
+      if (reactPickerRef.current && !reactPickerRef.current.contains(e.target as Node)) setReactingMsgId(null);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [reactingMsgId]);
+
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
     if (!trimmed || !myUserId) return;
-    const clientMessageId = chatSocket.send(userId, trimmed);
+    const replyToId = replyTo?.id;
+    const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId }) : undefined;
+    const clientMessageId = chatSocket.send(userId, trimmed, "text", { replyToId, replySnapshot });
     useChatStore.getState().addMessage(userId, {
-      id: clientMessageId ?? crypto.randomUUID(),
-      clientMessageId: clientMessageId ?? undefined,
+      id: clientMessageId,
+      clientMessageId,
       senderId: myUserId,
       recipientId: userId,
       content: trimmed,
       messageType: "text",
       timestamp: Date.now(),
-      status: clientMessageId ? "sending" : "failed",
+      status: "sending",
+      replyToId,
+      replySnapshot,
     }, true);
     setText("");
     setShowEmoji(false);
+    setReplyTo(null);
     chatSocket.sendTyping(userId, false);
     inputRef.current?.focus();
-  }, [text, myUserId, userId]);
+  }, [text, myUserId, userId, replyTo]);
+
+  const handleReact = useCallback((msgId: string, emoji: string) => {
+    setReactingMsgId(null);
+    chatSocket.send(userId, emoji, "reaction", { clientMessageId: crypto.randomUUID(), metadata: JSON.stringify({ targetMessageId: msgId, emoji }) });
+  }, [userId]);
 
   const handleSendMedia = useCallback(async () => {
     if (!mediaPreview || !myUserId || uploading) return;
@@ -284,29 +315,89 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       form.append("type", "chat");
       const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
       const url = result.url;
-      const clientMessageId = chatSocket.send(userId, url, "image", { fileName: mediaPreview.file.name, fileSize: mediaPreview.file.size });
+      const msgType = mediaPreview.kind === "video" ? "video" : mediaPreview.kind === "file" ? "file" : "image";
+      const replyToId = replyTo?.id;
+      const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId }) : undefined;
+      const clientMessageId = chatSocket.send(userId, url, msgType, { fileName: mediaPreview.file.name, fileSize: mediaPreview.file.size, replyToId, replySnapshot });
       useChatStore.getState().addMessage(userId, {
-        id: clientMessageId ?? crypto.randomUUID(),
-        clientMessageId: clientMessageId ?? undefined,
+        id: clientMessageId,
+        clientMessageId,
         senderId: myUserId,
         recipientId: userId,
         content: url,
-        messageType: "image",
+        messageType: msgType,
+        fileName: mediaPreview.file.name,
+        fileSize: mediaPreview.file.size,
         timestamp: Date.now(),
-        status: clientMessageId ? "sending" : "failed",
+        status: "sending",
+        replyToId,
+        replySnapshot,
       }, true);
+      setReplyTo(null);
     } catch {}
     URL.revokeObjectURL(mediaPreview.url);
     setMediaPreview(null);
     setUploading(false);
-  }, [mediaPreview, myUserId, userId, uploading]);
+  }, [mediaPreview, myUserId, userId, uploading, replyTo]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (kind: "image" | "video" | "file") => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setMediaPreview({ file, url: URL.createObjectURL(file) });
+    setMediaPreview({ file, url: URL.createObjectURL(file), kind });
+    setShowAttach(false);
     e.target.value = "";
   };
+
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    } catch {}
+  };
+
+  const handleStopRecording = useCallback(async () => {
+    const mr = mediaRecorderRef.current;
+    if (!mr) return;
+    setIsRecording(false);
+    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
+    await new Promise<void>((res) => { mr.onstop = () => res(); mr.stop(); });
+    mr.stream.getTracks().forEach((t) => t.stop());
+    if (!audioChunksRef.current.length || !myUserId) return;
+    const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+    const duration = recordingSeconds;
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", blob, "voice.webm");
+      form.append("type", "chat");
+      const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
+      const replyToId = replyTo?.id;
+      const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId }) : undefined;
+      const clientMessageId = chatSocket.send(userId, result.url, "voice", { duration, replyToId, replySnapshot });
+      useChatStore.getState().addMessage(userId, {
+        id: clientMessageId,
+        clientMessageId,
+        senderId: myUserId,
+        recipientId: userId,
+        content: result.url,
+        messageType: "voice",
+        duration,
+        timestamp: Date.now(),
+        status: "sending",
+        replyToId,
+        replySnapshot,
+      }, true);
+      setReplyTo(null);
+    } catch {}
+    setUploading(false);
+  }, [myUserId, userId, recordingSeconds, replyTo]);
 
   const handleTyping = (value: string) => {
     setText(value);
@@ -381,19 +472,57 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                 const isMine = cluster.senderId === myUserId;
                 return (
                   <div key={ci} className="mb-1.5">
-                    {cluster.messages.map((msg) => (
-                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[75%] rounded-2xl text-[13px] leading-[1.4] break-words ${
-                          msg.messageType === "payment_receipt" || msg.messageType === "escrow_update"
-                            ? "p-0"
-                            : "px-3 py-1"
-                        } ${
-                          isMine
-                            ? "text-white rounded-br-sm"
-                            : "bg-feed-bg text-text rounded-bl-sm"
-                        }`} style={isMine && msg.messageType !== "payment_receipt" && msg.messageType !== "escrow_update" ? { background: color } : undefined}>
+                    {cluster.messages.map((msg) => {
+                      let replySnap: { content: string; messageType: string; senderId: string } | null = null;
+                      try { if (msg.replySnapshot) replySnap = JSON.parse(msg.replySnapshot); } catch {}
+                      const isCard = msg.messageType === "payment_receipt" || msg.messageType === "escrow_update";
+                      return (
+                      <div key={msg.id ?? msg.clientMessageId} className={`group relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"}`}>
+                        {/* Reply button on hover */}
+                        <button
+                          className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-light-text hover:text-text ${isMine ? "left-0 -translate-x-full pr-1" : "right-0 translate-x-full pl-1"}`}
+                          onClick={() => setReplyTo(msg)}
+                        >
+                          <IoArrowUndoOutline size={14} />
+                        </button>
+                        {/* React button on hover */}
+                        <div className={`absolute -top-3 ${isMine ? "left-0" : "right-0"} opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
+                          <button className="text-light-text hover:text-text" onClick={() => setReactingMsgId(msg.id)}>
+                            <IoHappySharp size={13} />
+                          </button>
+                          {reactingMsgId === msg.id && (
+                            <div ref={reactPickerRef} className={`absolute ${isMine ? "left-0" : "right-0"} -top-8 flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20`}>
+                              {QUICK_REACTIONS.map((e) => (
+                                <button key={e} className="text-[16px] hover:scale-125 transition-transform" onClick={() => handleReact(msg.id, e)}>{e}</button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className={`max-w-[75%] rounded-2xl text-[13px] leading-[1.4] break-words ${isCard ? "p-0" : "px-3 py-1"} ${
+                          isMine ? "text-white rounded-br-sm" : "bg-feed-bg text-text rounded-bl-sm"
+                        }`} style={isMine && !isCard ? { background: color } : undefined}>
+                          {replySnap && (
+                            <div className={`text-[11px] px-2 py-1 mb-1 rounded-lg border-l-2 opacity-80 ${isMine ? "bg-white/10 border-white/60" : "bg-black/10 border-primary"}`}>
+                              <span className="font-semibold block truncate">{replySnap.senderId === myUserId ? "You" : contact.name}</span>
+                              <span className="truncate block">{replySnap.messageType === "image" ? "📷 Photo" : replySnap.messageType === "video" ? "🎥 Video" : replySnap.messageType === "voice" ? "🎤 Voice" : replySnap.messageType === "file" ? "📎 File" : replySnap.content?.slice(0, 60)}</span>
+                            </div>
+                          )}
                           {msg.messageType === "image" ? (
                             <img src={msg.content} alt="" className="max-w-full rounded-lg max-h-[200px] object-cover" />
+                          ) : msg.messageType === "video" ? (
+                            <video src={msg.content} controls className="max-w-full rounded-lg max-h-[200px]" />
+                          ) : msg.messageType === "voice" ? (
+                            <div className="flex items-center gap-2 py-1">
+                              <IoMicOutline size={14} className="shrink-0" />
+                              <audio src={msg.content} controls className="h-7 w-40" style={{ filter: isMine ? "invert(1) brightness(2)" : undefined }} />
+                              {msg.duration ? <span className="text-[10px] opacity-60">{msg.duration}s</span> : null}
+                            </div>
+                          ) : msg.messageType === "file" ? (
+                            <a href={msg.content} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 py-1 ${isMine ? "text-white" : "text-primary"}`}>
+                              <IoDocumentOutline size={16} className="shrink-0" />
+                              <span className="text-[12px] underline truncate max-w-[160px]">{msg.fileName ?? "File"}</span>
+                              {msg.fileSize ? <span className="text-[10px] opacity-60 shrink-0">{(msg.fileSize / 1024).toFixed(0)}KB</span> : null}
+                            </a>
                           ) : msg.messageType === "payment_receipt" ? (() => {
                             const meta = parseMeta<ReceiptMeta>(msg);
                             if (!meta) return <span className="px-3 py-1 block">{msg.content}</span>;
@@ -460,7 +589,8 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                           )}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                     <p className={`text-[9px] text-light-text mt-0.5 ${isMine ? "text-right pr-1" : "pl-1"}`}>
                       {cluster.time}
                     </p>
@@ -484,10 +614,33 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
         </div>
       </div>
 
+      {/* Reply bar */}
+      {replyTo && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border-t border-border bg-background">
+          <div className="flex-1 border-l-2 border-primary pl-2">
+            <p className="text-[10px] font-semibold text-primary">{replyTo.senderId === myUserId ? "You" : contact.name}</p>
+            <p className="text-[11px] text-light-text truncate">{replyTo.messageType === "image" ? "📷 Photo" : replyTo.messageType === "video" ? "🎥 Video" : replyTo.messageType === "voice" ? "🎤 Voice" : replyTo.messageType === "file" ? "📎 File" : replyTo.content?.slice(0, 80)}</p>
+          </div>
+          <button onClick={() => setReplyTo(null)} className="text-light-text hover:text-text shrink-0">
+            <IoCloseOutline size={18} />
+          </button>
+        </div>
+      )}
+
       {/* Media preview */}
       {mediaPreview && (
         <div className="relative px-3 py-2 border-t border-border bg-background">
-          <img src={mediaPreview.url} alt="Preview" className="h-28 rounded-lg object-cover" />
+          {mediaPreview.kind === "image" ? (
+            <img src={mediaPreview.url} alt="Preview" className="h-28 rounded-lg object-cover" />
+          ) : mediaPreview.kind === "video" ? (
+            <video src={mediaPreview.url} className="h-28 rounded-lg object-cover" />
+          ) : (
+            <div className="flex items-center gap-2 h-12 px-2">
+              <IoDocumentOutline size={24} className="text-light-text" />
+              <span className="text-[13px] text-text truncate">{mediaPreview.file.name}</span>
+              <span className="text-[11px] text-light-text shrink-0">{(mediaPreview.file.size / 1024).toFixed(0)}KB</span>
+            </div>
+          )}
           <button onClick={() => { URL.revokeObjectURL(mediaPreview.url); setMediaPreview(null); }} className="absolute top-3 right-4 text-text/80 hover:text-text">
             <IoCloseCircle size={22} />
           </button>
@@ -550,14 +703,32 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-2 px-3 py-2 border-t border-border bg-background shrink-0">
-          <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-light-text hover:text-text transition-colors">
-            <IoHappyOutline size={22} />
+        <div className="flex items-center gap-1.5 px-3 py-2 border-t border-border bg-background shrink-0">
+          <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-light-text hover:text-text transition-colors shrink-0">
+            <IoHappyOutline size={20} />
           </button>
-          <button onClick={() => fileRef.current?.click()} className="p-1 text-light-text hover:text-text transition-colors">
-            <IoImageOutline size={22} />
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+          {/* Attach picker */}
+          <div className="relative shrink-0">
+            <button onClick={() => setShowAttach((p) => !p)} className="p-1 text-light-text hover:text-text transition-colors">
+              <IoImageOutline size={20} />
+            </button>
+            {showAttach && (
+              <div className="absolute bottom-10 left-0 bg-background border border-border rounded-xl shadow-lg flex flex-col py-1 min-w-[130px] z-20">
+                <button onClick={() => { imageRef.current?.click(); setShowAttach(false); }} className="flex items-center gap-2 px-3 py-2 text-[12px] text-text hover:bg-feed-bg">
+                  <IoImageOutline size={15} /> Photo
+                </button>
+                <button onClick={() => { videoRef.current?.click(); setShowAttach(false); }} className="flex items-center gap-2 px-3 py-2 text-[12px] text-text hover:bg-feed-bg">
+                  <IoVideocamOutline size={15} /> Video
+                </button>
+                <button onClick={() => { docRef.current?.click(); setShowAttach(false); }} className="flex items-center gap-2 px-3 py-2 text-[12px] text-text hover:bg-feed-bg">
+                  <IoDocumentOutline size={15} /> File
+                </button>
+              </div>
+            )}
+          </div>
+          <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect("image")} />
+          <input ref={videoRef} type="file" accept="video/*" className="hidden" onChange={handleFileSelect("video")} />
+          <input ref={docRef} type="file" accept="*/*" className="hidden" onChange={handleFileSelect("file")} />
           <input
             ref={inputRef}
             type="text"
@@ -565,16 +736,23 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
             onChange={(e) => handleTyping(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             placeholder="Write a message..."
-            className="flex-1 bg-feed-bg text-text text-[13px] px-4 py-2 rounded-full outline-none placeholder:text-light-text border border-transparent focus:border-primary/50"
+            className="flex-1 bg-feed-bg text-text text-[13px] px-4 py-2 rounded-full outline-none placeholder:text-light-text border border-transparent focus:border-primary/50 min-w-0"
           />
-          <button
-            onClick={handleSend}
-            disabled={!text.trim()}
-            className="p-2 rounded-full disabled:text-light-text transition-colors"
-            style={{ color: text.trim() ? color : undefined }}
-          >
-            <IoSend size={18} />
-          </button>
+          {/* Voice record / Send */}
+          {text.trim() ? (
+            <button onClick={handleSend} className="p-2 rounded-full shrink-0 transition-colors" style={{ color: color }}>
+              <IoSend size={18} />
+            </button>
+          ) : isRecording ? (
+            <button onClick={handleStopRecording} disabled={uploading} className="p-2 rounded-full shrink-0 text-red-500 animate-pulse">
+              <IoStopCircleOutline size={22} />
+            </button>
+          ) : (
+            <button onClick={handleStartRecording} disabled={uploading} className="p-2 rounded-full shrink-0 text-light-text hover:text-text transition-colors">
+              <IoMicOutline size={20} />
+            </button>
+          )}
+          {isRecording && <span className="text-[11px] text-red-500 shrink-0">{recordingSeconds}s</span>}
         </div>
       )}
     </div>

@@ -4,6 +4,21 @@ import { AuthStorage } from "./authStorage";
 import { getDeviceId } from "./deviceId";
 
 const CHAT_WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL ?? "wss://upload.twedot.com/ws";
+const PENDING_QUEUE_KEY = "twedot_chat_pending_queue";
+
+interface QueuedMessage {
+  recipientId: string;
+  content: string;
+  messageType: string;
+  clientMessageId: string;
+  replyToId?: string;
+  replySnapshot?: string;
+  caption?: string;
+  fileName?: string;
+  fileSize?: number;
+  duration?: number;
+  metadata?: string;
+}
 
 export interface ProductInquiryMeta {
   productId: string;
@@ -60,6 +75,30 @@ class ChatSocket {
   private maxReconnectDelay = 30000;
   private intentionalClose = false;
   private visibilityBound = false;
+  private pendingQueue: QueuedMessage[] = [];
+
+  private loadPendingQueue() {
+    try {
+      const raw = localStorage.getItem(PENDING_QUEUE_KEY);
+      if (raw) this.pendingQueue = JSON.parse(raw);
+    } catch {}
+  }
+
+  private savePendingQueue() {
+    try { localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(this.pendingQueue)); } catch {}
+  }
+
+  private flushPendingQueue() {
+    if (!this.pendingQueue.length) return;
+    const queue = [...this.pendingQueue];
+    this.pendingQueue = [];
+    this.savePendingQueue();
+    for (const item of queue) {
+      try {
+        this.ws!.send(JSON.stringify({ type: "send_message", ...item }));
+      } catch {}
+    }
+  }
 
   private onMessage: MessageHandler[] = [];
   private onMessageSent: MessageHandler[] = [];
@@ -81,6 +120,7 @@ class ChatSocket {
     }
 
     this.intentionalClose = false;
+    this.loadPendingQueue();
     const url = `${CHAT_WS_URL}?token=${encodeURIComponent(token)}&deviceId=${encodeURIComponent(getDeviceId())}`;
 
     if (!this.visibilityBound) {
@@ -106,6 +146,7 @@ class ChatSocket {
       console.log("[chat-ws] connected");
       this.reconnectDelay = 1000;
       this.emit("connectionChange", true);
+      this.flushPendingQueue();
     };
 
     this.ws.onmessage = (event) => {
@@ -198,8 +239,12 @@ class ChatSocket {
     clientMessageId?: string;
     metadata?: string;
   }) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return null;
     const clientMessageId = extra?.clientMessageId ?? crypto.randomUUID();
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      this.pendingQueue.push({ recipientId, content, messageType, clientMessageId, ...extra });
+      this.savePendingQueue();
+      return clientMessageId;
+    }
     this.ws.send(JSON.stringify({
       type: "send_message",
       recipientId,
