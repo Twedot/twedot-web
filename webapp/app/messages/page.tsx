@@ -550,13 +550,23 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                 const isMine = cluster.senderId === myUserId;
                 return (
                   <div key={ci} className="mb-1.5">
-                    {cluster.messages.map((msg) => {
+                    {cluster.messages.map((msg, mi) => {
                       let replySnap: { content: string; messageType: string; senderId: string } | null = null;
                       try { if (msg.replySnapshot) replySnap = JSON.parse(msg.replySnapshot); } catch {}
                       const isMedia = msg.messageType === "image" || msg.messageType === "video";
                       const isCard = msg.messageType === "payment_receipt" || msg.messageType === "escrow_update" || isMedia;
+                      const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
-                      <div key={msg.id ?? msg.clientMessageId} className={`group relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"}`}>
+                      <div key={msg.id ?? msg.clientMessageId} className={`group relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-10" : ""}`}>
+                        {!isMine && (
+                          <div className="absolute left-0 bottom-0 w-7 h-7">
+                            {isLastInCluster && (
+                              contact.photo
+                                ? <img src={contact.photo} alt="" className="w-7 h-7 rounded-full object-cover" />
+                                : <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white text-[10px] font-bold">{contact.name?.[0]?.toUpperCase() ?? "?"}</div>
+                            )}
+                          </div>
+                        )}
                         {/* Reply button on hover */}
                         <button
                           className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-light-text hover:text-text ${isMine ? "left-0 -translate-x-full pr-1" : "right-0 translate-x-full pl-1"}`}
@@ -578,7 +588,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                           )}
                         </div>
                         <div className={`max-w-[75%] rounded-2xl text-[13px] leading-[1.4] break-words ${isCard ? "p-0" : "px-3 py-1"} ${
-                          isMine ? "text-white rounded-br-sm" : "bg-feed-bg text-text rounded-bl-sm"
+                          isMine ? "text-white rounded-br-sm" : `${isMedia ? "" : "bg-feed-bg"} text-text rounded-bl-sm`
                         }`} style={isMine && !isCard ? { background: color } : undefined}>
                           {replySnap && (
                             <div className={`text-[11px] px-2 py-1 mb-1 rounded-lg border-l-2 opacity-80 ${isMine ? "bg-white/10 border-white/60" : "bg-black/10 border-primary"}`}>
