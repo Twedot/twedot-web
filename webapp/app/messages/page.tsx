@@ -555,7 +555,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                       let replySnap: { content: string; messageType: string; senderId: string } | null = null;
                       try { if (msg.replySnapshot) replySnap = JSON.parse(msg.replySnapshot); } catch {}
                       const isMedia = msg.messageType === "image" || msg.messageType === "video";
-                      const isCard = msg.messageType === "payment_receipt" || msg.messageType === "escrow_update" || isMedia;
+                      const isCard = msg.messageType === "payment_receipt" || msg.messageType === "escrow_update";
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
                       <div key={msg.id ?? msg.clientMessageId} className={`group relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-10" : ""}`}>
@@ -588,8 +588,24 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             </div>
                           )}
                         </div>
+                        {isMedia ? (
+                          <div
+                            className="rounded-xl overflow-hidden p-[1px] cursor-pointer relative"
+                            style={{ backgroundColor: isMine ? color : undefined, borderTopRightRadius: isMine ? 4 : 12, borderTopLeftRadius: !isMine ? 4 : 12 }}
+                            onClick={() => msg.messageType === "image" && setViewingImage(msg.content)}
+                          >
+                            {msg.messageType === "image" ? (
+                              <img src={msg.content} alt="" className="w-[220px] h-[270px] rounded-[11px] object-cover block" />
+                            ) : (
+                              <video src={msg.content} controls className="w-[220px] max-h-[270px] rounded-[11px] object-cover block" />
+                            )}
+                            <div className="absolute bottom-1.5 right-2 bg-black/50 rounded-full px-1.5 py-0.5">
+                              <span className="text-[10px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
+                            </div>
+                          </div>
+                        ) : (
                         <div className={`max-w-[75%] rounded-2xl text-[13px] leading-[1.4] break-words ${isCard ? "p-0" : "px-3 py-1"} ${
-                          isMine ? "text-white rounded-br-sm" : `${isMedia ? "" : "bg-feed-bg"} text-text rounded-bl-sm`
+                          isMine ? "text-white rounded-br-sm" : "bg-feed-bg text-text rounded-bl-sm"
                         }`} style={isMine && !isCard ? { background: color } : undefined}>
                           {replySnap && (
                             <div className={`text-[11px] px-2 py-1 mb-1 rounded-lg border-l-2 opacity-80 ${isMine ? "bg-white/10 border-white/60" : "bg-black/10 border-primary"}`}>
@@ -597,11 +613,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                               <span className="truncate block">{replySnap.messageType === "image" ? "📷 Photo" : replySnap.messageType === "video" ? "🎥 Video" : replySnap.messageType === "voice" ? "🎤 Voice" : replySnap.messageType === "file" ? "📎 File" : replySnap.content?.slice(0, 60)}</span>
                             </div>
                           )}
-                          {msg.messageType === "image" ? (
-                            <img src={msg.content} alt="" onClick={() => setViewingImage(msg.content)} className="w-[220px] h-[270px] rounded-2xl object-cover block cursor-pointer hover:opacity-90 transition-opacity" style={{ borderBottomRightRadius: isMine ? 4 : undefined, borderBottomLeftRadius: !isMine ? 4 : undefined }} />
-                          ) : msg.messageType === "video" ? (
-                            <video src={msg.content} controls className="w-[220px] max-h-[270px] rounded-2xl object-cover block" style={{ borderBottomRightRadius: isMine ? 4 : undefined, borderBottomLeftRadius: !isMine ? 4 : undefined }} />
-                          ) : msg.messageType === "voice" ? (
+                          {msg.messageType === "voice" ? (
                             <VoiceWaveformPlayer src={msg.content} duration={msg.duration || 0} isMine={isMine} color={color} />
                           ) : msg.messageType === "file" ? (
                             <a href={msg.content} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 py-1 ${isMine ? "text-white" : "text-primary"}`}>
@@ -674,6 +686,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             <span className="block text-[10px] text-red-400 px-1">Not connected</span>
                           )}
                         </div>
+                        )}
                       </div>
                       );
                     })}
