@@ -237,16 +237,23 @@ export default function OrdersPage() {
                     <div className="flex gap-3 items-start">
                       {/* Thumbnail */}
                       <div className="w-14 h-14 rounded-xl bg-[#0E0E16] flex-shrink-0 overflow-hidden flex items-center justify-center">
-                        {order.product?.image ? (
-                          <img
-                            src={order.product.image}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const el = e.target as HTMLImageElement;
-                              el.style.display = "none";
-                            }}
-                          />
+                        {order.product?.image?.startsWith("http") ? (
+                          <>
+                            <img
+                              src={order.product.image}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const el = e.target as HTMLImageElement;
+                                el.style.display = "none";
+                                const fb = el.nextElementSibling as HTMLElement | null;
+                                if (fb) fb.style.display = "flex";
+                              }}
+                            />
+                            <div style={{ display: "none" }} className="w-full h-full items-center justify-center">
+                              <IoImageOutline size={22} className="text-white/20" />
+                            </div>
+                          </>
                         ) : (
                           <IoImageOutline size={22} className="text-white/20" />
                         )}
