@@ -6,7 +6,7 @@ import { useChatStore } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage, type ProductInquiryMeta } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
 import { apiUploadFile, apiPost, apiGet } from "@/lib/api";
-import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle, IoShieldCheckmarkOutline, IoAlertCircleOutline } from "react-icons/io5";
+import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle, IoShieldCheckmarkOutline, IoAlertCircleOutline, IoPlayOutline, IoPauseOutline, IoMicOutline, IoCloseOutline } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import dynamic from "next/dynamic";
 
@@ -105,6 +105,69 @@ function groupMessages(messages: ChatMessage[]): MessageGroup[] {
   return groups;
 }
 
+const WAVEFORM_BARS = 20;
+const BAR_HEIGHTS = Array.from({ length: WAVEFORM_BARS }, () => 3 + Math.random() * 12);
+
+function MiniVoicePlayer({ src, duration, isMine, color }: { src: string; duration: number; isMine: boolean; color: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(duration);
+  const waveRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onTime = () => { const dur = el.duration || totalDuration; setCurrentTime(el.currentTime); setProgress(dur > 0 ? el.currentTime / dur : 0); };
+    const onLoaded = () => { if (el.duration && isFinite(el.duration)) setTotalDuration(el.duration); };
+    const onEnded = () => { setPlaying(false); setProgress(0); setCurrentTime(0); };
+    el.addEventListener("timeupdate", onTime);
+    el.addEventListener("loadedmetadata", onLoaded);
+    el.addEventListener("ended", onEnded);
+    return () => { el.removeEventListener("timeupdate", onTime); el.removeEventListener("loadedmetadata", onLoaded); el.removeEventListener("ended", onEnded); };
+  }, [totalDuration]);
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (playing) { el.pause(); setPlaying(false); } else { el.play().then(() => setPlaying(true)).catch(() => {}); }
+  };
+
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = audioRef.current; const bar = waveRef.current;
+    if (!el || !bar) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const dur = el.duration || totalDuration;
+    if (dur > 0) { el.currentTime = ratio * dur; setProgress(ratio); }
+  };
+
+  const fmt = (s: number) => { if (!s || isNaN(s)) return "0:00"; return `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`; };
+  const activeColor = isMine ? "#fff" : "#6B4EFF";
+  const inactiveColor = isMine ? "rgba(255,255,255,0.35)" : "rgba(107,78,255,0.25)";
+
+  return (
+    <div className="flex items-center gap-1.5 min-w-[160px] w-[190px] py-0.5">
+      <audio ref={audioRef} src={src} preload="metadata" />
+      <button onClick={toggle} className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: isMine ? "#fff" : "#6B4EFF" }}>
+        {playing ? <IoPauseOutline size={10} style={{ color: isMine ? "#6B4EFF" : "#fff" }} /> : <IoPlayOutline size={10} style={{ color: isMine ? "#6B4EFF" : "#fff" }} />}
+      </button>
+      <div ref={waveRef} className="flex-1 h-6 flex flex-col justify-center cursor-pointer relative" onClick={seek}>
+        <div className="flex items-center justify-between gap-[1.5px]">
+          {BAR_HEIGHTS.map((h, i) => <div key={i} className="rounded-sm" style={{ width: 1.5, height: h, backgroundColor: (i / WAVEFORM_BARS) <= progress ? activeColor : inactiveColor, transition: "background-color 0.15s" }} />)}
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-[1.5px] rounded-full" style={{ backgroundColor: inactiveColor }}>
+          <div className="h-full rounded-full" style={{ width: `${progress * 100}%`, backgroundColor: activeColor, transition: "width 0.1s linear" }} />
+        </div>
+      </div>
+      <span className="text-[9px] min-w-[24px] text-right shrink-0" style={{ color: isMine ? "rgba(255,255,255,0.7)" : "#999", fontVariantNumeric: "tabular-nums" }}>
+        {fmt(playing ? currentTime : totalDuration)}
+      </span>
+    </div>
+  );
+}
+
 export default function ChatWindow({ userId }: { userId: string }) {
   const router = useRouter();
   const thread = useChatStore((s) => s.threads.get(userId));
@@ -122,6 +185,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const [mediaPreviews, setMediaPreviews] = useState<{ file: File; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [buyingProduct, setBuyingProduct] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
   const pendingPaymentRef = useRef<string | null>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
 
@@ -341,15 +405,43 @@ export default function ChatWindow({ userId }: { userId: string }) {
                 const isMine = cluster.senderId === myUserId;
                 return (
                   <div key={ci} className="mb-1">
-                    {cluster.messages.map((msg) => (
-                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"}`}>
+                    {cluster.messages.map((msg, mi) => {
+                      const isMedia = msg.messageType === "image" || msg.messageType === "video";
+                      const isLastInCluster = mi === cluster.messages.length - 1;
+                      return (
+                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-7" : ""}`}>
+                        {!isMine && (
+                          <div className="absolute left-0 bottom-0 w-5 h-5" style={{ position: "relative", marginLeft: -24, alignSelf: "flex-end", marginRight: -3 }}>
+                            {isLastInCluster && (
+                              contact.photo
+                                ? <img src={contact.photo} alt="" className="w-5 h-5 rounded-full object-cover" />
+                                : <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white text-[8px] font-bold">{contact.name?.[0]?.toUpperCase() ?? "?"}</div>
+                            )}
+                          </div>
+                        )}
+                        {isMedia ? (
+                          <div
+                            className="rounded-xl overflow-hidden p-[1px] cursor-pointer relative"
+                            style={{ backgroundColor: isMine ? color : "#2a2a2a", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
+                            onClick={() => msg.messageType === "image" && setViewingImage(msg.content)}
+                          >
+                            {msg.messageType === "image" ? (
+                              <img src={msg.content} alt="" className="w-[170px] h-[210px] rounded-[11px] object-cover block" />
+                            ) : (
+                              <video src={msg.content} controls className="w-[170px] max-h-[210px] rounded-[11px] object-cover block" />
+                            )}
+                            <div className="absolute bottom-1 right-1.5 bg-black/50 rounded-full px-1 py-0.5">
+                              <span className="text-[8px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
+                            </div>
+                          </div>
+                        ) : (
                         <div className={`max-w-[80%] px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
                           isMine
                             ? "text-white rounded-br-sm"
                             : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
                         }`} style={isMine ? { background: color } : undefined}>
-                          {msg.messageType === "image" ? (
-                            <img src={msg.content} alt="" className="max-w-full rounded-lg max-h-[140px] object-cover" />
+                          {msg.messageType === "voice" ? (
+                            <MiniVoicePlayer src={msg.content} duration={msg.duration || 0} isMine={isMine} color={color} />
                           ) : (msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId) ? (
                             (() => {
                               const meta = parseMeta<ProductInquiryMeta>(msg);
@@ -447,8 +539,10 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             <span className="block text-[8px] text-red-400">Not connected</span>
                           )}
                         </div>
+                        )}
                       </div>
-                    ))}
+                      );
+                    })}
                     <p className={`text-[8px] text-white/25 mt-0.5 ${isMine ? "text-right pr-1" : "pl-1"}`}>
                       {cluster.time}
                     </p>
@@ -549,6 +643,14 @@ export default function ChatWindow({ userId }: { userId: string }) {
           <IoSend size={12} />
         </button>
       </div>
+      {viewingImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingImage(null)}>
+          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingImage(null)}>
+            <IoCloseOutline size={32} />
+          </button>
+          <img src={viewingImage} alt="" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg cursor-default" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 }
