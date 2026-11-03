@@ -384,7 +384,7 @@ export default function InventoryPage() {
 
         {/* ── Detail view ── */}
         {view === "detail" && activeItem && (() => {
-          const images = activeItem.images?.map(img => img.image_url) ?? [];
+          const images = (activeItem.images?.map(img => img.image_url || img.thumbnail_url).filter(u => u?.startsWith("http")) ?? []) as string[];
           return (
             <>
               <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
@@ -414,7 +414,20 @@ export default function InventoryPage() {
                   {images.length > 0 ? (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={images[carouselIdx]} alt="" className="h-full w-full object-contain" />
+                      <img
+                        src={images[carouselIdx]}
+                        alt=""
+                        className="h-full w-full object-contain"
+                        onError={(e) => {
+                          const el = e.target as HTMLImageElement;
+                          el.style.display = "none";
+                          const fb = el.nextElementSibling as HTMLElement | null;
+                          if (fb) fb.style.display = "flex";
+                        }}
+                      />
+                      <div className="hidden h-full w-full absolute inset-0 items-center justify-center">
+                        <IoImageOutline size={48} className="text-white/30" />
+                      </div>
                       {images.length > 1 && (
                         <>
                           <button
