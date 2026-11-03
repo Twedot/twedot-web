@@ -28,6 +28,10 @@ export const feedStateStore = {
   get: (): FeedState => ({ ..._state }),
   saveTopPost: (id: string) => { _state.topPostId = id; },
   hasCache: (query: string) => _state.posts.length > 0 && _state.query === query,
+  removePost: (id: string) => {
+    _state.posts = _state.posts.filter((p) => p.id !== id && p.groupId !== id);
+    _listeners.forEach((fn) => fn());
+  },
   updatePost: (id: string, patch: Partial<StatusPost>) => {
     const idx = _state.posts.findIndex((p) => p.id === id);
     if (idx === -1) return;

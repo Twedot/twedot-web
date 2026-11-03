@@ -197,12 +197,12 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
   };
 
   // Menu handlers
-  async function handleNotInterested() { setMenuOpen(false); try { await apiPost(`/status/${head.id}/hide`, {}); } catch {} }
+  async function handleNotInterested() { setMenuOpen(false); try { await apiPost(`/status/${head.id}/hide`, {}); feedStateStore.removePost(head.id); } catch {} }
   async function handleMoreLikeThis() { setMenuOpen(false); try { await apiPost(`/status/${head.id}/more-like-this`, {}); } catch {} notify("Got it — we'll show you more like this"); }
   async function handleMute() { setMenuOpen(false); try { await apiPost(`/users/mute/${head.userId}`, {}); notify(`@${head.userName} muted`); } catch { notify("Could not mute"); } }
   async function handleBlock() { setMenuOpen(false); try { await apiPost(`/users/block/${head.userId}`, {}); notify(`@${head.userName} blocked`); } catch { notify("Could not block"); } }
   async function handleReport() { setMenuOpen(false); try { await apiPost(`/status/${head.id}/report`, { reason: "inappropriate" }); notify("Post reported"); } catch { notify("Post reported"); } }
-  async function handleDelete() { setMenuOpen(false); try { await apiDelete(`/status/${head.id}`); notify("Post deleted"); } catch { notify("Could not delete"); } }
+  async function handleDelete() { setMenuOpen(false); try { await apiDelete(`/status/${head.id}`); feedStateStore.removePost(head.id); notify("Post deleted"); } catch { notify("Could not delete"); } }
   async function handlePin() { setMenuOpen(false); try { await apiPost(`/status/${head.id}/pin`, {}); notify("Post pinned"); } catch { notify("Could not pin"); } }
   function handleCopyLink() { setMenuOpen(false); navigator.clipboard?.writeText(window.location.origin + postUrl(head.id)).catch(() => {}); notify("Link copied"); }
   function handleEmbedPost() { setMenuOpen(false); const code = `<iframe src="${window.location.origin}${postUrl(head.id)}" width="550" height="400" frameborder="0" scrolling="no"></iframe>`; navigator.clipboard?.writeText(code).catch(() => {}); notify("Embed code copied"); }
