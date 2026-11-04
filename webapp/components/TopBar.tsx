@@ -437,7 +437,10 @@ function ChatDropdown() {
   const threads = useChatStore((s) => s.threads);
   const openChat = useChatStore((s) => s.openChat);
   const removeThread = useChatStore((s) => s.removeThread);
-  const [labelsVisible, setLabelsVisible] = useState(true);
+  const [labelsVisible, setLabelsVisible] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try { return localStorage.getItem("twedot_chat_labels") !== "0"; } catch { return true; }
+  });
 
   const totalUnread = Array.from(threads.values()).reduce((sum, t) => sum + t.unreadCount, 0);
   const chatList = Array.from(threads.values())
@@ -470,7 +473,7 @@ function ChatDropdown() {
         <div className="fixed right-3 top-16 z-[9998] hidden sm:flex flex-col items-end gap-2.5 py-2">
           {/* Toggle button to show/hide name+message labels */}
           <button
-            onClick={() => setLabelsVisible(v => !v)}
+            onClick={() => setLabelsVisible(v => { const next = !v; try { localStorage.setItem("twedot_chat_labels", next ? "1" : "0"); } catch {} return next; })}
             title={labelsVisible ? "Hide labels" : "Show labels"}
             className="w-9 h-5 rounded-full flex items-center justify-center bg-[#333]/80 text-white/50 hover:text-white/80 hover:bg-[#444]/80 transition-colors self-end mb-0.5"
           >
