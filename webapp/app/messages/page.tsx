@@ -135,7 +135,10 @@ function timeLabel(d: Date): string {
 
 function lastMsgPreview(msg: ChatMessage | null): string {
   if (!msg) return "No messages yet";
-  if (msg.messageType === "image") return "📷 Photo";
+  if (msg.messageType === "image" || msg.messageType === "album") return "📷 Photo";
+  if (msg.messageType === "video") return "🎥 Video";
+  if (msg.messageType === "voice") return "🎤 Voice";
+  if (msg.messageType === "file" || msg.messageType === "document") return "📎 File";
   return msg.content.length > 40 ? msg.content.slice(0, 40) + "…" : msg.content;
 }
 
@@ -655,7 +658,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                           {replySnap && (
                             <div className={`text-[11px] px-2 py-1 mb-1 rounded-lg border-l-2 opacity-80 ${isMine ? "bg-white/10 border-white/60" : "bg-black/10 border-primary"}`}>
                               <span className="font-semibold block truncate">{replySnap.senderId === myUserId ? "You" : contact.name}</span>
-                              <span className="truncate block">{replySnap.messageType === "image" ? "📷 Photo" : replySnap.messageType === "video" ? "🎥 Video" : replySnap.messageType === "voice" ? "🎤 Voice" : replySnap.messageType === "file" ? "📎 File" : replySnap.content?.slice(0, 60)}</span>
+                              <span className="truncate block">{replySnap.messageType === "image" || replySnap.messageType === "album" ? "📷 Photo" : replySnap.messageType === "video" ? "🎥 Video" : replySnap.messageType === "voice" ? "🎤 Voice" : replySnap.messageType === "file" ? "📎 File" : replySnap.content?.slice(0, 60)}</span>
                             </div>
                           )}
                           {msg.messageType === "voice" ? (
@@ -773,7 +776,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
         <div className="flex items-center gap-2 px-3 py-1.5 border-t border-border bg-background">
           <div className="flex-1 border-l-2 border-primary pl-2">
             <p className="text-[10px] font-semibold text-primary">{replyTo.senderId === myUserId ? "You" : contact.name}</p>
-            <p className="text-[11px] text-light-text truncate">{replyTo.messageType === "image" ? "📷 Photo" : replyTo.messageType === "video" ? "🎥 Video" : replyTo.messageType === "voice" ? "🎤 Voice" : replyTo.messageType === "file" ? "📎 File" : replyTo.content?.slice(0, 80)}</p>
+            <p className="text-[11px] text-light-text truncate">{replyTo.messageType === "image" || replyTo.messageType === "album" ? "📷 Photo" : replyTo.messageType === "video" ? "🎥 Video" : replyTo.messageType === "voice" ? "🎤 Voice" : replyTo.messageType === "file" ? "📎 File" : replyTo.content?.slice(0, 80)}</p>
           </div>
           <button onClick={() => setReplyTo(null)} className="text-light-text hover:text-text shrink-0">
             <IoCloseOutline size={18} />

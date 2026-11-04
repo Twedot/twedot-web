@@ -36,7 +36,7 @@ function roomId(r: RoomListItem): string {
 
 function previewText(rawContent: string, msgType: string | null): string {
   const t = msgType?.toLowerCase();
-  if (t === "image") return "📷 Photo";
+  if (t === "image" || t === "album") return "📷 Photo";
   if (t === "video") return "🎥 Video";
   if (t === "audio" || t === "voice") return "🎵 Audio";
   if (t === "file") return "📎 File";

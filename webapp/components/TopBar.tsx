@@ -497,7 +497,7 @@ function ChatDropdown() {
             const { contact, unreadCount, isOnline, lastMessage } = thread;
             const borderColor = avatarBorder(contact.userId);
             const preview = lastMessage
-              ? lastMessage.messageType === "image" ? "📷 Photo" : (lastMessage.content.length > 25 ? lastMessage.content.slice(0, 25) + "…" : lastMessage.content)
+              ? (lastMessage.messageType === "image" || lastMessage.messageType === "album") ? "📷 Photo" : lastMessage.messageType === "video" ? "🎥 Video" : lastMessage.messageType === "voice" ? "🎤 Voice" : lastMessage.messageType === "file" || lastMessage.messageType === "document" ? "📎 File" : (lastMessage.content.length > 25 ? lastMessage.content.slice(0, 25) + "…" : lastMessage.content)
               : null;
             return (
               <div key={contact.userId} className="group/chat relative flex items-center gap-2">
