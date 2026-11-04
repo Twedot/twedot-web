@@ -554,7 +554,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                     {cluster.messages.map((msg, mi) => {
                       let replySnap: { content: string; messageType: string; senderId: string } | null = null;
                       try { if (msg.replySnapshot) replySnap = JSON.parse(msg.replySnapshot); } catch {}
-                      const isMedia = msg.messageType === "image" || msg.messageType === "video";
+                      const isMedia = msg.messageType === "image" || msg.messageType === "video" || msg.messageType === "album";
                       const isCard = msg.messageType === "payment_receipt" || msg.messageType === "escrow_update";
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
@@ -595,7 +595,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             if (msg.content.startsWith("{")) {
                               try {
                                 const p = JSON.parse(msg.content);
-                                if (msg.messageType === "image") {
+                                if (msg.messageType === "image" || msg.messageType === "album") {
                                   mediaUrls = p.uris ?? (p.url ? [p.url] : []);
                                 } else {
                                   videoUrl = p.url ?? p.uris?.[0] ?? null;
@@ -609,7 +609,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                               videoUrl = msg.content;
                             }
 
-                            if (msg.messageType === "image" && mediaUrls.length > 0) {
+                            if ((msg.messageType === "image" || msg.messageType === "album") && mediaUrls.length > 0) {
                               const isGroup = mediaUrls.length > 1;
                               return (
                                 <div

@@ -123,7 +123,7 @@ function normalizeRoomMsg(r: any): RoomMessage {
 
 function detectMediaType(content: string, rawMsgType: string): "image" | "video" | "text" {
   const t = (rawMsgType || "").toLowerCase();
-  if (t === "image" || t === "images" || t === "photo") return "image";
+  if (t === "image" || t === "images" || t === "photo" || t === "album") return "image";
   if (t === "video" || t === "videos") return "video";
 
   if (content && content.startsWith("{")) {

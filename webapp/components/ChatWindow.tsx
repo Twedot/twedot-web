@@ -406,7 +406,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                 return (
                   <div key={ci} className="mb-1">
                     {cluster.messages.map((msg, mi) => {
-                      const isMedia = msg.messageType === "image" || msg.messageType === "video";
+                      const isMedia = msg.messageType === "image" || msg.messageType === "video" || msg.messageType === "album";
                       const isProductInquiry = msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId;
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
@@ -427,7 +427,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             if (msg.content.startsWith("{")) {
                               try {
                                 const p = JSON.parse(msg.content);
-                                if (msg.messageType === "image") {
+                                if (msg.messageType === "image" || msg.messageType === "album") {
                                   mediaUrls = p.uris ?? (p.url ? [p.url] : []);
                                 } else {
                                   videoUrl = p.url ?? p.uris?.[0] ?? null;
@@ -441,7 +441,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               videoUrl = msg.content;
                             }
 
-                            if (msg.messageType === "image" && mediaUrls.length > 0) {
+                            if ((msg.messageType === "image" || msg.messageType === "album") && mediaUrls.length > 0) {
                               const isGroup = mediaUrls.length > 1;
                               return (
                                 <div
