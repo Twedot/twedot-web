@@ -407,6 +407,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                   <div key={ci} className="mb-1">
                     {cluster.messages.map((msg, mi) => {
                       const isMedia = msg.messageType === "image" || msg.messageType === "video";
+                      const isProductInquiry = msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId;
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
                       <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-8" : ""}`}>
@@ -434,6 +435,45 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               <span className="text-[8px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
                             </div>
                           </div>
+                        ) : isProductInquiry ? (
+                          (() => {
+                            const meta = parseMeta<ProductInquiryMeta>(msg);
+                            const displayImage = (meta as any)?.postImage ?? meta?.productImage;
+                            const isBuyer = thread?.productContext
+                              ? myUserId !== thread.productContext.sellerId
+                              : meta?.sellerId ? myUserId !== meta.sellerId : false;
+                            return (
+                              <div className={`w-[180px] rounded-xl overflow-hidden ${isMine ? "text-white" : "text-white/90"}`}
+                                style={{ backgroundColor: isMine ? color : "#2a2a2a", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}>
+                                {displayImage && (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={displayImage} alt="" className="w-full h-[110px] object-cover" />
+                                )}
+                                {meta && (
+                                  <div className="flex items-center justify-between gap-1 px-1.5 pt-1 pb-0.5">
+                                    <div className="min-w-0">
+                                      <p className="text-[10px] font-bold truncate">{meta.productName}</p>
+                                      <p className="text-[10px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>
+                                    </div>
+                                    {isBuyer && (
+                                      <button
+                                        onClick={handleBuyProduct}
+                                        disabled={buyingProduct}
+                                        className="flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-400 text-white text-[9px] font-semibold transition-colors disabled:opacity-50"
+                                      >
+                                        <IoCartOutline size={9} />
+                                        {buyingProduct ? "..." : "Buy"}
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                                <p className="text-[11px] leading-[1.4] px-1.5 pb-1">{msg.content}</p>
+                                <div className="text-right px-1.5 pb-0.5">
+                                  <span className="text-[8px] text-white/50">{timeLabel(toDate(msg.timestamp))}</span>
+                                </div>
+                              </div>
+                            );
+                          })()
                         ) : (
                         <div className={`max-w-[80%] px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
                           isMine
@@ -442,41 +482,6 @@ export default function ChatWindow({ userId }: { userId: string }) {
                         }`} style={isMine ? { background: color } : undefined}>
                           {msg.messageType === "voice" ? (
                             <MiniVoicePlayer src={msg.content} duration={msg.duration || 0} isMine={isMine} color={color} />
-                          ) : (msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId) ? (
-                            (() => {
-                              const meta = parseMeta<ProductInquiryMeta>(msg);
-                              const displayImage = (meta as any)?.postImage ?? meta?.productImage;
-                              const isBuyer = thread?.productContext
-                                ? myUserId !== thread.productContext.sellerId
-                                : meta?.sellerId ? myUserId !== meta.sellerId : false;
-                              return (
-                                <div className="w-[180px] rounded-xl overflow-hidden">
-                                  {displayImage && (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={displayImage} alt="" className="w-full h-[110px] object-cover" />
-                                  )}
-                                  {meta && (
-                                    <div className="flex items-center justify-between gap-1 px-1.5 pt-1 pb-0.5">
-                                      <div className="min-w-0">
-                                        <p className="text-[10px] font-bold truncate">{meta.productName}</p>
-                                        <p className="text-[10px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>
-                                      </div>
-                                      {isBuyer && (
-                                        <button
-                                          onClick={handleBuyProduct}
-                                          disabled={buyingProduct}
-                                          className="flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-400 text-white text-[9px] font-semibold transition-colors disabled:opacity-50"
-                                        >
-                                          <IoCartOutline size={9} />
-                                          {buyingProduct ? "..." : "Buy"}
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                  <p className="text-[11px] leading-[1.4] px-1.5 pb-1">{msg.content}</p>
-                                </div>
-                              );
-                            })()
                           ) : msg.messageType === "payment_receipt" ? (
                             (() => {
                               const meta = parseMeta<ReceiptMeta>(msg);
