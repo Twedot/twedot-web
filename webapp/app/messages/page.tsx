@@ -561,7 +561,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                       const isCard = msg.messageType === "payment_receipt" || msg.messageType === "escrow_update";
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
-                      <div key={msg.id ?? msg.clientMessageId} className={`group relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-10" : ""}`}>
+                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-10" : ""} relative`}>
                         {!isMine && (
                           <div className="absolute left-0 bottom-0 w-7 h-7">
                             {isLastInCluster && (
@@ -571,20 +571,21 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             )}
                           </div>
                         )}
-                        {/* Reply button on hover — always on the gap side so it doesn't overflow the viewport */}
+                        <div className="group relative inline-flex max-w-[80%]">
+                        {/* Reply button on hover */}
                         <button
-                          className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-light-text hover:text-text ${isMine ? "left-0 -translate-x-full pr-1" : "left-0 -translate-x-full pr-1"}`}
+                          className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-light-text hover:text-text ${isMine ? "left-0 -translate-x-full pr-1" : "right-0 translate-x-full pl-1"}`}
                           onClick={() => setReplyTo(msg)}
                         >
                           <IoArrowUndoOutline size={14} />
                         </button>
                         {/* React button on hover */}
-                        <div className={`absolute -top-3 ${isMine ? "right-0" : "left-10"} opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
+                        <div className={`absolute -top-3 ${isMine ? "left-0" : "right-0"} opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
                           <button className="text-light-text hover:text-text" onClick={() => setReactingMsgId(msg.id)}>
                             <IoHappySharp size={13} />
                           </button>
                           {reactingMsgId === msg.id && (
-                            <div ref={reactPickerRef} className={`absolute ${isMine ? "right-0" : "left-0"} -top-8 flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20`}>
+                            <div ref={reactPickerRef} className={`absolute ${isMine ? "left-0" : "right-0"} -top-8 flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20`}>
                               {QUICK_REACTIONS.map((e) => (
                                 <button key={e} className="text-[16px] hover:scale-125 transition-transform" onClick={() => handleReact(msg.id, e)}>{e}</button>
                               ))}
@@ -652,7 +653,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             return <span className="text-[13px]">{msg.content}</span>;
                           })()
                         ) : (
-                        <div className={`max-w-[75%] rounded-2xl text-[13px] leading-[1.4] break-words ${isCard ? "p-0" : "px-3 py-1"} ${
+                        <div className={`rounded-2xl text-[13px] leading-[1.4] break-words ${isCard ? "p-0" : "px-3 py-1"} ${
                           isMine ? "text-white rounded-br-sm" : "bg-feed-bg text-text rounded-bl-sm"
                         }`} style={isMine && !isCard ? { background: color } : undefined}>
                           {replySnap && (
@@ -745,6 +746,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                           )}
                         </div>
                         )}
+                      </div>
                       </div>
                       );
                     })}
