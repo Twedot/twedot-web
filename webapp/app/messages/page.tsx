@@ -666,17 +666,27 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             );
                           })() : (msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId) ? (() => {
                             const meta = parseMeta<ProductInquiryMeta>(msg);
-                            const displayImage = meta?.postImage ?? meta?.productImage;
+                            const displayImage = (meta as any)?.postImage ?? meta?.productImage;
+                            const isBuyer = meta?.sellerId ? myUserId !== meta.sellerId : false;
                             return (
-                              <div className="p-1.5 rounded-xl bg-black/20 border border-white/10 min-w-[180px]">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  {displayImage && <img src={displayImage} alt="" className="w-8 h-8 rounded object-cover" />}
-                                  <div className="min-w-0">
-                                    {meta && <p className="text-[11px] font-bold truncate">{meta.productName}</p>}
-                                    {meta && <p className="text-[11px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>}
+                              <div className="w-[220px] rounded-xl overflow-hidden">
+                                {displayImage && (
+                                  <img src={displayImage} alt="" className="w-full h-[130px] object-cover" />
+                                )}
+                                {meta && (
+                                  <div className="flex items-center justify-between gap-1.5 px-2 py-1.5">
+                                    <div className="min-w-0">
+                                      <p className="text-[12px] font-bold truncate">{meta.productName}</p>
+                                      <p className="text-[12px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>
+                                    </div>
+                                    {isBuyer && (
+                                      <a href={`/p/${meta.productId}`} className="flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full bg-red-500 hover:bg-red-400 text-white text-[11px] font-semibold transition-colors">
+                                        Buy
+                                      </a>
+                                    )}
                                   </div>
-                                </div>
-                                <p className="text-[12px]">{msg.content}</p>
+                                )}
+                                <p className="text-[12px] px-2 pb-1.5">{msg.content}</p>
                               </div>
                             );
                           })() : (

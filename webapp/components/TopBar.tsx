@@ -358,9 +358,9 @@ export default function TopBar() {
               </button>
               {user.profile_photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.profile_photo_url} alt={user.name ?? ""} className="h-8 w-8 cursor-pointer rounded-full object-cover" onClick={() => router.push("/profile")} />
+                <img src={user.profile_photo_url} alt={user.name ?? ""} className="hidden sm:block h-8 w-8 cursor-pointer rounded-full object-cover" onClick={() => router.push("/profile")} />
               ) : (
-                <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-feed-bg" onClick={() => router.push("/profile")}>
+                <div className="hidden sm:flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-feed-bg" onClick={() => router.push("/profile")}>
                   <IoPersonOutline size={17} className="text-light-text" />
                 </div>
               )}

@@ -267,24 +267,24 @@ export default function ProfilePage() {
       )}
 
       {/* ── Action buttons ── */}
-      <div className="mx-6 mt-4 flex gap-2">
+      <div className="mx-4 sm:mx-6 mt-4 flex flex-wrap gap-2">
         <button
           onClick={() => router.push("/settings?section=edit-profile")}
-          className="flex items-center gap-1 rounded-full bg-primary px-3.5 py-1.5 text-[12px] font-semibold text-white hover:bg-primary/90"
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-primary/90"
         >
           <IoCreateOutline size={13} />
           Edit profile
         </button>
         <button
           onClick={handleShareProfile}
-          className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 rounded-full border border-border px-3 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
         >
           <IoShareSocialOutline size={13} />
           Share
         </button>
         <button
           onClick={() => router.push("/profile-card")}
-          className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
+          className="flex-1 min-w-0 flex items-center justify-center gap-1 rounded-full border border-border px-3 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
         >
           <IoCardOutline size={13} />
           Card
@@ -298,7 +298,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ── Profile link + Balance ── */}
-      <div className="mx-6 mt-4 flex items-center gap-2">
+      <div className="mx-4 sm:mx-6 mt-4 flex items-center gap-2">
         <IoLinkOutline size={13} className="flex-shrink-0 text-primary" />
         <span className="flex-1 truncate text-[12px] text-light-text">
           twedot.com/u/{inviteToken ?? "…"}
