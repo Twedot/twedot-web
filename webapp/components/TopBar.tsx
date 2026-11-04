@@ -438,7 +438,9 @@ function ChatDropdown() {
   const openChat = useChatStore((s) => s.openChat);
   const closeChat = useChatStore((s) => s.closeChat);
   const [labelsVisible, setLabelsVisible] = useState(true);
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => {
+    try { const raw = localStorage.getItem("twedot_hidden_chat_ids"); return raw ? new Set(JSON.parse(raw)) : new Set(); } catch { return new Set(); }
+  });
 
   const totalUnread = Array.from(threads.values()).reduce((sum, t) => sum + t.unreadCount, 0);
   const chatList = Array.from(threads.values())
@@ -500,7 +502,7 @@ function ChatDropdown() {
             return (
               <div key={contact.userId} className="group/chat relative flex items-center gap-2">
                 <button
-                  onClick={(e) => { e.stopPropagation(); closeChat(contact.userId); setHiddenIds((prev) => new Set(prev).add(contact.userId)); }}
+                  onClick={(e) => { e.stopPropagation(); closeChat(contact.userId); setHiddenIds((prev) => { const next = new Set(prev).add(contact.userId); try { localStorage.setItem("twedot_hidden_chat_ids", JSON.stringify([...next])); } catch {} return next; }); }}
                   className="absolute -top-1 -right-1 z-10 hidden group-hover/chat:flex h-4 w-4 items-center justify-center rounded-full bg-[#333] text-white/70 hover:bg-[#555] hover:text-white"
                 >
                   <IoClose size={10} />

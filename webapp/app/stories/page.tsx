@@ -901,11 +901,10 @@ function FeedContent() {
   const feedItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = groupedPosts.map((posts) => ({ kind: "post" as const, posts }));
     if (liveStreams.length === 0) return items;
-    const result: FeedItem[] = [...items];
-    for (let i = 0; i < liveStreams.length; i++) {
-      result.push({ kind: "live", stream: liveStreams[i] });
-    }
-    return result;
+    const liveItems: FeedItem[] = liveStreams.map((stream) => ({ kind: "live" as const, stream }));
+    // Place live streams after the first post so they're visible early
+    if (items.length === 0) return liveItems;
+    return [items[0], ...liveItems, ...items.slice(1)];
   }, [groupedPosts, liveStreams]);
 
   useEffect(() => {
