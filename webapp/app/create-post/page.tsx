@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/lib/AuthContext";
 import { apiPost, apiUploadFile } from "@/lib/api";
 import { uploadStore } from "@/lib/uploadStore";
+import LocationAutocomplete from "@/components/LocationAutocomplete";
 
 type Mode = "text" | "image" | "video";
 type MediaItem = { file: File; preview: string; thumb: string; type: "image" | "video" };
@@ -691,16 +692,12 @@ export default function CreatePostPage() {
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              <IoLocationOutline size={14} className="text-light-text flex-shrink-0" />
-              <input
-                type="text"
-                value={productLocation}
-                onChange={(e) => setProductLocation(e.target.value)}
-                placeholder="Location (e.g. Lagos, Ikeja)"
-                className="flex-1 rounded-xl bg-feed-bg px-3 py-2 text-[12px] text-text outline-none placeholder-light-text border border-transparent focus:border-primary/50"
-              />
-            </div>
+            <LocationAutocomplete
+              value={productLocation}
+              onChange={(loc) => setProductLocation(loc.address)}
+              onTextChange={(text) => setProductLocation(text)}
+              placeholder="Location (e.g. Lagos, Ikeja)"
+            />
           </div>
         )}
       </div>}
