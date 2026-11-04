@@ -729,10 +729,10 @@ function LiveFeedCard({
 
       {/* ── Media card — live stream video ── */}
       <div
-        className="relative flex-shrink-0 overflow-hidden rounded-2xl"
-        style={{ maxHeight: maxH, maxWidth: 480 }}
+        className="relative flex-shrink-0 overflow-hidden rounded-2xl w-full max-w-[480px]"
+        style={{ maxHeight: maxH, aspectRatio: "9/16" }}
       >
-        <LiveStreamPlayer roomId={stream.roomId} hostPhoto={stream.hostPhoto} muted />
+        <LiveStreamPlayer roomId={stream.roomId} hostPhoto={stream.hostPhoto} muted fill />
 
         {/* LIVE badge overlay */}
         <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
@@ -901,10 +901,18 @@ function FeedContent() {
   const feedItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = groupedPosts.map((posts) => ({ kind: "post" as const, posts }));
     if (liveStreams.length === 0) return items;
-    const liveItems: FeedItem[] = liveStreams.map((stream) => ({ kind: "live" as const, stream }));
-    // Place live streams after the first post so they're visible early
-    if (items.length === 0) return liveItems;
-    return [items[0], ...liveItems, ...items.slice(1)];
+    if (items.length === 0) return liveStreams.map((s) => ({ kind: "live" as const, stream: s }));
+    const result: FeedItem[] = [];
+    const gap = Math.max(3, Math.floor(items.length / (liveStreams.length + 1)));
+    let li = 0;
+    for (let i = 0; i < items.length; i++) {
+      if (li < liveStreams.length && i > 0 && i % gap === 0) {
+        result.push({ kind: "live", stream: liveStreams[li++] });
+      }
+      result.push(items[i]);
+    }
+    while (li < liveStreams.length) result.push({ kind: "live", stream: liveStreams[li++] });
+    return result;
   }, [groupedPosts, liveStreams]);
 
   useEffect(() => {
