@@ -505,7 +505,7 @@ export default function BroadcastPage() {
           )}
 
           {/* Controls */}
-          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-3 bg-gradient-to-t from-black/60 to-transparent px-4 pb-4 pt-8">
+          <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-center gap-3 bg-gradient-to-t from-black/60 to-transparent px-4 pb-4 pt-8">
             <button
               onClick={toggleMic}
               className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${micOn ? "bg-white/15 text-white" : "bg-red-500/80 text-white"}`}

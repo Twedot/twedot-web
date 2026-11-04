@@ -234,9 +234,8 @@ export class LiveStreamService {
   }
 
   async setCameraEnabled(on: boolean) {
-    if (!this._room || !lkModule) return;
-    const pub = this._room.localParticipant.getTrackPublication(lkModule.Track.Source.Camera);
-    if (pub?.track) { if (on) await pub.unmute(); else await pub.mute(); }
+    if (!this._room) return;
+    await this._room.localParticipant.setCameraEnabled(on);
   }
 
   async publishMicTrack(track: MediaStreamTrack) {
@@ -249,9 +248,8 @@ export class LiveStreamService {
   }
 
   async setMicEnabled(on: boolean) {
-    if (!this._room || !lkModule) return;
-    const pub = this._room.localParticipant.getTrackPublication(lkModule.Track.Source.Microphone);
-    if (pub?.track) { if (on) await pub.unmute(); else await pub.mute(); }
+    if (!this._room) return;
+    await this._room.localParticipant.setMicrophoneEnabled(on);
   }
 
   // ── Screen share ────────────────────────────────────
