@@ -170,17 +170,38 @@ export default function BroadcastPage() {
 
   const toggleCamera = useCallback(async () => {
     const svc = serviceRef.current;
-    if (!svc || !mediaStreamRef.current) return;
-    const track = mediaStreamRef.current.getVideoTracks()[0];
-    if (!track) return;
+    if (!svc) return;
     if (cameraOn) {
-      track.enabled = false;
       await svc.unpublishCamera();
+      const ms = mediaStreamRef.current;
+      if (ms) {
+        ms.getVideoTracks().forEach((t) => { t.stop(); ms.removeTrack(t); });
+      }
+      if (videoRef.current) { videoRef.current.srcObject = null; videoRef.current.srcObject = ms; }
       setCameraOn(false);
     } else {
-      track.enabled = true;
-      await svc.publishCameraTrack(track);
-      setCameraOn(true);
+      try {
+        const fresh = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720, frameRate: 30 },
+        });
+        const newTrack = fresh.getVideoTracks()[0];
+        if (!newTrack) { fresh.getTracks().forEach((t) => t.stop()); return; }
+        const ms = mediaStreamRef.current;
+        if (ms) {
+          ms.getVideoTracks().forEach((t) => { t.stop(); ms.removeTrack(t); });
+          ms.addTrack(newTrack);
+        } else {
+          mediaStreamRef.current = fresh;
+        }
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+          videoRef.current.srcObject = mediaStreamRef.current;
+        }
+        await svc.publishCameraTrack(newTrack);
+        setCameraOn(true);
+      } catch (e) {
+        console.error("toggleCamera re-enable failed:", e);
+      }
     }
   }, [cameraOn]);
 
@@ -236,13 +257,32 @@ export default function BroadcastPage() {
               autoPlay
               playsInline
               muted
-              className="h-full w-full object-cover"
+              className={`h-full w-full object-cover ${!cameraOn ? "hidden" : ""}`}
               style={{ transform: "scaleX(-1)" }}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
             </div>
+          )}
+          {cameraReady && !cameraOn && (
+            <>
+              {user?.profile_photo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.profile_photo_url} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover" style={{ filter: "blur(20px)" }} />
+              )}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-[1]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20">
+                  {user?.profile_photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.profile_photo_url} alt="" className="h-14 w-14 rounded-full object-cover" />
+                  ) : (
+                    <IoPersonOutline size={36} className="text-white/30" />
+                  )}
+                </div>
+                <p className="text-[12px] text-white/60">Camera is off</p>
+              </div>
+            </>
           )}
 
           {/* Mic/cam toggles on preview */}
@@ -405,21 +445,27 @@ export default function BroadcastPage() {
             autoPlay
             playsInline
             muted
-            className="h-full w-full object-contain"
+            className={`h-full w-full object-contain ${!cameraOn && !screenSharing ? "hidden" : ""}`}
             style={{ transform: cameraOn && !screenSharing ? "scaleX(-1)" : undefined }}
           />
           {!cameraOn && !screenSharing && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/10">
-                {user?.profile_photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={user.profile_photo_url} alt="" className="h-20 w-20 rounded-full object-cover" />
-                ) : (
-                  <IoPersonOutline size={36} className="text-white/30" />
-                )}
+            <>
+              {user?.profile_photo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.profile_photo_url} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover" style={{ filter: "blur(20px)" }} />
+              )}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-[1]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20">
+                  {user?.profile_photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.profile_photo_url} alt="" className="h-14 w-14 rounded-full object-cover" />
+                  ) : (
+                    <IoPersonOutline size={36} className="text-white/30" />
+                  )}
+                </div>
+                <p className="text-[12px] text-white/60">Camera is off</p>
               </div>
-              <p className="text-[12px] text-white/40">Camera off</p>
-            </div>
+            </>
           )}
 
           {/* Controls */}

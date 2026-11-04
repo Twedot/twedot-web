@@ -6,11 +6,12 @@ interface Props {
   roomId: string;
   hostPhoto?: string;
   muted?: boolean;
+  fill?: boolean;
 }
 
 type Phase = "idle" | "loading" | "live" | "ended" | "error";
 
-export default function LiveStreamPlayer({ roomId, hostPhoto, muted = false }: Props) {
+export default function LiveStreamPlayer({ roomId, hostPhoto, muted = false, fill = false }: Props) {
   const wrapRef  = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -75,19 +76,38 @@ export default function LiveStreamPlayer({ roomId, hostPhoto, muted = false }: P
           }
         });
 
-        room.on(RoomEvent.TrackUnsubscribed, (track: any) => {
+        const recheckVideo = () => {
           if (cancelled) return;
-          if (track.kind === Track.Kind.Video) {
-            let anyVideo = false;
-            for (const p of room.remoteParticipants.values()) {
-              for (const pub of p.trackPublications.values()) {
-                if (pub.isSubscribed && pub.track?.kind === Track.Kind.Video) { anyVideo = true; break; }
-              }
-              if (anyVideo) break;
+          let anyVideo = false;
+          for (const p of room.remoteParticipants.values()) {
+            for (const pub of p.trackPublications.values()) {
+              if (pub.isSubscribed && pub.track?.kind === Track.Kind.Video && !pub.isMuted) { anyVideo = true; break; }
             }
-            setHasVideo(anyVideo);
-            attachBestVideo();
+            if (anyVideo) break;
           }
+          setHasVideo(anyVideo);
+          attachBestVideo();
+        };
+
+        room.on(RoomEvent.TrackUnsubscribed, (track: any) => {
+          if (cancelled || track.kind !== Track.Kind.Video) return;
+          recheckVideo();
+        });
+
+        room.on(RoomEvent.TrackUnpublished, () => {
+          if (cancelled) return;
+          recheckVideo();
+        });
+
+        room.on(RoomEvent.TrackMuted, (pub: any) => {
+          if (cancelled || pub.kind !== Track.Kind.Video) return;
+          recheckVideo();
+        });
+
+        room.on(RoomEvent.TrackUnmuted, (pub: any) => {
+          if (cancelled || pub.kind !== Track.Kind.Video) return;
+          setHasVideo(true);
+          attachBestVideo();
         });
 
         room.on(RoomEvent.Disconnected, () => {
@@ -138,7 +158,7 @@ export default function LiveStreamPlayer({ roomId, hostPhoto, muted = false }: P
   }, [roomId]);
 
   return (
-    <div ref={wrapRef} className="relative overflow-hidden rounded-xl bg-black" style={{ aspectRatio: "16/9" }}>
+    <div ref={wrapRef} className="relative overflow-hidden rounded-xl bg-black" style={fill ? { width: "100%", height: "100%" } : { aspectRatio: "16/9" }}>
       {/* Blurred host photo while loading / as background */}
       {hostPhoto && (phase === "idle" || phase === "loading") && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -176,7 +196,7 @@ export default function LiveStreamPlayer({ roomId, hostPhoto, muted = false }: P
         </div>
       )}
 
-      <video ref={videoRef} autoPlay playsInline muted={muted} className="absolute inset-0 h-full w-full object-contain" />
+      <video ref={videoRef} autoPlay playsInline muted={muted} className={`absolute inset-0 h-full w-full object-contain ${phase === "live" && !hasVideo ? "hidden" : ""}`} />
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio ref={audioRef} autoPlay muted={muted} />
 

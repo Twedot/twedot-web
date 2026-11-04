@@ -26,6 +26,7 @@ export default function WatchPage() {
   const [viewerCount, setViewerCount] = useState(0);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [hasVideo, setHasVideo] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -69,6 +70,7 @@ export default function WatchPage() {
           room.on(RoomEvent.TrackSubscribed, (track: any, pub: any) => {
             if (cancelled) return;
             if (track.kind === Track.Kind.Video) {
+              setHasVideo(true);
               const isScreen = pub.source === Track.Source.ScreenShare;
               if (isScreen) {
                 hasScreenShare = true;
@@ -81,19 +83,62 @@ export default function WatchPage() {
             }
           });
 
+          const recheckVideo = () => {
+            if (cancelled) return;
+            let anyVideo = false;
+            for (const p of room.remoteParticipants.values()) {
+              for (const tp of p.trackPublications.values()) {
+                if (tp.isSubscribed && tp.track?.kind === Track.Kind.Video && !tp.isMuted) { anyVideo = true; break; }
+              }
+              if (anyVideo) break;
+            }
+            setHasVideo(anyVideo);
+          };
+
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           room.on(RoomEvent.TrackUnsubscribed, (track: any, pub: any) => {
             if (cancelled) return;
-            if (pub.source === Track.Source.ScreenShare && track.kind === Track.Kind.Video) {
-              hasScreenShare = false;
-              track.detach(videoRef.current!);
-              for (const p of room.remoteParticipants.values()) {
-                for (const tp of p.trackPublications.values()) {
-                  if (tp.track?.kind === Track.Kind.Video && tp.source === Track.Source.Camera && videoRef.current) {
-                    (tp.track as any).attach(videoRef.current);
+            if (track.kind === Track.Kind.Video) {
+              if (pub.source === Track.Source.ScreenShare) {
+                hasScreenShare = false;
+                track.detach(videoRef.current!);
+                let foundCamera = false;
+                for (const p of room.remoteParticipants.values()) {
+                  for (const tp of p.trackPublications.values()) {
+                    if (tp.track?.kind === Track.Kind.Video && tp.source === Track.Source.Camera && !tp.isMuted && videoRef.current) {
+                      (tp.track as any).attach(videoRef.current);
+                      foundCamera = true;
+                    }
                   }
                 }
+                setHasVideo(foundCamera);
+              } else {
+                recheckVideo();
               }
+            }
+          });
+
+          room.on(RoomEvent.TrackUnpublished, () => {
+            if (cancelled) return;
+            recheckVideo();
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          room.on(RoomEvent.TrackMuted, (pub: any) => {
+            if (cancelled || pub.kind !== Track.Kind.Video) return;
+            recheckVideo();
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          room.on(RoomEvent.TrackUnmuted, (pub: any) => {
+            if (cancelled || pub.kind !== Track.Kind.Video) return;
+            setHasVideo(true);
+            const isScreen = pub.source === Track.Source.ScreenShare;
+            if (isScreen) {
+              hasScreenShare = true;
+              if (videoRef.current && pub.track) (pub.track as any).attach(videoRef.current);
+            } else if (!hasScreenShare && videoRef.current && pub.track) {
+              (pub.track as any).attach(videoRef.current);
             }
           });
 
@@ -229,7 +274,26 @@ export default function WatchPage() {
       <div className="flex flex-1 gap-0 overflow-hidden">
         {/* Video */}
         <div className="relative flex-1 bg-zinc-950">
-          <video ref={videoRef} autoPlay playsInline className="h-full w-full object-contain" />
+          {/* Camera-off blur */}
+          {phase === "live" && !hasVideo && hostPhoto && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={hostPhoto} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover" style={{ filter: "blur(20px)" }} />
+          )}
+          {phase === "live" && !hasVideo && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-[1]">
+              <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center mb-2">
+                {hostPhoto ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={hostPhoto} alt="" className="h-14 w-14 rounded-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-bold text-white">🎙</span>
+                )}
+              </div>
+              <p className="text-[12px] text-white/60">Camera is off</p>
+            </div>
+          )}
+
+          <video ref={videoRef} autoPlay playsInline className={`h-full w-full object-contain ${phase === "live" && !hasVideo ? "hidden" : ""}`} />
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
           <audio ref={audioRef} autoPlay />
 
