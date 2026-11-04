@@ -536,7 +536,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col-reverse">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 flex flex-col-reverse">
         <div className="flex flex-col gap-0.5">
           {messages.length === 0 && !thread.requestStatus && (
             <div className="flex items-center justify-center py-24 text-light-text text-[13px]">
@@ -571,20 +571,20 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             )}
                           </div>
                         )}
-                        {/* Reply button on hover */}
+                        {/* Reply button on hover — always on the gap side so it doesn't overflow the viewport */}
                         <button
-                          className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-light-text hover:text-text ${isMine ? "left-0 -translate-x-full pr-1" : "right-0 translate-x-full pl-1"}`}
+                          className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-light-text hover:text-text ${isMine ? "left-0 -translate-x-full pr-1" : "left-0 -translate-x-full pr-1"}`}
                           onClick={() => setReplyTo(msg)}
                         >
                           <IoArrowUndoOutline size={14} />
                         </button>
                         {/* React button on hover */}
-                        <div className={`absolute -top-3 ${isMine ? "left-0" : "right-0"} opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
+                        <div className={`absolute -top-3 ${isMine ? "right-0" : "left-10"} opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
                           <button className="text-light-text hover:text-text" onClick={() => setReactingMsgId(msg.id)}>
                             <IoHappySharp size={13} />
                           </button>
                           {reactingMsgId === msg.id && (
-                            <div ref={reactPickerRef} className={`absolute ${isMine ? "left-0" : "right-0"} -top-8 flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20`}>
+                            <div ref={reactPickerRef} className={`absolute ${isMine ? "right-0" : "left-0"} -top-8 flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20`}>
                               {QUICK_REACTIONS.map((e) => (
                                 <button key={e} className="text-[16px] hover:scale-125 transition-transform" onClick={() => handleReact(msg.id, e)}>{e}</button>
                               ))}
