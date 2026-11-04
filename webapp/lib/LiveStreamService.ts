@@ -64,6 +64,7 @@ export class LiveStreamService {
   private _disposed = false;
   private _ready = false;
   private _pendingGoLive: (() => void) | null = null;
+  private _isViewer = false;
 
   get isHosting() { return this._isHosting; }
   get activeStreamId() { return this._activeStreamId; }
@@ -100,7 +101,16 @@ export class LiveStreamService {
   private handleMessage(msg: Record<string, unknown>) {
     switch (msg.type) {
       case "welcome":
-        this.send({ type: "resume_host" });
+        if (this._isViewer) {
+          this._ready = true;
+          if (this._pendingGoLive) {
+            const fn = this._pendingGoLive;
+            this._pendingGoLive = null;
+            fn();
+          }
+        } else {
+          this.send({ type: "resume_host" });
+        }
         break;
 
       case "live_started": {
@@ -288,6 +298,7 @@ export class LiveStreamService {
   }
 
   joinStream(roomId: string) {
+    this._isViewer = true;
     const doSend = () => this.send({ type: "join_stream", roomId });
     if (this._ready) {
       doSend();

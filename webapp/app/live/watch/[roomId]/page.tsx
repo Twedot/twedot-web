@@ -63,13 +63,37 @@ export default function WatchPage() {
           const room = new Room({ adaptiveStream: true, dynacast: true });
           roomRef.current = room;
 
+          let hasScreenShare = false;
+
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          room.on(RoomEvent.TrackSubscribed, (track: any) => {
+          room.on(RoomEvent.TrackSubscribed, (track: any, pub: any) => {
             if (cancelled) return;
-            if (track.kind === Track.Kind.Video && videoRef.current) {
-              track.attach(videoRef.current);
+            if (track.kind === Track.Kind.Video) {
+              const isScreen = pub.source === Track.Source.ScreenShare;
+              if (isScreen) {
+                hasScreenShare = true;
+                if (videoRef.current) track.attach(videoRef.current);
+              } else if (!hasScreenShare && videoRef.current) {
+                track.attach(videoRef.current);
+              }
             } else if (track.kind === Track.Kind.Audio && audioRef.current) {
               track.attach(audioRef.current);
+            }
+          });
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          room.on(RoomEvent.TrackUnsubscribed, (track: any, pub: any) => {
+            if (cancelled) return;
+            if (pub.source === Track.Source.ScreenShare && track.kind === Track.Kind.Video) {
+              hasScreenShare = false;
+              track.detach(videoRef.current!);
+              for (const p of room.remoteParticipants.values()) {
+                for (const tp of p.trackPublications.values()) {
+                  if (tp.track?.kind === Track.Kind.Video && tp.source === Track.Source.Camera && videoRef.current) {
+                    (tp.track as any).attach(videoRef.current);
+                  }
+                }
+              }
             }
           });
 
@@ -83,8 +107,14 @@ export default function WatchPage() {
           for (const participant of room.remoteParticipants.values()) {
             for (const pub of participant.trackPublications.values()) {
               if (pub.isSubscribed && pub.track) {
-                if (pub.track.kind === Track.Kind.Video && videoRef.current) {
-                  (pub.track as any).attach(videoRef.current);
+                const isScreen = pub.source === Track.Source.ScreenShare;
+                if (pub.track.kind === Track.Kind.Video) {
+                  if (isScreen) {
+                    hasScreenShare = true;
+                    if (videoRef.current) (pub.track as any).attach(videoRef.current);
+                  } else if (!hasScreenShare && videoRef.current) {
+                    (pub.track as any).attach(videoRef.current);
+                  }
                 } else if (pub.track.kind === Track.Kind.Audio && audioRef.current) {
                   (pub.track as any).attach(audioRef.current);
                 }
