@@ -54,6 +54,10 @@ import { chatSocket } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
 import ErrorState from "@/components/ErrorState";
 import { useLiveUsers } from "@/lib/liveUsers";
+import { useLiveStreams, type LiveStream } from "@/components/LiveStreamCard";
+import LiveStreamPlayer from "@/components/LiveStreamPlayer";
+
+type FeedItem = { kind: "post"; posts: StatusPost[] } | { kind: "live"; stream: LiveStream };
 
 const PAGE_SIZE = 20;
 
@@ -660,6 +664,106 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
   );
 }
 
+/* ── Live Stream Feed Card ── */
+function LiveFeedCard({
+  stream,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+}: {
+  stream: LiveStream;
+  onPrev: () => void;
+  onNext: () => void;
+  hasPrev: boolean;
+  hasNext: boolean;
+}) {
+  const router = useRouter();
+  const [watchStart] = useState(() => Date.now());
+  const [blurred, setBlurred] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setBlurred(true), 5 * 60 * 1000);
+    return () => clearTimeout(timer);
+  }, [watchStart]);
+
+  return (
+    <div className="relative flex h-full w-full items-center justify-center bg-black">
+      <div className="relative w-full h-full max-w-[480px] mx-auto">
+        <LiveStreamPlayer roomId={stream.roomId} hostPhoto={stream.hostPhoto} />
+
+        {/* LIVE badge + viewer count */}
+        <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+          <span className="flex items-center gap-1.5 rounded bg-red-500 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-white">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+            LIVE
+          </span>
+          <span className="flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-semibold text-white">
+            {stream.viewers.toLocaleString()} watching
+          </span>
+        </div>
+
+        {/* Host info */}
+        <div className="absolute bottom-16 left-4 right-16 z-10">
+          <div className="flex items-center gap-2.5 mb-2">
+            {stream.hostPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={stream.hostPhoto} alt="" className="h-10 w-10 rounded-full object-cover border-2 border-red-500" />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 border-2 border-red-500 text-white font-bold">
+                {stream.hostName[0]?.toUpperCase()}
+              </div>
+            )}
+            <div>
+              <p className="text-[14px] font-bold text-white drop-shadow">{stream.hostName}</p>
+              {stream.title && <p className="text-[12px] text-white/70 drop-shadow">#{stream.title}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* 5-min blur gate */}
+        {blurred && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-black/70 backdrop-blur-md">
+            <p className="text-[18px] font-bold text-white">Want to keep watching?</p>
+            <p className="text-[13px] text-white/60">Join the live stream to continue</p>
+            <button
+              onClick={() => router.push(`/live/watch/${stream.roomId}`)}
+              className="mt-2 rounded-full bg-red-500 px-8 py-3 text-[14px] font-bold text-white hover:bg-red-600 transition-colors"
+            >
+              Join Stream
+            </button>
+            <button
+              onClick={onNext}
+              className="text-[13px] text-white/50 hover:text-white/80 transition-colors"
+            >
+              Skip to next
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Side actions */}
+      <div className="absolute right-3 bottom-20 z-10 flex flex-col items-center gap-3">
+        <button
+          onClick={() => router.push(`/live/watch/${stream.roomId}`)}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/90 text-white"
+          title="Join stream"
+        >
+          <IoPlay size={20} />
+        </button>
+        <div className="flex flex-col items-center gap-1.5 mt-2">
+          <button onClick={onPrev} disabled={!hasPrev} className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/10 text-foreground disabled:opacity-30">
+            <IoChevronUp size={18} />
+          </button>
+          <button onClick={onNext} disabled={!hasNext} className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/10 text-foreground disabled:opacity-30">
+            <IoChevronDown size={18} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Feed ── */
 function FeedContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -750,7 +854,26 @@ function FeedContent() {
     return () => clearInterval(interval);
   }, [isAuthenticated, query]);
 
+  const liveStreams = useLiveStreams();
+
   const groupedPosts = useMemo(() => groupPosts(posts), [posts]);
+
+  const feedItems: FeedItem[] = useMemo(() => {
+    const items: FeedItem[] = groupedPosts.map((posts) => ({ kind: "post" as const, posts }));
+    if (liveStreams.length === 0) return items;
+    const result: FeedItem[] = [];
+    let liveIdx = 0;
+    for (let i = 0; i < items.length; i++) {
+      result.push(items[i]);
+      if ((i + 1) % 3 === 0 && liveIdx < liveStreams.length) {
+        result.push({ kind: "live", stream: liveStreams[liveIdx++] });
+      }
+    }
+    while (liveIdx < liveStreams.length) {
+      result.push({ kind: "live", stream: liveStreams[liveIdx++] });
+    }
+    return result;
+  }, [groupedPosts, liveStreams]);
 
   useEffect(() => {
     videoFeedStore.setFeedVideos(posts);
@@ -758,18 +881,18 @@ function FeedContent() {
 
   // Prefetch next page when near end
   useEffect(() => {
-    if (groupedPosts.length > 0 && currentIdx >= groupedPosts.length - 3 && hasMoreRef.current && !isFetchingRef.current) {
+    if (feedItems.length > 0 && currentIdx >= feedItems.length - 3 && hasMoreRef.current && !isFetchingRef.current) {
       loadPage(pageRef.current + 1);
     }
-  }, [currentIdx, groupedPosts.length, loadPage]);
+  }, [currentIdx, feedItems.length, loadPage]);
 
   const goNext = useCallback(() => {
     setCurrentIdx((i) => {
-      const next = Math.min(i + 1, groupedPosts.length - 1);
+      const next = Math.min(i + 1, feedItems.length - 1);
       try { sessionStorage.setItem("stories_idx", String(next)); } catch {}
       return next;
     });
-  }, [groupedPosts.length]);
+  }, [feedItems.length]);
 
   const goPrev = useCallback(() => {
     setCurrentIdx((i) => {
@@ -791,7 +914,8 @@ function FeedContent() {
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
-  const currentGroup = groupedPosts[currentIdx];
+  const currentFeedItem = feedItems[currentIdx];
+  const currentGroup = currentFeedItem?.kind === "post" ? currentFeedItem.posts : undefined;
 
   const goToLatest = useCallback(async () => {
     setCurrentIdx(0);
@@ -845,7 +969,16 @@ function FeedContent() {
           </div>
         )}
 
-        {currentGroup && (
+        {currentFeedItem?.kind === "live" ? (
+          <LiveFeedCard
+            key={`live-${currentFeedItem.stream.roomId}`}
+            stream={currentFeedItem.stream}
+            onPrev={goPrev}
+            onNext={goNext}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < feedItems.length - 1 || hasMore}
+          />
+        ) : currentGroup ? (
           <ShortsCard
             key={currentGroup[0].id}
             items={currentGroup}
@@ -853,9 +986,9 @@ function FeedContent() {
             onPrev={goPrev}
             onNext={goNext}
             hasPrev={currentIdx > 0}
-            hasNext={currentIdx < groupedPosts.length - 1 || hasMore}
+            hasNext={currentIdx < feedItems.length - 1 || hasMore}
           />
-        )}
+        ) : null}
 
         <CommentsDrawer
           postId={commentPanelPostId}
@@ -873,7 +1006,7 @@ function FeedContent() {
           </button>
         )}
 
-        {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
+        {isFetching && posts.length > 0 && currentIdx === feedItems.length - 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
           </div>
@@ -903,7 +1036,16 @@ function FeedContent() {
           </div>
         )}
 
-        {currentGroup && (
+        {currentFeedItem?.kind === "live" ? (
+          <LiveFeedCard
+            key={`live-m-${currentFeedItem.stream.roomId}`}
+            stream={currentFeedItem.stream}
+            onPrev={goPrev}
+            onNext={goNext}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < feedItems.length - 1 || hasMore}
+          />
+        ) : currentGroup ? (
           <MobileShortsCard
             key={currentGroup[0].id}
             items={currentGroup}
@@ -911,9 +1053,9 @@ function FeedContent() {
             onPrev={goPrev}
             onNext={goNext}
             hasPrev={currentIdx > 0}
-            hasNext={currentIdx < groupedPosts.length - 1 || hasMore}
+            hasNext={currentIdx < feedItems.length - 1 || hasMore}
           />
-        )}
+        ) : null}
 
         <CommentsDrawer
           postId={commentPanelPostId}
@@ -931,7 +1073,7 @@ function FeedContent() {
           </button>
         )}
 
-        {isFetching && posts.length > 0 && currentIdx === groupedPosts.length - 1 && (
+        {isFetching && posts.length > 0 && currentIdx === feedItems.length - 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
           </div>
