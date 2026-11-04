@@ -233,6 +233,12 @@ export class LiveStreamService {
     if (pub?.track) await this._room.localParticipant.unpublishTrack(pub.track.mediaStreamTrack);
   }
 
+  async setCameraEnabled(on: boolean) {
+    if (!this._room || !lkModule) return;
+    const pub = this._room.localParticipant.getTrackPublication(lkModule.Track.Source.Camera);
+    if (pub?.track) { if (on) await pub.unmute(); else await pub.mute(); }
+  }
+
   async publishMicTrack(track: MediaStreamTrack) {
     if (!this._room) return;
     const lk = await getLK();

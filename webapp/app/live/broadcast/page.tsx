@@ -171,38 +171,13 @@ export default function BroadcastPage() {
   const toggleCamera = useCallback(async () => {
     const svc = serviceRef.current;
     if (!svc) return;
-    if (cameraOn) {
-      await svc.unpublishCamera();
-      const ms = mediaStreamRef.current;
-      if (ms) {
-        ms.getVideoTracks().forEach((t) => { t.stop(); ms.removeTrack(t); });
-      }
-      if (videoRef.current) { videoRef.current.srcObject = null; videoRef.current.srcObject = ms; }
-      setCameraOn(false);
-    } else {
-      try {
-        const fresh = await navigator.mediaDevices.getUserMedia({
-          video: { width: 1280, height: 720, frameRate: 30 },
-        });
-        const newTrack = fresh.getVideoTracks()[0];
-        if (!newTrack) { fresh.getTracks().forEach((t) => t.stop()); return; }
-        const ms = mediaStreamRef.current;
-        if (ms) {
-          ms.getVideoTracks().forEach((t) => { t.stop(); ms.removeTrack(t); });
-          ms.addTrack(newTrack);
-        } else {
-          mediaStreamRef.current = fresh;
-        }
-        if (videoRef.current) {
-          videoRef.current.srcObject = null;
-          videoRef.current.srcObject = mediaStreamRef.current;
-        }
-        await svc.publishCameraTrack(newTrack);
-        setCameraOn(true);
-      } catch (e) {
-        console.error("toggleCamera re-enable failed:", e);
-      }
+    const next = !cameraOn;
+    await svc.setCameraEnabled(next);
+    const ms = mediaStreamRef.current;
+    if (ms) {
+      ms.getVideoTracks().forEach((t) => { t.enabled = next; });
     }
+    setCameraOn(next);
   }, [cameraOn]);
 
   const toggleMic = useCallback(async () => {
