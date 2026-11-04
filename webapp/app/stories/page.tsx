@@ -664,7 +664,7 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
   );
 }
 
-/* ── Live Stream Feed Card ── */
+/* ── Live Stream Feed Card (matches ShortsCard layout) ── */
 function LiveFeedCard({
   stream,
   onPrev,
@@ -679,6 +679,7 @@ function LiveFeedCard({
   hasNext: boolean;
 }) {
   const router = useRouter();
+  const { notify } = useUi();
   const [watchStart] = useState(() => Date.now());
   const [blurred, setBlurred] = useState(false);
 
@@ -687,43 +688,68 @@ function LiveFeedCard({
     return () => clearTimeout(timer);
   }, [watchStart]);
 
-  return (
-    <div className="relative flex h-full w-full items-center justify-center bg-black">
-      <div className="relative w-full h-full max-w-[480px] mx-auto">
-        <LiveStreamPlayer roomId={stream.roomId} hostPhoto={stream.hostPhoto} />
+  const maxH = "calc(100vh - 56px - 40px)";
 
-        {/* LIVE badge + viewer count */}
-        <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
+  return (
+    <div className="flex h-[calc(100vh-56px)] w-full items-center justify-center gap-5 pb-5 pt-5">
+      {/* ── Left column: author info (bottom-aligned) ── */}
+      <div className="flex-shrink-0 w-[300px] flex flex-col gap-2 self-end pb-2">
+        {/* Author row */}
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.push(`/live/watch/${stream.roomId}`)} className="flex-shrink-0 relative">
+            <div className="rounded-full p-[2.5px]" style={{ background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" }}>
+              {stream.hostPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={stream.hostPhoto} alt={stream.hostName} className="h-9 w-9 rounded-full object-cover border-2 border-background" />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/20 border-2 border-background">
+                  <IoPersonOutline size={16} className="text-foreground" />
+                </div>
+              )}
+            </div>
+            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded bg-red-500 px-1 text-[7px] font-black uppercase text-white">LIVE</span>
+          </button>
+          <button onClick={() => router.push(profileUrl(stream.hostName, stream.hostId))} className="min-w-0 text-left">
+            <span className="text-[13px] font-bold text-text">{stream.hostName}</span>
+            {(stream.rank || stream.occupation) && (
+              <p className="text-[11px] text-light-text">{[stream.rank, stream.occupation].filter(Boolean).join(" · ")}</p>
+            )}
+          </button>
+        </div>
+
+        {stream.title && (
+          <p className="text-[14px] leading-[20px] font-semibold text-text">#{stream.title}</p>
+        )}
+
+        <p className="text-[11px] text-light-text">
+          <span className="animate-pulse text-red-400">●</span>{" "}
+          {stream.viewers.toLocaleString()} watching
+        </p>
+      </div>
+
+      {/* ── Media card — live stream video ── */}
+      <div
+        className="relative flex-shrink-0 overflow-hidden rounded-2xl bg-black"
+        style={{ maxHeight: maxH, maxWidth: 480, width: 480 }}
+      >
+        <div style={{ maxHeight: maxH, aspectRatio: "9/16" }}>
+          <LiveStreamPlayer roomId={stream.roomId} hostPhoto={stream.hostPhoto} muted />
+        </div>
+
+        {/* LIVE badge overlay */}
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
           <span className="flex items-center gap-1.5 rounded bg-red-500 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-white">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
             LIVE
           </span>
           <span className="flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-semibold text-white">
-            {stream.viewers.toLocaleString()} watching
+            {stream.viewers.toLocaleString()}
           </span>
-        </div>
-
-        {/* Host info */}
-        <div className="absolute bottom-16 left-4 right-16 z-10">
-          <div className="flex items-center gap-2.5 mb-2">
-            {stream.hostPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={stream.hostPhoto} alt="" className="h-10 w-10 rounded-full object-cover border-2 border-red-500" />
-            ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 border-2 border-red-500 text-white font-bold">
-                {stream.hostName[0]?.toUpperCase()}
-              </div>
-            )}
-            <div>
-              <p className="text-[14px] font-bold text-white drop-shadow">{stream.hostName}</p>
-              {stream.title && <p className="text-[12px] text-white/70 drop-shadow">#{stream.title}</p>}
-            </div>
-          </div>
         </div>
 
         {/* 5-min blur gate */}
         {blurred && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-black/70 backdrop-blur-md">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-black/70 backdrop-blur-md rounded-2xl">
             <p className="text-[18px] font-bold text-white">Want to keep watching?</p>
             <p className="text-[13px] text-white/60">Join the live stream to continue</p>
             <button
@@ -742,15 +768,31 @@ function LiveFeedCard({
         )}
       </div>
 
-      {/* Side actions */}
-      <div className="absolute right-3 bottom-20 z-10 flex flex-col items-center gap-3">
-        <button
-          onClick={() => router.push(`/live/watch/${stream.roomId}`)}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/90 text-white"
-          title="Join stream"
-        >
-          <IoPlay size={20} />
-        </button>
+      {/* ── Action rail + nav arrows (matches ShortsCard) ── */}
+      <div className="relative z-50 flex flex-col items-center gap-3 flex-shrink-0 self-end pb-2">
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={() => router.push(`/live/watch/${stream.roomId}`)}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+            title="Join stream"
+          >
+            <IoPlay size={22} />
+          </button>
+          <span className="text-[11px] font-bold text-light-text">Join</span>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={async () => {
+              const url = `${window.location.origin}/live/watch/${stream.roomId}`;
+              try { if (navigator.share) await navigator.share({ url }); else { await navigator.clipboard.writeText(url); notify("Link copied"); } } catch {}
+            }}
+            className="flex h-11 w-11 items-center justify-center rounded-full text-light-text transition-colors hover:bg-foreground/10"
+          >
+            <IoShareOutline size={24} />
+          </button>
+          <span className="text-[11px] font-bold text-light-text">Share</span>
+        </div>
+        {/* Nav arrows */}
         <div className="flex flex-col items-center gap-1.5 mt-2">
           <button onClick={onPrev} disabled={!hasPrev} className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground/10 text-foreground disabled:opacity-30">
             <IoChevronUp size={18} />

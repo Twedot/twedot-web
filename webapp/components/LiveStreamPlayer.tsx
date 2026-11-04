@@ -5,15 +5,17 @@ import { useEffect, useRef, useState } from "react";
 interface Props {
   roomId: string;
   hostPhoto?: string;
+  muted?: boolean;
 }
 
 type Phase = "idle" | "loading" | "live" | "ended" | "error";
 
-export default function LiveStreamPlayer({ roomId, hostPhoto }: Props) {
+export default function LiveStreamPlayer({ roomId, hostPhoto, muted = false }: Props) {
   const wrapRef  = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [phase, setPhase] = useState<Phase>("idle");
+  const [hasVideo, setHasVideo] = useState(false);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -68,13 +70,24 @@ export default function LiveStreamPlayer({ roomId, hostPhoto }: Props) {
           if (track.kind === Track.Kind.Audio && audioRef.current) {
             track.attach(audioRef.current);
           } else if (track.kind === Track.Kind.Video) {
+            setHasVideo(true);
             attachBestVideo();
           }
         });
 
         room.on(RoomEvent.TrackUnsubscribed, (track: any) => {
           if (cancelled) return;
-          if (track.kind === Track.Kind.Video) attachBestVideo();
+          if (track.kind === Track.Kind.Video) {
+            let anyVideo = false;
+            for (const p of room.remoteParticipants.values()) {
+              for (const pub of p.trackPublications.values()) {
+                if (pub.isSubscribed && pub.track?.kind === Track.Kind.Video) { anyVideo = true; break; }
+              }
+              if (anyVideo) break;
+            }
+            setHasVideo(anyVideo);
+            attachBestVideo();
+          }
         });
 
         room.on(RoomEvent.Disconnected, () => {
@@ -86,6 +99,14 @@ export default function LiveStreamPlayer({ roomId, hostPhoto }: Props) {
 
         // Attach tracks already published before we connected
         attachBestVideo();
+        let foundVideo = false;
+        for (const p of room.remoteParticipants.values()) {
+          for (const pub of p.trackPublications.values()) {
+            if (pub.isSubscribed && pub.track?.kind === Track.Kind.Video) { foundVideo = true; break; }
+          }
+          if (foundVideo) break;
+        }
+        setHasVideo(foundVideo);
         for (const p of room.remoteParticipants.values()) {
           for (const pub of p.trackPublications.values()) {
             if (pub.isSubscribed && pub.track?.kind === Track.Kind.Audio && audioRef.current) {
@@ -130,9 +151,34 @@ export default function LiveStreamPlayer({ roomId, hostPhoto }: Props) {
         />
       )}
 
-      <video ref={videoRef} autoPlay playsInline className="absolute inset-0 h-full w-full object-contain" />
+      {/* Camera-off: show blurred host photo */}
+      {phase === "live" && !hasVideo && hostPhoto && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={hostPhoto}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full scale-110 object-cover"
+          style={{ filter: "blur(20px)" }}
+        />
+      )}
+      {phase === "live" && !hasVideo && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-[1]">
+          <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center mb-2">
+            {hostPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={hostPhoto} alt="" className="h-14 w-14 rounded-full object-cover" />
+            ) : (
+              <span className="text-2xl font-bold text-white">🎙</span>
+            )}
+          </div>
+          <p className="text-[12px] text-white/60">Camera is off</p>
+        </div>
+      )}
+
+      <video ref={videoRef} autoPlay playsInline muted={muted} className="absolute inset-0 h-full w-full object-contain" />
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio ref={audioRef} autoPlay />
+      <audio ref={audioRef} autoPlay muted={muted} />
 
       {(phase === "idle" || phase === "loading") && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
