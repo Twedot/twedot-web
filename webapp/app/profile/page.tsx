@@ -195,8 +195,8 @@ export default function ProfilePage() {
         </div>
 
         {/* Info column */}
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-          <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 flex-col items-start justify-center gap-1">
+          <div className="flex w-full items-center gap-2">
             <h2 className="text-[15px] font-bold leading-tight text-text">
               {user.name ?? "No name set"}
             </h2>
@@ -220,7 +220,7 @@ export default function ProfilePage() {
           />
 
           {/* Inline info chips */}
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="mt-1.5 flex w-full flex-wrap items-center gap-x-3 gap-y-1">
             {(user.city || user.country) && (
               <span className="flex items-center gap-1 text-[12px] text-light-text">
                 <IoLocationOutline size={13} className="flex-shrink-0 text-primary" />
