@@ -19,7 +19,7 @@ import { useUi } from "@/lib/UiContext";
 import { useJobSocket } from "@/lib/jobSocket";
 import { apiGet } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
-import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
+import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5";
 import { useChatStore } from "@/lib/chatStore";
 import Image from "next/image";
 
@@ -436,10 +436,13 @@ function ChatDropdown() {
   const chatRouter = useRouter();
   const threads = useChatStore((s) => s.threads);
   const openChat = useChatStore((s) => s.openChat);
+  const closeChat = useChatStore((s) => s.closeChat);
   const [labelsVisible, setLabelsVisible] = useState(true);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
   const totalUnread = Array.from(threads.values()).reduce((sum, t) => sum + t.unreadCount, 0);
   const chatList = Array.from(threads.values())
+    .filter((t) => t.contact.name !== "Unknown" && !hiddenIds.has(t.contact.userId))
     .sort((a, b) => {
       const aTime = a.lastMessage?.timestamp ?? 0;
       const bTime = b.lastMessage?.timestamp ?? 0;
@@ -495,11 +498,17 @@ function ChatDropdown() {
               ? lastMessage.messageType === "image" ? "📷 Photo" : (lastMessage.content.length > 25 ? lastMessage.content.slice(0, 25) + "…" : lastMessage.content)
               : null;
             return (
-              <button
-                key={contact.userId}
-                onClick={() => { openChat(contact); }}
-                className="flex items-center gap-2"
-              >
+              <div key={contact.userId} className="group/chat relative flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); closeChat(contact.userId); setHiddenIds((prev) => new Set(prev).add(contact.userId)); }}
+                  className="absolute -top-1 -right-1 z-10 hidden group-hover/chat:flex h-4 w-4 items-center justify-center rounded-full bg-[#333] text-white/70 hover:bg-[#555] hover:text-white"
+                >
+                  <IoClose size={10} />
+                </button>
+                <button
+                  onClick={() => { openChat(contact); }}
+                  className="flex items-center gap-2"
+                >
                 {/* Name + last message label — hidden when labelsVisible is false */}
                 {labelsVisible && (
                   <div className="relative rounded-lg bg-[#222] px-2 py-1 shadow-lg border border-[#333] max-w-[160px]">
@@ -536,7 +545,8 @@ function ChatDropdown() {
                     </span>
                   )}
                 </div>
-              </button>
+                </button>
+              </div>
             );
           })}
         </div>
