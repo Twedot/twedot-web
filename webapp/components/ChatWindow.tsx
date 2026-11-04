@@ -450,13 +450,13 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                 ? myUserId !== thread.productContext.sellerId
                                 : meta?.sellerId ? myUserId !== meta.sellerId : false;
                               return (
-                                <div className="w-[180px]">
+                                <div className="w-[180px] rounded-xl overflow-hidden">
                                   {displayImage && (
                                     // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={displayImage} alt="" className="w-full h-[110px] object-cover rounded-t-lg mb-1" />
+                                    <img src={displayImage} alt="" className="w-full h-[110px] object-cover" />
                                   )}
                                   {meta && (
-                                    <div className="flex items-center justify-between gap-1 px-1 pt-1 pb-0.5">
+                                    <div className="flex items-center justify-between gap-1 px-1.5 pt-1 pb-0.5">
                                       <div className="min-w-0">
                                         <p className="text-[10px] font-bold truncate">{meta.productName}</p>
                                         <p className="text-[10px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>
@@ -473,7 +473,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                       )}
                                     </div>
                                   )}
-                                  <p className="text-[11px] leading-[1.4] px-1 pb-1">{msg.content}</p>
+                                  <p className="text-[11px] leading-[1.4] px-1.5 pb-1">{msg.content}</p>
                                 </div>
                               );
                             })()
