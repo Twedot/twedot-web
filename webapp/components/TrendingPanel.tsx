@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IoPersonOutline } from "react-icons/io5";
+import { IoPersonOutline, IoCloseOutline } from "react-icons/io5";
 import { apiGet, apiPost, apiDelete } from "@/lib/api";
 import type { StatusPost } from "@/lib/types";
 import { useUi } from "@/lib/UiContext";
@@ -70,11 +70,13 @@ export default function TrendingPanel() {
   const { notify } = useUi();
   const { user: authUser } = useAuth();
   const { allStreams } = useLiveUsers();
-  const liveStreams = allStreams().filter((s) => s.hostId !== authUser?.id);
+  const liveStreams = allStreams().filter((s) => s.hostId !== authUser?.id && !hiddenLiveIds.has(s.roomId));
   const [posts, setPosts] = useState<StatusPost[]>([]);
   const [users, setUsers] = useState<SuggestedUser[]>([]);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const loadingFollowRef = useRef<Set<string>>(new Set());
+  const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set());
+  const [hiddenLiveIds, setHiddenLiveIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     apiGet<StatusPost[]>("/status/public?page=1&limit=15")
@@ -140,27 +142,33 @@ export default function TrendingPanel() {
           </div>
           <div className="flex gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {liveStreams.map((s) => (
-              <button
-                key={s.roomId}
-                onClick={() => router.push(`/live/watch/${s.roomId}`)}
-                className="group relative flex-shrink-0 text-center"
-              >
-                <div
-                  className="relative rounded-full p-[2.5px]"
-                  style={{ background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" }}
+              <div key={s.roomId} className="group relative flex-shrink-0 text-center">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setHiddenLiveIds((prev) => new Set(prev).add(s.roomId)); }}
+                  className="absolute -top-1 -right-1 z-10 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-foreground/80 text-background"
                 >
-                  {s.hostPhoto ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.hostPhoto} alt={s.hostName} className="h-12 w-12 rounded-full border-2 border-background object-cover" />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-background bg-border/40">
-                      <IoPersonOutline size={18} className="text-light-text" />
-                    </div>
-                  )}
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded bg-red-500 px-1 text-[7px] font-black uppercase text-white">LIVE</span>
-                </div>
-                <p className="mt-1.5 w-14 truncate text-[10px] font-medium text-text">{s.hostName}</p>
-              </button>
+                  <IoCloseOutline size={12} />
+                </button>
+                <button
+                  onClick={() => router.push(`/live/watch/${s.roomId}`)}
+                >
+                  <div
+                    className="relative rounded-full p-[2.5px]"
+                    style={{ background: "#FF0040", animation: "avatar-live-ring 2s ease-in-out infinite" }}
+                  >
+                    {s.hostPhoto ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s.hostPhoto} alt={s.hostName} className="h-12 w-12 rounded-full border-2 border-background object-cover" />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-background bg-border/40">
+                        <IoPersonOutline size={18} className="text-light-text" />
+                      </div>
+                    )}
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded bg-red-500 px-1 text-[7px] font-black uppercase text-white">LIVE</span>
+                  </div>
+                  <p className="mt-1.5 w-14 truncate text-[10px] font-medium text-text">{s.hostName}</p>
+                </button>
+              </div>
             ))}
           </div>
           <style>{`
@@ -183,8 +191,8 @@ export default function TrendingPanel() {
           </div>
 
           <ul>
-            {posts.map((post) => (
-              <li key={post.id}>
+            {posts.filter((p) => !hiddenPostIds.has(p.id)).map((post) => (
+              <li key={post.id} className="group/post relative">
                 <button
                   onClick={() => { postDetailStore.set(post); router.push(postUrl(post.id)); }}
                   className="flex w-full items-start gap-2.5 px-4 py-3 text-left hover:bg-background/60"
@@ -206,6 +214,12 @@ export default function TrendingPanel() {
                       {post.likeCount} likes · {post.commentCount} comments
                     </div>
                   </div>
+                </button>
+                <button
+                  onClick={() => setHiddenPostIds((prev) => new Set(prev).add(post.id))}
+                  className="absolute top-2 right-2 hidden group-hover/post:flex h-5 w-5 items-center justify-center rounded-full bg-foreground/10 text-light-text hover:bg-foreground/20"
+                >
+                  <IoCloseOutline size={14} />
                 </button>
               </li>
             ))}
