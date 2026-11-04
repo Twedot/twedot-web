@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useChatStore, type ChatContact } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
@@ -9,6 +9,7 @@ import { apiUploadFile } from "@/lib/api";
 import { IoArrowBack, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoShieldCheckmarkOutline, IoCheckmarkCircle, IoAlertCircleOutline, IoVideocamOutline, IoDocumentOutline, IoMicOutline, IoStopCircleOutline, IoPlayOutline, IoPauseOutline, IoCloseOutline, IoArrowUndoOutline, IoHappySharp } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import { apiGet } from "@/lib/api";
+import { useJobSocket } from "@/lib/jobSocket";
 import dynamic from "next/dynamic";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -188,9 +189,24 @@ function groupMessages(messages: ChatMessage[]): MessageGroup[] {
 }
 
 export default function MessagesPage() {
+  return <Suspense><MessagesPageInner /></Suspense>;
+}
+
+function MessagesPageInner() {
   const router = useRouter();
-  const [activeChat, setActiveChat] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const chatParam = searchParams.get("chat");
+  const [activeChat, setActiveChatRaw] = useState<string | null>(chatParam);
   const threads = useChatStore((s) => s.threads);
+
+  const setActiveChat = useCallback((userId: string | null) => {
+    setActiveChatRaw(userId);
+    if (userId) {
+      window.history.replaceState(null, "", `/messages?chat=${userId}`);
+    } else {
+      window.history.replaceState(null, "", "/messages");
+    }
+  }, []);
 
   const chatList = Array.from(threads.values())
     .sort((a, b) => {
@@ -296,10 +312,30 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   const [viewingImages, setViewingImages] = useState<{ urls: string[]; index: number } | null>(null);
   const reactPickerRef = useRef<HTMLDivElement>(null);
   const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
+  const { socket: ioSocket } = useJobSocket();
+  const [reactions, setReactions] = useState<Record<string, Record<string, string[]>>>({});
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [thread?.messages.length]);
+
+  useEffect(() => {
+    if (!ioSocket) return;
+    const handler = (data: { messageId: string; emoji: string; senderId: string }) => {
+      if (data.senderId === myUserId) return;
+      setReactions(prev => {
+        const msgR = { ...(prev[data.messageId] ?? {}) };
+        for (const e of Object.keys(msgR)) {
+          msgR[e] = (msgR[e] ?? []).filter(u => u !== data.senderId);
+          if (msgR[e].length === 0) delete msgR[e];
+        }
+        msgR[data.emoji] = [...(msgR[data.emoji] ?? []), data.senderId];
+        return { ...prev, [data.messageId]: msgR };
+      });
+    };
+    ioSocket.on("message_reaction", handler);
+    return () => { ioSocket.off("message_reaction", handler); };
+  }, [ioSocket, myUserId]);
 
   useEffect(() => {
     if (thread && thread.unreadCount > 0) {
@@ -385,8 +421,21 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
 
   const handleReact = useCallback((msgId: string, emoji: string) => {
     setReactingMsgId(null);
-    chatSocket.send(userId, emoji, "reaction", { clientMessageId: crypto.randomUUID(), metadata: JSON.stringify({ targetMessageId: msgId, emoji }) });
-  }, [userId]);
+    if (!myUserId) return;
+    setReactions(prev => {
+      const msgR = { ...(prev[msgId] ?? {}) };
+      const current = Object.keys(msgR).find(e => (msgR[e] ?? []).includes(myUserId));
+      for (const e of Object.keys(msgR)) {
+        msgR[e] = (msgR[e] ?? []).filter(u => u !== myUserId);
+        if (msgR[e].length === 0) delete msgR[e];
+      }
+      if (current !== emoji) {
+        msgR[emoji] = [...(msgR[emoji] ?? []), myUserId];
+      }
+      return { ...prev, [msgId]: msgR };
+    });
+    ioSocket?.emit("react_to_message", { messageId: msgId, emoji, recipientId: userId });
+  }, [userId, myUserId, ioSocket]);
 
   const handleSendMedia = useCallback(async () => {
     if (!mediaPreview || !myUserId || uploading) return;
@@ -744,6 +793,20 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                           )}
                         </div>
                         )}
+                      {/* Reaction bubbles */}
+                      {reactions[msg.id] && Object.keys(reactions[msg.id]).length > 0 && (
+                        <div className={`flex gap-0.5 mt-0.5 ${isMine ? "justify-end" : "justify-start"}`}>
+                          {Object.entries(reactions[msg.id]).map(([emoji, users]) => users.length > 0 && (
+                            <button key={emoji} onClick={() => handleReact(msg.id, emoji)}
+                              className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] border ${
+                                users.includes(myUserId ?? "") ? "border-primary bg-primary/10" : "border-border bg-background"
+                              }`}>
+                              <span>{emoji}</span>
+                              {users.length > 1 && <span className="text-[9px] text-light-text">{users.length}</span>}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       </div>
                       </div>
                       );
