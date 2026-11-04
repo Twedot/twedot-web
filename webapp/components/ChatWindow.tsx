@@ -185,7 +185,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const [mediaPreviews, setMediaPreviews] = useState<{ file: File; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [buyingProduct, setBuyingProduct] = useState(false);
-  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [viewingImages, setViewingImages] = useState<{ urls: string[]; index: number } | null>(null);
   const pendingPaymentRef = useRef<string | null>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
 
@@ -421,20 +421,65 @@ export default function ChatWindow({ userId }: { userId: string }) {
                           </div>
                         )}
                         {isMedia ? (
-                          <div
-                            className="rounded-xl overflow-hidden p-[1px] cursor-pointer relative"
-                            style={{ backgroundColor: isMine ? color : "#2a2a2a", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
-                            onClick={() => msg.messageType === "image" && setViewingImage(msg.content)}
-                          >
-                            {msg.messageType === "image" ? (
-                              <img src={msg.content} alt="" className="w-[170px] h-[210px] rounded-[11px] object-cover block" />
-                            ) : (
-                              <video src={msg.content} controls className="w-[170px] max-h-[210px] rounded-[11px] object-cover block" />
-                            )}
-                            <div className="absolute bottom-1 right-1.5 bg-black/50 rounded-full px-1 py-0.5">
-                              <span className="text-[8px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
-                            </div>
-                          </div>
+                          (() => {
+                            let mediaUrls: string[] = [];
+                            let videoUrl: string | null = null;
+                            if (msg.content.startsWith("{")) {
+                              try {
+                                const p = JSON.parse(msg.content);
+                                if (msg.messageType === "image") {
+                                  mediaUrls = p.uris ?? (p.url ? [p.url] : []);
+                                } else {
+                                  videoUrl = p.url ?? p.uris?.[0] ?? null;
+                                }
+                              } catch { /* not JSON */ }
+                            }
+                            if (mediaUrls.length === 0 && msg.messageType === "image" && msg.content.startsWith("http")) {
+                              mediaUrls = [msg.content];
+                            }
+                            if (!videoUrl && msg.messageType === "video" && msg.content.startsWith("http")) {
+                              videoUrl = msg.content;
+                            }
+
+                            if (msg.messageType === "image" && mediaUrls.length > 0) {
+                              const isGroup = mediaUrls.length > 1;
+                              return (
+                                <div
+                                  className="rounded-xl overflow-hidden p-[1px] relative"
+                                  style={{ backgroundColor: isMine ? color : "#2a2a2a", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
+                                >
+                                  <div className={`grid overflow-hidden rounded-[11px] ${isGroup ? "grid-cols-2" : "grid-cols-1"}`} style={{ width: 170 }}>
+                                    {mediaUrls.map((url, idx) => (
+                                      <div key={idx} className="relative overflow-hidden cursor-pointer" style={{ height: isGroup ? 100 : 210 }}
+                                        onClick={() => setViewingImages({ urls: mediaUrls, index: idx })}
+                                      >
+                                        <img src={url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="absolute bottom-1 right-1.5 bg-black/50 rounded-full px-1 py-0.5">
+                                    <span className="text-[8px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (msg.messageType === "video" && videoUrl) {
+                              return (
+                                <div
+                                  className="rounded-xl overflow-hidden p-[1px] relative"
+                                  style={{ backgroundColor: isMine ? color : "#2a2a2a", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
+                                >
+                                  <video src={videoUrl} controls className="w-[170px] max-h-[210px] rounded-[11px] object-cover block" />
+                                  <div className="absolute bottom-1 right-1.5 bg-black/50 rounded-full px-1 py-0.5">
+                                    <span className="text-[8px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return <span className="text-[11px]">{msg.content}</span>;
+                          })()
                         ) : isProductInquiry ? (
                           (() => {
                             const meta = parseMeta<ProductInquiryMeta>(msg);
@@ -648,12 +693,21 @@ export default function ChatWindow({ userId }: { userId: string }) {
           <IoSend size={12} />
         </button>
       </div>
-      {viewingImage && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingImage(null)}>
-          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingImage(null)}>
+      {viewingImages && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingImages(null)}>
+          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingImages(null)}>
             <IoCloseOutline size={32} />
           </button>
-          <img src={viewingImage} alt="" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg cursor-default" onClick={(e) => e.stopPropagation()} />
+          {viewingImages.urls.length > 1 && viewingImages.index > 0 && (
+            <button className="absolute left-4 text-white/80 hover:text-white text-3xl z-10" onClick={(e) => { e.stopPropagation(); setViewingImages(prev => prev ? { ...prev, index: prev.index - 1 } : null); }}>‹</button>
+          )}
+          <img src={viewingImages.urls[viewingImages.index]} alt="" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg cursor-default" onClick={(e) => e.stopPropagation()} />
+          {viewingImages.urls.length > 1 && viewingImages.index < viewingImages.urls.length - 1 && (
+            <button className="absolute right-14 text-white/80 hover:text-white text-3xl z-10" onClick={(e) => { e.stopPropagation(); setViewingImages(prev => prev ? { ...prev, index: prev.index + 1 } : null); }}>›</button>
+          )}
+          {viewingImages.urls.length > 1 && (
+            <span className="absolute bottom-4 text-white/60 text-sm">{viewingImages.index + 1} / {viewingImages.urls.length}</span>
+          )}
         </div>
       )}
     </div>

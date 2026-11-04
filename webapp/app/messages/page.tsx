@@ -290,7 +290,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   const audioChunksRef = useRef<Blob[]>([]);
   const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
-  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [viewingImages, setViewingImages] = useState<{ urls: string[]; index: number } | null>(null);
   const reactPickerRef = useRef<HTMLDivElement>(null);
   const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
 
@@ -589,20 +589,65 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                           )}
                         </div>
                         {isMedia ? (
-                          <div
-                            className="rounded-xl overflow-hidden p-[1px] cursor-pointer relative"
-                            style={{ backgroundColor: isMine ? color : undefined, borderTopRightRadius: isMine ? 4 : 12, borderTopLeftRadius: !isMine ? 4 : 12 }}
-                            onClick={() => msg.messageType === "image" && setViewingImage(msg.content)}
-                          >
-                            {msg.messageType === "image" ? (
-                              <img src={msg.content} alt="" className="w-[220px] h-[270px] rounded-[11px] object-cover block" />
-                            ) : (
-                              <video src={msg.content} controls className="w-[220px] max-h-[270px] rounded-[11px] object-cover block" />
-                            )}
-                            <div className="absolute bottom-1.5 right-2 bg-black/50 rounded-full px-1.5 py-0.5">
-                              <span className="text-[10px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
-                            </div>
-                          </div>
+                          (() => {
+                            let mediaUrls: string[] = [];
+                            let videoUrl: string | null = null;
+                            if (msg.content.startsWith("{")) {
+                              try {
+                                const p = JSON.parse(msg.content);
+                                if (msg.messageType === "image") {
+                                  mediaUrls = p.uris ?? (p.url ? [p.url] : []);
+                                } else {
+                                  videoUrl = p.url ?? p.uris?.[0] ?? null;
+                                }
+                              } catch { /* not JSON */ }
+                            }
+                            if (mediaUrls.length === 0 && msg.messageType === "image" && msg.content.startsWith("http")) {
+                              mediaUrls = [msg.content];
+                            }
+                            if (!videoUrl && msg.messageType === "video" && msg.content.startsWith("http")) {
+                              videoUrl = msg.content;
+                            }
+
+                            if (msg.messageType === "image" && mediaUrls.length > 0) {
+                              const isGroup = mediaUrls.length > 1;
+                              return (
+                                <div
+                                  className="rounded-xl overflow-hidden p-[1px] relative"
+                                  style={{ backgroundColor: isMine ? color : undefined, borderTopRightRadius: isMine ? 4 : 12, borderTopLeftRadius: !isMine ? 4 : 12 }}
+                                >
+                                  <div className={`grid overflow-hidden rounded-[11px] ${isGroup ? "grid-cols-2" : "grid-cols-1"}`} style={{ width: 220 }}>
+                                    {mediaUrls.map((url, idx) => (
+                                      <div key={idx} className="relative overflow-hidden cursor-pointer" style={{ height: isGroup ? 130 : 270 }}
+                                        onClick={() => setViewingImages({ urls: mediaUrls, index: idx })}
+                                      >
+                                        <img src={url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="absolute bottom-1.5 right-2 bg-black/50 rounded-full px-1.5 py-0.5">
+                                    <span className="text-[10px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (msg.messageType === "video" && videoUrl) {
+                              return (
+                                <div
+                                  className="rounded-xl overflow-hidden p-[1px] relative"
+                                  style={{ backgroundColor: isMine ? color : undefined, borderTopRightRadius: isMine ? 4 : 12, borderTopLeftRadius: !isMine ? 4 : 12 }}
+                                >
+                                  <video src={videoUrl} controls className="w-[220px] max-h-[270px] rounded-[11px] object-cover block" />
+                                  <div className="absolute bottom-1.5 right-2 bg-black/50 rounded-full px-1.5 py-0.5">
+                                    <span className="text-[10px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return <span className="text-[13px]">{msg.content}</span>;
+                          })()
                         ) : (
                         <div className={`max-w-[75%] rounded-2xl text-[13px] leading-[1.4] break-words ${isCard ? "p-0" : "px-3 py-1"} ${
                           isMine ? "text-white rounded-br-sm" : "bg-feed-bg text-text rounded-bl-sm"
@@ -864,12 +909,21 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
           {isRecording && <span className="text-[11px] text-red-500 shrink-0">{recordingSeconds}s</span>}
         </div>
       )}
-      {viewingImage && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingImage(null)}>
-          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingImage(null)}>
+      {viewingImages && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingImages(null)}>
+          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingImages(null)}>
             <IoCloseOutline size={32} />
           </button>
-          <img src={viewingImage} alt="" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg cursor-default" onClick={(e) => e.stopPropagation()} />
+          {viewingImages.urls.length > 1 && viewingImages.index > 0 && (
+            <button className="absolute left-4 text-white/80 hover:text-white text-3xl z-10" onClick={(e) => { e.stopPropagation(); setViewingImages(prev => prev ? { ...prev, index: prev.index - 1 } : null); }}>‹</button>
+          )}
+          <img src={viewingImages.urls[viewingImages.index]} alt="" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg cursor-default" onClick={(e) => e.stopPropagation()} />
+          {viewingImages.urls.length > 1 && viewingImages.index < viewingImages.urls.length - 1 && (
+            <button className="absolute right-14 text-white/80 hover:text-white text-3xl z-10" onClick={(e) => { e.stopPropagation(); setViewingImages(prev => prev ? { ...prev, index: prev.index + 1 } : null); }}>›</button>
+          )}
+          {viewingImages.urls.length > 1 && (
+            <span className="absolute bottom-4 text-white/60 text-sm">{viewingImages.index + 1} / {viewingImages.urls.length}</span>
+          )}
         </div>
       )}
     </div>
