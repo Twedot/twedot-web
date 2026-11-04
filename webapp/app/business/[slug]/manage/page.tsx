@@ -24,6 +24,7 @@ import {
 import { useAuth } from "@/lib/AuthContext";
 import { apiGet, apiPost, apiPatch, apiDelete, apiUploadFile } from "@/lib/api";
 import { useUi } from "@/lib/UiContext";
+import LocationAutocomplete from "@/components/LocationAutocomplete";
 
 const MapPicker = dynamic(() => import("../../MapPicker"), { ssr: false });
 
@@ -683,7 +684,12 @@ export default function ManageBusinessPage() {
             <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com" className={inputCls} /></div>
 
           <div><label className={labelCls}>Address</label>
-            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main Street, Lagos" className={inputCls} /></div>
+            <LocationAutocomplete
+              value={address}
+              onChange={(loc) => { setAddress(loc.address); setLat(loc.lat); setLng(loc.lng); }}
+              onTextChange={(text) => setAddress(text)}
+              placeholder="123 Main Street, Lagos"
+            /></div>
 
           <div>
             <label className={labelCls}>Location on Map</label>
