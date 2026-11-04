@@ -7,9 +7,10 @@ import { useAuth } from "@/lib/AuthContext";
 
 export default function LivePageContent() {
   const router = useRouter();
-  const { user } = useAuth();
+  const auth = useAuth();
   const allStreams = useLiveStreams();
-  const streams = allStreams.filter((s) => s.hostId !== user?.id);
+  const myId = auth.user?.id;
+  const streams = myId ? allStreams.filter((s) => s.hostId !== myId) : allStreams;
 
   return (
     <div className="flex min-h-[calc(100vh-56px)] flex-col bg-background">
