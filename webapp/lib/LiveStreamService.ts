@@ -41,6 +41,7 @@ type EventHandler = {
   onChat?: (msg: ChatMessage) => void;
   onStreamEnded?: () => void;
   onError?: (msg: string) => void;
+  onNoActiveStream?: () => void;
 };
 
 let lkModule: typeof import("livekit-client") | null = null;
@@ -129,6 +130,7 @@ export class LiveStreamService {
         this._isHosting = false;
         this._activeStreamId = null;
         this._ready = true;
+        this.handlers.onNoActiveStream?.();
         if (this._pendingGoLive) {
           const fn = this._pendingGoLive;
           this._pendingGoLive = null;

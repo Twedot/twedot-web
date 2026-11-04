@@ -21,13 +21,13 @@ import { LiveStreamService, ChatMessage } from "@/lib/LiveStreamService";
 const STREAM_WS_URL = "wss://prodapi.twedot.com/stream-api/ws";
 const CATEGORIES = ["General", "Gaming", "Music", "Education", "Sports", "Entertainment", "Tech"];
 
-type Phase = "setup" | "connecting" | "live" | "ended";
+type Phase = "checking" | "setup" | "connecting" | "live" | "ended";
 
 export default function BroadcastPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  const [phase, setPhase] = useState<Phase>("setup");
+  const [phase, setPhase] = useState<Phase>("checking");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("General");
   const [price, setPrice] = useState(0);
@@ -138,6 +138,7 @@ export default function BroadcastPage() {
 
     svc.on({
       onResumed: (_streamId, token, livekitUrl) => { resumeRoom(token, livekitUrl); },
+      onNoActiveStream: () => { if (!cancelled) setPhase("setup"); },
       onChat: (msg) => setChatMessages((prev) => [...prev.slice(-200), msg]),
       onViewerCount: (c) => setViewerCount(c),
       onViewerJoined: (_uid, name) => {
@@ -147,7 +148,7 @@ export default function BroadcastPage() {
         if (timerRef.current) clearInterval(timerRef.current);
         setPhase("ended");
       },
-      onError: () => {},
+      onError: () => { if (!cancelled) setPhase("setup"); },
     });
 
     svc.connect(user.id);
@@ -280,6 +281,17 @@ export default function BroadcastPage() {
   const fmtTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
   if (isLoading || !isAuthenticated) return null;
+
+  if (phase === "checking") {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
+          <p className="text-[13px] text-light-text">Checking for active stream…</p>
+        </div>
+      </div>
+    );
+  }
 
   // ── Setup — inside AppShell, camera preview + form ──
   if (phase === "setup" || phase === "connecting") {
