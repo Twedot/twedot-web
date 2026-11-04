@@ -70,13 +70,13 @@ export default function TrendingPanel() {
   const { notify } = useUi();
   const { user: authUser } = useAuth();
   const { allStreams } = useLiveUsers();
-  const liveStreams = allStreams().filter((s) => s.hostId !== authUser?.id && !hiddenLiveIds.has(s.roomId));
   const [posts, setPosts] = useState<StatusPost[]>([]);
   const [users, setUsers] = useState<SuggestedUser[]>([]);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const loadingFollowRef = useRef<Set<string>>(new Set());
   const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set());
   const [hiddenLiveIds, setHiddenLiveIds] = useState<Set<string>>(new Set());
+  const liveStreams = allStreams().filter((s) => s.hostId !== authUser?.id && !hiddenLiveIds.has(s.roomId));
 
   const load = useCallback(() => {
     apiGet<StatusPost[]>("/status/public?page=1&limit=15")
