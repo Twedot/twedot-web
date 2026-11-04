@@ -100,6 +100,65 @@ export default function BroadcastPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
+  // Auto-resume: on page load, check if host has an active stream
+  useEffect(() => {
+    if (!user?.id || !isAuthenticated) return;
+    let cancelled = false;
+
+    const svc = new LiveStreamService(STREAM_WS_URL);
+
+    const resumeRoom = async (token: string, livekitUrl: string) => {
+      if (cancelled) return;
+      // Wait for camera to be ready before publishing
+      const waitForCamera = () => new Promise<void>((resolve) => {
+        if (mediaStreamRef.current) { resolve(); return; }
+        const iv = setInterval(() => { if (mediaStreamRef.current || cancelled) { clearInterval(iv); resolve(); } }, 100);
+        setTimeout(() => { clearInterval(iv); resolve(); }, 5000);
+      });
+      await waitForCamera();
+      if (cancelled) return;
+      try {
+        await svc.connectRoom(token, livekitUrl);
+        const stream = mediaStreamRef.current;
+        if (stream) {
+          const vt = stream.getVideoTracks()[0];
+          const at = stream.getAudioTracks()[0];
+          if (vt) await svc.publishCameraTrack(vt);
+          if (at) await svc.publishMicTrack(at);
+        }
+        if (cancelled) return;
+        serviceRef.current = svc;
+        setPhase("live");
+        const start = Date.now();
+        timerRef.current = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 1000);
+      } catch {
+        if (!cancelled) svc.dispose();
+      }
+    };
+
+    svc.on({
+      onResumed: (_streamId, token, livekitUrl) => { resumeRoom(token, livekitUrl); },
+      onChat: (msg) => setChatMessages((prev) => [...prev.slice(-200), msg]),
+      onViewerCount: (c) => setViewerCount(c),
+      onViewerJoined: (_uid, name) => {
+        setChatMessages((prev) => [...prev.slice(-200), { userId: "", user: "", color: "#888", text: `${name} joined` }]);
+      },
+      onStreamEnded: () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        setPhase("ended");
+      },
+      onError: () => {},
+    });
+
+    svc.connect(user.id);
+
+    return () => {
+      cancelled = true;
+      if (!serviceRef.current || serviceRef.current !== svc) svc.dispose();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, isAuthenticated]);
+
   const goLive = useCallback(async () => {
     if (!user?.id || !title.trim()) return;
     if (!mediaStreamRef.current) {
@@ -109,6 +168,8 @@ export default function BroadcastPage() {
     setPhase("connecting");
     setError(null);
 
+    // Dispose any existing service (e.g. from auto-resume probe)
+    serviceRef.current?.dispose();
     const svc = new LiveStreamService(STREAM_WS_URL);
     serviceRef.current = svc;
 
