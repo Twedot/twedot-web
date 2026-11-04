@@ -579,7 +579,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                               <IoHappySharp size={13} />
                             </button>
                             {reactingMsgId === msg.id && (
-                              <div ref={reactPickerRef} className={`absolute bottom-full mb-1 ${isMine ? "right-0" : "left-0"} flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20`}>
+                              <div ref={reactPickerRef} className={`absolute bottom-full mb-1 ${isMine ? "left-0" : "right-0"} flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20`}>
                                 {QUICK_REACTIONS.map((e) => (
                                   <button key={e} className="text-[16px] hover:scale-125 transition-transform" onClick={() => handleReact(msg.id, e)}>{e}</button>
                                 ))}
