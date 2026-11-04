@@ -438,9 +438,13 @@ function ChatDropdown() {
   const openChat = useChatStore((s) => s.openChat);
   const closeChat = useChatStore((s) => s.closeChat);
   const [labelsVisible, setLabelsVisible] = useState(true);
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => {
-    try { const raw = localStorage.getItem("twedot_hidden_chat_ids"); return raw ? new Set(JSON.parse(raw)) : new Set(); } catch { return new Set(); }
-  });
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("twedot_hidden_chat_ids");
+      if (raw) setHiddenIds(new Set(JSON.parse(raw)));
+    } catch {}
+  }, []);
 
   const totalUnread = Array.from(threads.values()).reduce((sum, t) => sum + t.unreadCount, 0);
   const chatList = Array.from(threads.values())
