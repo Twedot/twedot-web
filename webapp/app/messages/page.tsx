@@ -620,23 +620,23 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             )}
                           </div>
                         )}
-                        <div className="group relative inline-flex max-w-[80%]">
-                        {/* Reply + React on hover — anchored to the side of the bubble */}
-                        <div className={`absolute top-1/2 -translate-y-1/2 flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 ${isMine ? "left-0 -translate-x-full pr-1" : "right-0 translate-x-full pl-1"}`}>
+                        <div className="group relative inline-flex flex-col max-w-[80%]">
+                        {/* Reply + React overlay — inside the bubble corner */}
+                        <div className={`absolute top-0.5 ${isMine ? "left-0.5" : "right-0.5"} flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
                           <div className="relative">
-                            <button className="text-light-text hover:text-text" onClick={() => setReactingMsgId(reactingMsgId === msg.id ? null : msg.id)}>
-                              <IoHappySharp size={13} />
+                            <button className="p-0.5 rounded-full bg-black/40 text-white/80 hover:text-white hover:bg-black/60" onClick={() => setReactingMsgId(reactingMsgId === msg.id ? null : msg.id)}>
+                              <IoHappySharp size={12} />
                             </button>
                             {reactingMsgId === msg.id && (
-                              <div ref={reactPickerRef} className={`absolute bottom-full mb-1 ${isMine ? "left-0" : "right-0"} flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20`}>
+                              <div ref={reactPickerRef} className={`absolute top-full mt-1 ${isMine ? "left-0" : "right-0"} flex gap-1 bg-background border border-border rounded-full px-2 py-1 shadow-lg z-20 whitespace-nowrap`}>
                                 {QUICK_REACTIONS.map((e) => (
                                   <button key={e} className="text-[16px] hover:scale-125 transition-transform" onClick={() => handleReact(msg.id, e)}>{e}</button>
                                 ))}
                               </div>
                             )}
                           </div>
-                          <button className="text-light-text hover:text-text" onClick={() => setReplyTo(msg)}>
-                            <IoArrowUndoOutline size={14} />
+                          <button className="p-0.5 rounded-full bg-black/40 text-white/80 hover:text-white hover:bg-black/60" onClick={() => setReplyTo(msg)}>
+                            <IoArrowUndoOutline size={12} />
                           </button>
                         </div>
                         {isMedia ? (
