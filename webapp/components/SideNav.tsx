@@ -35,8 +35,6 @@ import {
   IoStorefrontOutline,
   IoRadioOutline,
   IoRadio,
-  IoEarthOutline,
-  IoEarth,
 } from "react-icons/io5";
 import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
@@ -63,7 +61,6 @@ const mainItems: NavItem[] = [
   { href: "/job-request", label: "Job Request", icon: IoNotificationsOutline, activeIcon: IoNotifications },
   { href: "/business", label: "Business", icon: IoStorefrontOutline, activeIcon: IoStorefrontOutline },
   { href: "/live", label: "Live", icon: IoRadioOutline, activeIcon: IoRadio, liveDot: true },
-  { href: "https://world.twedot.com", label: "Twedot World", icon: IoEarthOutline, activeIcon: IoEarth, external: true },
 ];
 
 const PLUGIN_ITEMS = [

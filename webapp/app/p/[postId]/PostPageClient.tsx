@@ -1076,29 +1076,29 @@ export default function PostPageClient() {
       </div>{/* end left section */}
 
       {/* ── Right: permanent comments panel ── */}
-      <div className="w-[400px] flex-shrink-0 border-l border-white/10 flex flex-col overflow-hidden">
+      <div className="w-[400px] flex-shrink-0 border-l border-border flex flex-col overflow-hidden bg-background">
         {/* Header */}
-        <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-white/10">
-          <IoChatbubbleEllipsesOutline size={16} className="text-white/50" />
-          <span className="text-[13px] font-bold text-white">Comments</span>
-          <span className="text-[12px] text-white/40">({commentCount})</span>
-          <span className="ml-auto flex items-center gap-1 text-[10px] text-white/30">
+        <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-border">
+          <IoChatbubbleEllipsesOutline size={16} className="text-light-text" />
+          <span className="text-[13px] font-bold text-text">Comments</span>
+          <span className="text-[12px] text-light-text">({commentCount})</span>
+          <span className="ml-auto flex items-center gap-1 text-[10px] text-light-text">
             <IoEyeOutline size={11} />
             {fmt(post?.viewCount ?? 0)}
           </span>
         </div>
 
         {/* Comments list */}
-        <div className="flex-1 overflow-y-auto px-4 divide-y divide-white/5">
+        <div className="flex-1 overflow-y-auto px-4 divide-y divide-border/40">
           {loadingPost && (
             <div className="flex justify-center py-8">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-light-text/30 border-t-light-text" />
             </div>
           )}
           {topLevelComments.length === 0 && !loadingPost && (
             <div className="flex flex-col items-center gap-2 py-10 text-center">
-              <IoChatbubbleEllipsesOutline size={28} className="text-white/20" />
-              <p className="text-[13px] text-white/30">No comments yet. Be the first!</p>
+              <IoChatbubbleEllipsesOutline size={28} className="text-light-text/30" />
+              <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
             </div>
           )}
           {topLevelComments.map((comment) => {
@@ -1118,7 +1118,7 @@ export default function PostPageClient() {
         </div>
 
         {/* Composer */}
-        <div className="flex-shrink-0 border-t border-white/10 px-4 py-3">
+        <div className="flex-shrink-0 border-t border-border px-4 py-3">
           <div className="flex items-center gap-2">
             {user?.profile_photo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -1128,7 +1128,7 @@ export default function PostPageClient() {
                 <IoPersonOutline size={13} className="text-light-text" />
               </div>
             )}
-            <div className="flex-1 min-w-0 rounded-full bg-white/5 border border-white/10 px-3 py-1.5">
+            <div className="flex-1 min-w-0 rounded-full bg-feed-bg border border-border px-3 py-1.5">
               <textarea
                 ref={inputRef}
                 value={replyText}
