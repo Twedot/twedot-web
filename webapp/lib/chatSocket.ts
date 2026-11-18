@@ -272,11 +272,7 @@ class ChatSocket {
   }
 
   requestHistory(peerId: string, before?: string) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.warn(`[chat-debug] requestHistory(${peerId}) skipped: ws not open`);
-      return;
-    }
-    console.log(`[chat-debug] requestHistory(${peerId}) sending`);
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     this.ws.send(JSON.stringify({ type: "chat_history", recipientId: peerId, id: before ?? "" }));
   }
 

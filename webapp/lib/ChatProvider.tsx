@@ -128,7 +128,6 @@ export default function ChatProvider() {
     }));
 
     unsubs.push(chatSocket.on("history", (data) => {
-      console.log(`[chat-debug] history for ${data.peerId}: ${data.messages?.length ?? 0} msgs, hasMore=${data.hasMore}`, data.messages?.slice(0, 3));
       useChatStore.getState().loadHistory(data.peerId, data.messages as any, data.hasMore);
     }));
 
