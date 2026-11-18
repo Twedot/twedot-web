@@ -54,25 +54,25 @@ function CommentRow({
   onReply: (name: string) => void;
 }) {
   return (
-    <div className="flex gap-2.5 py-3 border-b border-white/5 last:border-0">
+    <div className="flex gap-2.5 py-3 border-b border-border/40 last:border-0">
       {comment.userPhoto ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={comment.userPhoto} alt={comment.userName} className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
       ) : (
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/10">
-          <IoPersonOutline size={15} className="text-white/60" />
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
+          <IoPersonOutline size={15} className="text-light-text" />
         </div>
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 mb-0.5">
-          <span className="text-[12px] font-semibold text-white">{comment.userName}</span>
+          <span className="text-[12px] font-semibold text-text">{comment.userName}</span>
           <RankBadge activityScore={comment.userGlobalActivityScore ?? 0} rankVisible={comment.userRankVisible !== false} plain className="" />
-          <span className="text-[10px] text-white/40">{timeAgo(comment.createdAt)}</span>
+          <span className="text-[10px] text-light-text">{timeAgo(comment.createdAt)}</span>
         </div>
-        <p className="text-[13px] leading-[18px] text-white/80 break-words">{comment.content}</p>
+        <p className="text-[13px] leading-[18px] text-text/80 break-words">{comment.content}</p>
         <button
           onClick={() => onReply(comment.userName)}
-          className="mt-1 flex items-center gap-1 text-[11px] text-white/40 hover:text-white/70 transition-colors"
+          className="mt-1 flex items-center gap-1 text-[11px] text-light-text hover:text-text transition-colors"
         >
           <IoArrowUndoOutline size={11} />
           Reply
@@ -176,15 +176,15 @@ export default function CommentsDrawer({
       <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 z-50 flex flex-col w-full max-w-[400px] bg-[#0f1117] border-l border-white/10 shadow-2xl">
+      <div className="fixed right-0 top-0 bottom-0 z-50 flex flex-col w-full max-w-[400px] bg-background border-l border-border shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
-            <IoChatbubbleEllipsesOutline size={18} className="text-white/60" />
-            <span className="text-[14px] font-bold text-white">Comments</span>
-            {count > 0 && <span className="text-[12px] text-white/40">({count})</span>}
+            <IoChatbubbleEllipsesOutline size={18} className="text-light-text" />
+            <span className="text-[14px] font-bold text-text">Comments</span>
+            {count > 0 && <span className="text-[12px] text-light-text">({count})</span>}
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors">
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-feed-bg text-light-text hover:text-text transition-colors">
             <IoClose size={18} />
           </button>
         </div>
@@ -193,13 +193,13 @@ export default function CommentsDrawer({
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4">
           {loading && (
             <div className="flex items-center justify-center py-10">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-light-text/30 border-t-light-text" />
             </div>
           )}
           {!loading && topLevel.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-10 text-center">
-              <IoChatbubbleEllipsesOutline size={28} className="text-white/20" />
-              <p className="text-[13px] text-white/30">No comments yet. Be the first!</p>
+              <IoChatbubbleEllipsesOutline size={28} className="text-light-text/30" />
+              <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
             </div>
           )}
           {topLevel.map((comment) => (
@@ -215,12 +215,12 @@ export default function CommentsDrawer({
         </div>
 
         {/* Composer */}
-        <div className="flex-shrink-0 border-t border-white/10 px-4 py-3">
+        <div className="flex-shrink-0 border-t border-border px-4 py-3">
           {replyTo && (
-            <div className="mb-2 flex items-center gap-1.5 text-[11px] text-white/40">
+            <div className="mb-2 flex items-center gap-1.5 text-[11px] text-light-text">
               <IoArrowUndoOutline size={11} />
-              <span>Replying to <strong className="text-white/60">@{replyTo}</strong></span>
-              <button onClick={() => setReplyTo(null)} className="ml-auto hover:text-white/60">✕</button>
+              <span>Replying to <strong className="text-text">@{replyTo}</strong></span>
+              <button onClick={() => setReplyTo(null)} className="ml-auto hover:text-text">✕</button>
             </div>
           )}
           <div className="flex items-center gap-2">
@@ -228,11 +228,11 @@ export default function CommentsDrawer({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.profile_photo_url} alt="" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
             ) : (
-              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white/10">
-                <IoPersonOutline size={13} className="text-white/60" />
+              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-border/40">
+                <IoPersonOutline size={13} className="text-light-text" />
               </div>
             )}
-            <div className="flex-1 min-w-0 rounded-full bg-white/5 border border-white/10 px-3 py-1.5">
+            <div className="flex-1 min-w-0 rounded-full bg-feed-bg border border-border px-3 py-1.5">
               <textarea
                 ref={inputRef}
                 value={text}
@@ -241,7 +241,7 @@ export default function CommentsDrawer({
                 placeholder={isAuthenticated ? (replyTo ? `Reply to @${replyTo}…` : "Write a comment…") : "Log in to comment"}
                 disabled={!isAuthenticated}
                 rows={1}
-                className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-white placeholder-white/30 outline-none"
+                className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
                 style={{ minHeight: 20, maxHeight: 80 }}
               />
             </div>
