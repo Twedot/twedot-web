@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { IoClose, IoRemove, IoAdd, IoCartOutline } from "react-icons/io5";
+import { apiGet, apiPost } from "../lib/api";
 
 interface ProductVariant { id: string; name: string; sortOrder: number; }
 interface ProductSku { id: string; variantValues: Record<string, string>; label: string | null; price: number; stock: number; reservedStock: number; availableStock: number; isActive: boolean; }
@@ -38,10 +39,9 @@ export default function ProductBuyModal({ visible, productId, sellerId, onClose 
     setImageIndex(0);
     setVariantSelections({});
 
-    fetch(`/twedot-api/api/v1/commerce/products/${productId}`, { credentials: "include" })
-      .then(r => r.ok ? r.json() : null)
-      .then(json => { setProduct(json?.data ?? null); setLoading(false); })
-      .catch(() => { setLoading(false); });
+    apiGet<ProductDetail>(`/commerce/products/${productId}`)
+      .then(data => { setProduct(data); setLoading(false); })
+      .catch(() => { setProduct(null); setLoading(false); });
   }, [visible, productId]);
 
   useEffect(() => {
@@ -90,19 +90,13 @@ export default function ProductBuyModal({ visible, productId, sellerId, onClose 
     try {
       const body: Record<string, unknown> = { productId, sellerId, quantity };
       if (selectedSku) body.skuId = selectedSku.id;
-      const res = await fetch("/twedot-api/api/v1/commerce/orders/initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body),
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.data?.authorizationUrl) {
-        alert(json?.message || "Could not initiate payment");
+      const data = await apiPost<{ authorizationUrl: string; reference: string; orderId: string }>("/commerce/orders/initiate", body);
+      if (!data?.authorizationUrl) {
+        alert("Could not initiate payment");
         setBuying(false);
         return;
       }
-      window.open(json.data.authorizationUrl, "_blank");
+      window.open(data.authorizationUrl, "_blank");
       onClose();
     } catch {
       alert("Could not initiate payment. Please try again.");
