@@ -11,13 +11,14 @@ import RankBadge from "@/components/RankBadge";
 import { apiGet } from "@/lib/api";
 import { useJobSocket } from "@/lib/jobSocket";
 import dynamic from "next/dynamic";
+import ProductBuyModal from "@/components/ProductBuyModal";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const emojiDataRaw = require("@emoji-mart/data");
 const emojiData = emojiDataRaw?.default ?? emojiDataRaw;
 const EmojiPicker = dynamic(() => import("@emoji-mart/react"), { ssr: false });
 
-interface ReceiptMeta { orderId: string; productName: string; productImage?: string; amount: number; buyerName: string; sellerName: string; }
+interface ReceiptMeta { orderId: string; productName: string; productImage?: string; amount: number; quantity?: number; variantLabel?: string; buyerName: string; sellerName: string; }
 interface EscrowMeta { orderId: string; productName: string; amount: number; escrowEvent: string; reason?: string; }
 interface ProductInquiryMeta { productId: string; productName: string; productPrice: number; productImage?: string; postImage?: string; sellerId?: string; }
 
@@ -314,6 +315,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
   const { socket: ioSocket } = useJobSocket();
   const [reactions, setReactions] = useState<Record<string, Record<string, string[]>>>({});
+  const [buyModal, setBuyModal] = useState<{ productId: string; sellerId: string } | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -731,7 +733,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                                   <span className="text-[10px] font-semibold text-green-400">Payment Held in Escrow</span>
                                 </div>
                                 {meta.productImage && <img src={meta.productImage} alt="" className="w-full h-24 rounded-lg object-cover mb-1.5" />}
-                                <p className="text-[12px] font-semibold truncate">{meta.productName}</p>
+                                <p className="text-[12px] font-semibold truncate">{meta.variantLabel ? `${meta.productName} (${meta.variantLabel})` : meta.productName}{meta.quantity && meta.quantity > 1 ? ` × ${meta.quantity}` : ""}</p>
                                 <p className="text-[13px] font-bold text-green-300">{formatPrice(meta.amount)}</p>
                                 <p className="text-[10px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
                                 <p className="text-[10px] text-white/50 mt-0.5">Funds held safely — released when delivery is confirmed</p>
@@ -779,10 +781,10 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                                       <p className="text-[12px] font-bold truncate">{meta.productName}</p>
                                       <p className="text-[12px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>
                                     </div>
-                                    {isBuyer && (
-                                      <a href={`/p/${meta.productId}`} className="flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full bg-red-500 hover:bg-red-400 text-white text-[11px] font-semibold transition-colors">
+                                    {isBuyer && meta?.productId && (
+                                      <button onClick={() => setBuyModal({ productId: meta.productId, sellerId: meta.sellerId || userId })} className="flex-shrink-0 flex items-center gap-1 px-3 py-1 rounded-full bg-red-500 hover:bg-red-400 text-white text-[11px] font-semibold transition-colors">
                                         Buy
-                                      </a>
+                                      </button>
                                     )}
                                   </div>
                                 )}
@@ -995,6 +997,14 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
             <span className="absolute bottom-4 text-white/60 text-sm">{viewingImages.index + 1} / {viewingImages.urls.length}</span>
           )}
         </div>
+      )}
+      {buyModal && (
+        <ProductBuyModal
+          visible={true}
+          productId={buyModal.productId}
+          sellerId={buyModal.sellerId}
+          onClose={() => setBuyModal(null)}
+        />
       )}
     </div>
   );

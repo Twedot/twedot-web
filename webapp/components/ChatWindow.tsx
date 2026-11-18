@@ -9,6 +9,7 @@ import { apiUploadFile, apiPost, apiGet } from "@/lib/api";
 import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle, IoShieldCheckmarkOutline, IoAlertCircleOutline, IoPlayOutline, IoPauseOutline, IoMicOutline, IoCloseOutline } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import dynamic from "next/dynamic";
+import ProductBuyModal from "@/components/ProductBuyModal";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const emojiDataRaw = require("@emoji-mart/data");
@@ -184,9 +185,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const [showEmoji, setShowEmoji] = useState(false);
   const [mediaPreviews, setMediaPreviews] = useState<{ file: File; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [buyingProduct, setBuyingProduct] = useState(false);
+  const [buyModal, setBuyModal] = useState<{ productId: string; sellerId: string } | null>(null);
   const [viewingImages, setViewingImages] = useState<{ urls: string[]; index: number } | null>(null);
-  const pendingPaymentRef = useRef<string | null>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -291,22 +291,9 @@ export default function ChatWindow({ userId }: { userId: string }) {
     setUploading(false);
   }, [mediaPreviews, myUserId, userId, uploading]);
 
-  const handleBuyProduct = useCallback(async () => {
-    if (!myUserId || !thread?.productContext || buyingProduct) return;
-    setBuyingProduct(true);
-    try {
-      const pc = thread.productContext;
-      const res = await apiPost<{ authorizationUrl: string; reference: string }>("/commerce/orders/initiate", {
-        productId: pc.productId,
-        sellerId: pc.sellerId,
-      });
-      pendingPaymentRef.current = res.reference;
-      window.open(res.authorizationUrl, "_blank");
-    } catch {
-    } finally {
-      setBuyingProduct(false);
-    }
-  }, [myUserId, thread?.productContext, buyingProduct]);
+  const handleOpenBuyModal = useCallback((productId: string, sellerId: string) => {
+    setBuyModal({ productId, sellerId });
+  }, []);
 
   const handleConfirmDelivery = useCallback(async (orderId: string) => {
     try {
@@ -504,14 +491,13 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                       <p className="text-[10px] font-bold truncate">{meta.productName}</p>
                                       <p className="text-[10px] text-green-300 font-bold">{formatPrice(meta.productPrice)}</p>
                                     </div>
-                                    {isBuyer && (
+                                    {isBuyer && meta?.productId && (
                                       <button
-                                        onClick={handleBuyProduct}
-                                        disabled={buyingProduct}
-                                        className="flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-400 text-white text-[9px] font-semibold transition-colors disabled:opacity-50"
+                                        onClick={() => handleOpenBuyModal(meta.productId, meta.sellerId || userId)}
+                                        className="flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-400 text-white text-[9px] font-semibold transition-colors"
                                       >
                                         <IoCartOutline size={9} />
-                                        {buyingProduct ? "..." : "Buy"}
+                                        Buy
                                       </button>
                                     )}
                                   </div>
@@ -546,7 +532,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                     {meta.productImage && (
                                       <img src={meta.productImage} alt="" className="w-6 h-6 rounded object-cover" />
                                     )}
-                                    <span className="text-[9px] font-semibold truncate">{meta.productName}</span>
+                                    <span className="text-[9px] font-semibold truncate">{(meta as any).variantLabel ? `${meta.productName} (${(meta as any).variantLabel})` : meta.productName}{(meta as any).quantity > 1 ? ` × ${(meta as any).quantity}` : ""}</span>
                                   </div>
                                   <p className="text-[11px] font-bold text-green-300">{formatPrice(meta.amount)}</p>
                                   <p className="text-[8px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
@@ -713,6 +699,14 @@ export default function ChatWindow({ userId }: { userId: string }) {
             <span className="absolute bottom-4 text-white/60 text-sm">{viewingImages.index + 1} / {viewingImages.urls.length}</span>
           )}
         </div>
+      )}
+      {buyModal && (
+        <ProductBuyModal
+          visible={true}
+          productId={buyModal.productId}
+          sellerId={buyModal.sellerId}
+          onClose={() => setBuyModal(null)}
+        />
       )}
     </div>
   );
