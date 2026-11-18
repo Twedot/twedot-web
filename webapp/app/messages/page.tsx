@@ -350,8 +350,12 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   useEffect(() => {
     if (thread?.contact) {
       chatSocket.subscribePresence([userId]);
-      if (thread.messages.length === 0) chatSocket.requestHistory(userId);
+      chatSocket.requestHistory(userId);
     }
+    const unsub = chatSocket.on("connectionChange", (connected) => {
+      if (connected) chatSocket.requestHistory(userId);
+    });
+    return unsub;
   }, [userId, thread?.contact]);
 
   useEffect(() => {

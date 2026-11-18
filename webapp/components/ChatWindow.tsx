@@ -208,6 +208,10 @@ export default function ChatWindow({ userId }: { userId: string }) {
       chatSocket.subscribePresence([userId]);
       chatSocket.requestHistory(userId);
     }
+    const unsub = chatSocket.on("connectionChange", (connected) => {
+      if (connected) chatSocket.requestHistory(userId);
+    });
+    return unsub;
   }, [userId, thread?.contact]);
 
   const [wsConnected, setWsConnected] = useState(chatSocket.connected);
