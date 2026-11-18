@@ -230,18 +230,6 @@ export default function ChatWindow({ userId }: { userId: string }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showEmoji]);
 
-  useEffect(() => {
-    const onFocus = async () => {
-      const ref = pendingPaymentRef.current;
-      if (!ref) return;
-      pendingPaymentRef.current = null;
-      try {
-        await apiGet<{ status: string; orderId: string }>(`/commerce/orders/verify/${ref}`);
-      } catch {}
-    };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, []);
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
