@@ -32,7 +32,6 @@ import {
   IoHardwareChipOutline,
   IoCompassOutline,
   IoCubeOutline,
-  IoStorefrontOutline,
   IoRadioOutline,
   IoRadio,
 } from "react-icons/io5";
@@ -59,7 +58,6 @@ const mainItems: NavItem[] = [
   { href: "/nearby", label: "Nearby", icon: IoLocationOutline, activeIcon: IoLocation },
   { href: "/channels", label: "Channels", icon: IoChatbubbleOutline, activeIcon: IoChatbubble },
   { href: "/job-request", label: "Job Request", icon: IoNotificationsOutline, activeIcon: IoNotifications },
-  { href: "/business", label: "Business", icon: IoStorefrontOutline, activeIcon: IoStorefrontOutline },
   { href: "/live", label: "Live", icon: IoRadioOutline, activeIcon: IoRadio, liveDot: true },
 ];
 

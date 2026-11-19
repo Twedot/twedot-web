@@ -14,7 +14,6 @@ import {
   IoCheckmarkCircle,
   IoPeopleOutline,
   IoPersonAddOutline,
-  IoBriefcaseOutline,
   IoCodeSlashOutline,
   IoStar,
   IoDiamond,
@@ -81,7 +80,6 @@ export default function ProfileCardPage() {
   const cardOnlyRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [themeIdx, setThemeIdx] = useState(0);
-  const [businessAvailable, setBusinessAvailable] = useState(true);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
   const [showPhone, setShowPhone] = useState(false);
@@ -111,7 +109,7 @@ export default function ProfileCardPage() {
     ro.observe(wrapper);
     ro.observe(card);
     return () => ro.disconnect();
-  }, [user, themeIdx, businessAvailable, showPhone, showEmail, products.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, themeIdx, showPhone, showEmail, products.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -277,7 +275,6 @@ export default function ProfileCardPage() {
       <div className="flex flex-col gap-3 w-full max-w-[420px]">
         {/* Toggle row */}
         <div className="flex flex-wrap gap-3 justify-center">
-          <ToggleChip label="Business" active={businessAvailable} color={t.hex} onToggle={() => setBusinessAvailable(!businessAvailable)} />
           <ToggleChip label="Phone" active={showPhone} color={t.hex} onToggle={() => setShowPhone(!showPhone)} />
           <ToggleChip label="Email" active={showEmail} color={t.hex} onToggle={() => setShowEmail(!showEmail)} />
         </div>
@@ -392,12 +389,6 @@ export default function ProfileCardPage() {
                   </svg>
                   <span style={{ fontSize: 22, fontWeight: 800, color: "white", letterSpacing: "-0.5px" }}>twedot</span>
                 </div>
-                {businessAvailable && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.35)", border: `1px solid ${ac(r,g,b,0.25)}`, borderRadius: 20, padding: "5px 14px" }}>
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80" }} />
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "white" }}>Business Available</span>
-                  </div>
-                )}
               </div>
 
               {/* ═══ MAIN: Avatar + Info ═══ */}
@@ -483,31 +474,11 @@ export default function ProfileCardPage() {
               <div
                 style={{
                   position: "relative", zIndex: 2, margin: "0 24px",
-                  display: "flex", alignItems: "center", gap: 10,
+                  display: "flex", alignItems: "center", justifyContent: "center",
                   borderRadius: 16, padding: "12px 14px",
                   background: ac(r,g,b,0.06), border: `1px solid ${ac(r,g,b,0.18)}`,
                 }}
               >
-                <div style={{ width: 38, height: 38, borderRadius: 12, background: ac(r,g,b,0.15), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <IoBriefcaseOutline size={18} color="rgba(255,255,255,0.75)" />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "white" }}>
-                    {businessAvailable ? "Available for Business" : "Not Available"}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {businessAvailable
-                      ? (user.bio
-                          ? user.bio.length > 40 ? user.bio.slice(0, 40) + "…" : user.bio
-                          : "Open to collaborations, deals and projects.")
-                      : "Currently not taking new work."}
-                  </div>
-                </div>
-                {/* Toggle display */}
-                <div style={{ width: 42, height: 24, borderRadius: 12, background: businessAvailable ? ac(r,g,b,0.35) : "rgba(255,255,255,0.1)", position: "relative", flexShrink: 0 }}>
-                  <div style={{ position: "absolute", top: 3, width: 18, height: 18, borderRadius: "50%", background: businessAvailable ? t.hex : "rgba(255,255,255,0.3)", left: businessAvailable ? "auto" : 3, right: businessAvailable ? 3 : "auto" }} />
-                </div>
-                {/* QR Code */}
                 <div style={{ flexShrink: 0, borderRadius: 8, padding: 3, background: "white" }}>
                   <QRCodeSVG
                     value={profileUrl}
