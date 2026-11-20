@@ -111,8 +111,11 @@ class ChatSocket {
   private onHistory: HistoryHandler[] = [];
   private onConversationsList: ConversationsListHandler[] = [];
   private onConnectionChange: ((connected: boolean) => void)[] = [];
+  private recentMessageIds = new Set<string>();
+  private readonly MAX_RECENT_IDS = 500;
 
   connect() {
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
     const token = AuthStorage.getToken();
     if (!token) {
       console.warn("[chat-ws] no token, skipping connect");
@@ -175,6 +178,7 @@ class ChatSocket {
     }
     this.ws?.close();
     this.ws = null;
+    this.recentMessageIds.clear();
   }
 
   private scheduleReconnect() {
@@ -186,17 +190,30 @@ class ChatSocket {
     }, this.reconnectDelay);
   }
 
+  private trackMessageId(id: string): boolean {
+    if (this.recentMessageIds.has(id)) return false;
+    this.recentMessageIds.add(id);
+    if (this.recentMessageIds.size > this.MAX_RECENT_IDS) {
+      const first = this.recentMessageIds.values().next().value;
+      if (first) this.recentMessageIds.delete(first);
+    }
+    return true;
+  }
+
   private handleFrame(data: any) {
     switch (data.type) {
       case "receive_message":
+        if (data.id && !this.trackMessageId(data.id)) break;
         this.emit("message", data as ChatMessage);
         break;
       case "message_sent":
+        if (data.id) this.trackMessageId(data.id);
         this.emit("messageSent", data as ChatMessage);
         break;
       case "offline_messages":
         if (Array.isArray(data.messages)) {
           for (const msg of data.messages) {
+            if (msg.id && !this.trackMessageId(msg.id)) continue;
             this.emit("message", msg as ChatMessage);
           }
           this.ackOfflineMessages(data.messages.map((m: any) => m.id));
