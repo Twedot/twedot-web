@@ -927,7 +927,8 @@ function FeedContent() {
   }, [currentIdx, feedItems.length, loadPage]);
 
   const desktopRef = useRef<HTMLDivElement>(null);
-  const wheelLock = useRef(false);
+  const lastNavTime = useRef(0);
+  const accDelta = useRef(0);
 
   const goNext = useCallback(() => {
     setCurrentIdx((i) => {
@@ -957,16 +958,19 @@ function FeedContent() {
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
-  // Wheel navigation — one post per gesture
+  // Wheel navigation — accumulate delta, 700ms cooldown between navigations
   useEffect(() => {
     const el = desktopRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (wheelLock.current || Math.abs(e.deltaY) < 10) return;
-      wheelLock.current = true;
-      if (e.deltaY > 0) goNext(); else goPrev();
-      setTimeout(() => { wheelLock.current = false; }, 800);
+      const now = Date.now();
+      if (now - lastNavTime.current < 700) { accDelta.current = 0; return; }
+      accDelta.current += e.deltaY;
+      if (Math.abs(accDelta.current) < 80) return;
+      lastNavTime.current = now;
+      if (accDelta.current > 0) goNext(); else goPrev();
+      accDelta.current = 0;
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
