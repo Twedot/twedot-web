@@ -167,10 +167,10 @@ function SearchPage() {
   }
 
   return (
-    <div className="px-4 pb-16 -mt-2">
+    <div className="px-4 pb-16">
 
       {/* Tab bar + sort — sticky so they don't scroll away */}
-      <div className="sticky top-14 z-10 bg-background pb-2">
+      <div className="sticky top-14 z-10 bg-background pb-2 pt-4">
         <div className="no-scrollbar mb-2 flex gap-1 overflow-x-auto">
           {TABS.map((t) => (
             <button key={t.key} onClick={() => switchTab(t.key)}
