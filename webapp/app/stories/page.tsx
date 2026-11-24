@@ -926,39 +926,24 @@ function FeedContent() {
     }
   }, [currentIdx, feedItems.length, loadPage]);
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const scrollLocked = useRef(false);
-
-  const scrollToIdx = useCallback((idx: number, smooth = true) => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const cardH = el.clientHeight;
-    el.scrollTo({ top: idx * cardH, behavior: smooth ? "smooth" : "instant" });
-  }, []);
+  const desktopRef = useRef<HTMLDivElement>(null);
+  const wheelLock = useRef(false);
 
   const goNext = useCallback(() => {
-    if (scrollLocked.current) return;
-    scrollLocked.current = true;
     setCurrentIdx((i) => {
       const next = Math.min(i + 1, feedItems.length - 1);
       try { sessionStorage.setItem("stories_idx", String(next)); } catch {}
-      scrollToIdx(next);
       return next;
     });
-    setTimeout(() => { scrollLocked.current = false; }, 600);
-  }, [feedItems.length, scrollToIdx]);
+  }, [feedItems.length]);
 
   const goPrev = useCallback(() => {
-    if (scrollLocked.current) return;
-    scrollLocked.current = true;
     setCurrentIdx((i) => {
       const prev = Math.max(i - 1, 0);
       try { sessionStorage.setItem("stories_idx", String(prev)); } catch {}
-      scrollToIdx(prev);
       return prev;
     });
-    setTimeout(() => { scrollLocked.current = false; }, 600);
-  }, [scrollToIdx]);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -972,26 +957,20 @@ function FeedContent() {
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
-  // Wheel — block native scroll, one post per gesture
+  // Wheel navigation — one post per gesture
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+    const el = desktopRef.current;
+    if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (Math.abs(e.deltaY) < 5) return;
+      if (wheelLock.current || Math.abs(e.deltaY) < 10) return;
+      wheelLock.current = true;
       if (e.deltaY > 0) goNext(); else goPrev();
+      setTimeout(() => { wheelLock.current = false; }, 800);
     };
-    container.addEventListener("wheel", onWheel, { passive: false });
-    return () => container.removeEventListener("wheel", onWheel);
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
   }, [goNext, goPrev]);
-
-  // Restore scroll position once feed loads
-  const didRestore = useRef(false);
-  useEffect(() => {
-    if (didRestore.current || feedItems.length === 0) return;
-    didRestore.current = true;
-    if (currentIdx > 0) requestAnimationFrame(() => scrollToIdx(currentIdx, false));
-  }, [feedItems.length, currentIdx, scrollToIdx]);
 
   const currentFeedItem = feedItems[currentIdx];
   const currentGroup = currentFeedItem?.kind === "post" ? currentFeedItem.posts : undefined;
@@ -1021,7 +1000,7 @@ function FeedContent() {
   return (
     <>
       {/* ── Desktop view ── */}
-      <div className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden ${drawerOpen ? "pr-[400px]" : ""}`}>
+      <div ref={desktopRef} className={`relative h-[calc(100vh-56px)] overflow-hidden transition-[padding] duration-300 max-sm:hidden ${drawerOpen ? "pr-[400px]" : ""}`}>
         {!isAuthenticated && <LoginBanner />}
         {query && (
           <div className="absolute top-0 left-0 right-0 z-20 border-b border-border bg-background/80 backdrop-blur px-4 py-3 text-sm text-light-text">
@@ -1048,41 +1027,26 @@ function FeedContent() {
           </div>
         )}
 
-        {feedItems.length > 0 && (
-          <div
-            ref={scrollContainerRef}
-            className="no-scrollbar h-full overflow-y-auto"
-          >
-            {feedItems.map((item, idx) => {
-              const isNearby = Math.abs(idx - currentIdx) <= 2;
-              const key = item.kind === "live" ? `live-${item.stream.roomId}` : item.posts[0].id;
-              return (
-                <div key={key} data-idx={idx} className="h-[calc(100vh-56px)]">
-                  {isNearby ? (
-                    item.kind === "live" ? (
-                      <LiveFeedCard
-                        stream={item.stream}
-                        onPrev={goPrev}
-                        onNext={goNext}
-                        hasPrev={idx > 0}
-                        hasNext={idx < feedItems.length - 1 || hasMore}
-                      />
-                    ) : (
-                      <ShortsCard
-                        items={item.posts}
-                        onComment={openComment}
-                        onPrev={goPrev}
-                        onNext={goNext}
-                        hasPrev={idx > 0}
-                        hasNext={idx < feedItems.length - 1 || hasMore}
-                      />
-                    )
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {currentFeedItem?.kind === "live" ? (
+          <LiveFeedCard
+            key={`live-${currentFeedItem.stream.roomId}`}
+            stream={currentFeedItem.stream}
+            onPrev={goPrev}
+            onNext={goNext}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < feedItems.length - 1 || hasMore}
+          />
+        ) : currentGroup ? (
+          <ShortsCard
+            key={currentGroup[0].id}
+            items={currentGroup}
+            onComment={openComment}
+            onPrev={goPrev}
+            onNext={goNext}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < feedItems.length - 1 || hasMore}
+          />
+        ) : null}
 
         <CommentsDrawer
           postId={commentPanelPostId}
