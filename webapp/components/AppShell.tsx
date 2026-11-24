@@ -76,6 +76,8 @@ function AppShellLayout({ children }: { children: ReactNode }) {
         <main className={`min-w-0 flex-1 overflow-x-clip overflow-y-auto pb-14 lg:pb-0 ${
           pathname === "/stories" || pathname.startsWith("/p/")
             ? ""
+            : pathname === "/search"
+            ? ""
             : ((pathname.startsWith("/channels/") && pathname !== "/channels/create") || pathname.startsWith("/c/"))
             ? "2xl:pl-40"
             : (pathname.startsWith("/settings") || pathname.startsWith("/wallet") || pathname.startsWith("/analytics") || pathname.startsWith("/ads") || pathname.startsWith("/invite") || pathname.startsWith("/help") || pathname.startsWith("/service-history") || pathname.startsWith("/job-request") || pathname.startsWith("/boost") || pathname.startsWith("/inventory"))
