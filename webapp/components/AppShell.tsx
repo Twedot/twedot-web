@@ -74,7 +74,7 @@ function AppShellLayout({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col">
       <TopBar />
       <div className="flex w-full flex-1 overflow-hidden">
         <SideNav />
