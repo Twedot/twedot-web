@@ -926,21 +926,36 @@ function FeedContent() {
     }
   }, [currentIdx, feedItems.length, loadPage]);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const programmaticScroll = useRef(false);
+
+  const scrollToIdx = useCallback((idx: number) => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const child = el.children[idx] as HTMLElement | undefined;
+    if (!child) return;
+    programmaticScroll.current = true;
+    child.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => { programmaticScroll.current = false; }, 600);
+  }, []);
+
   const goNext = useCallback(() => {
     setCurrentIdx((i) => {
       const next = Math.min(i + 1, feedItems.length - 1);
       try { sessionStorage.setItem("stories_idx", String(next)); } catch {}
+      scrollToIdx(next);
       return next;
     });
-  }, [feedItems.length]);
+  }, [feedItems.length, scrollToIdx]);
 
   const goPrev = useCallback(() => {
     setCurrentIdx((i) => {
       const prev = Math.max(i - 1, 0);
       try { sessionStorage.setItem("stories_idx", String(prev)); } catch {}
+      scrollToIdx(prev);
       return prev;
     });
-  }, []);
+  }, [scrollToIdx]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -954,19 +969,37 @@ function FeedContent() {
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
-  // Wheel/trackpad navigation — one story per scroll gesture
+  // Scroll to initial position on mount
   useEffect(() => {
-    const cooldown = { current: false };
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) < 10 || cooldown.current) return;
-      e.preventDefault();
-      cooldown.current = true;
-      if (e.deltaY > 0) goNext(); else goPrev();
-      setTimeout(() => { cooldown.current = false; }, 400);
-    };
-    window.addEventListener("wheel", onWheel, { passive: false });
-    return () => window.removeEventListener("wheel", onWheel);
-  }, [goNext, goPrev]);
+    if (currentIdx > 0 && scrollContainerRef.current) {
+      const child = scrollContainerRef.current.children[currentIdx] as HTMLElement | undefined;
+      if (child) child.scrollIntoView({ block: "start" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedItems.length > 0]);
+
+  // Sync currentIdx from scroll position via IntersectionObserver
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (programmaticScroll.current) return;
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+            const idx = Number((entry.target as HTMLElement).dataset.idx);
+            if (!isNaN(idx)) {
+              setCurrentIdx(idx);
+              try { sessionStorage.setItem("stories_idx", String(idx)); } catch {}
+            }
+          }
+        }
+      },
+      { root: container, threshold: 0.5 }
+    );
+    Array.from(container.children).forEach((child) => observer.observe(child));
+    return () => observer.disconnect();
+  }, [feedItems.length]);
 
   const currentFeedItem = feedItems[currentIdx];
   const currentGroup = currentFeedItem?.kind === "post" ? currentFeedItem.posts : undefined;
@@ -1023,26 +1056,41 @@ function FeedContent() {
           </div>
         )}
 
-        {currentFeedItem?.kind === "live" ? (
-          <LiveFeedCard
-            key={`live-${currentFeedItem.stream.roomId}`}
-            stream={currentFeedItem.stream}
-            onPrev={goPrev}
-            onNext={goNext}
-            hasPrev={currentIdx > 0}
-            hasNext={currentIdx < feedItems.length - 1 || hasMore}
-          />
-        ) : currentGroup ? (
-          <ShortsCard
-            key={currentGroup[0].id}
-            items={currentGroup}
-            onComment={openComment}
-            onPrev={goPrev}
-            onNext={goNext}
-            hasPrev={currentIdx > 0}
-            hasNext={currentIdx < feedItems.length - 1 || hasMore}
-          />
-        ) : null}
+        {feedItems.length > 0 && (
+          <div
+            ref={scrollContainerRef}
+            className="no-scrollbar h-full snap-y snap-mandatory overflow-y-auto"
+          >
+            {feedItems.map((item, idx) => {
+              const isNearby = Math.abs(idx - currentIdx) <= 2;
+              const key = item.kind === "live" ? `live-${item.stream.roomId}` : item.posts[0].id;
+              return (
+                <div key={key} data-idx={idx} className="h-[calc(100vh-56px)] snap-start">
+                  {isNearby ? (
+                    item.kind === "live" ? (
+                      <LiveFeedCard
+                        stream={item.stream}
+                        onPrev={goPrev}
+                        onNext={goNext}
+                        hasPrev={idx > 0}
+                        hasNext={idx < feedItems.length - 1 || hasMore}
+                      />
+                    ) : (
+                      <ShortsCard
+                        items={item.posts}
+                        onComment={openComment}
+                        onPrev={goPrev}
+                        onNext={goNext}
+                        hasPrev={idx > 0}
+                        hasNext={idx < feedItems.length - 1 || hasMore}
+                      />
+                    )
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <CommentsDrawer
           postId={commentPanelPostId}
