@@ -954,6 +954,20 @@ function FeedContent() {
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
+  // Wheel/trackpad navigation — one story per scroll gesture
+  useEffect(() => {
+    const cooldown = { current: false };
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) < 10 || cooldown.current) return;
+      e.preventDefault();
+      cooldown.current = true;
+      if (e.deltaY > 0) goNext(); else goPrev();
+      setTimeout(() => { cooldown.current = false; }, 400);
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [goNext, goPrev]);
+
   const currentFeedItem = feedItems[currentIdx];
   const currentGroup = currentFeedItem?.kind === "post" ? currentFeedItem.posts : undefined;
 
