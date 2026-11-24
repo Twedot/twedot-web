@@ -74,7 +74,7 @@ function SearchPanelInner() {
   if (!q.trim()) return null;
 
   return (
-    <aside className="hidden h-full w-[340px] flex-shrink-0 overflow-y-auto py-4 pl-4 pr-3 lg:block xl:w-[360px] 2xl:w-[360px] 2xl:pl-8">
+    <aside className="hidden min-h-0 h-full w-[340px] flex-shrink-0 overflow-y-auto py-4 pl-4 pr-3 lg:block xl:w-[360px] 2xl:w-[360px] 2xl:pl-8">
 
       {/* Search history */}
       {history.length > 0 && (

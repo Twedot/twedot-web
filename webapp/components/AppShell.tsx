@@ -76,9 +76,9 @@ function AppShellLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar />
-      <div className="grid w-full flex-1 grid-cols-1 overflow-hidden md:grid-cols-[auto_1fr_auto]">
+      <div className="grid w-full flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)] overflow-hidden md:grid-cols-[auto_1fr_auto]">
         <SideNav />
-        <main ref={mainRef} className={`min-w-0 overflow-y-auto pb-14 md:pb-0 ${
+        <main ref={mainRef} className={`min-h-0 min-w-0 overflow-y-auto pb-14 md:pb-0 ${
           pathname === "/stories" || pathname.startsWith("/p/")
             ? ""
             : ((pathname.startsWith("/channels/") && pathname !== "/channels/create") || pathname.startsWith("/c/"))
