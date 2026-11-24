@@ -969,14 +969,32 @@ function FeedContent() {
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
-  // Scroll to initial position on mount
+  // Scroll to saved position once feed loads
+  const didRestoreScroll = useRef(false);
   useEffect(() => {
-    if (currentIdx > 0 && scrollContainerRef.current) {
-      const child = scrollContainerRef.current.children[currentIdx] as HTMLElement | undefined;
-      if (child) child.scrollIntoView({ block: "start" });
+    if (didRestoreScroll.current || feedItems.length === 0) return;
+    didRestoreScroll.current = true;
+    if (currentIdx > 0) {
+      requestAnimationFrame(() => {
+        const child = scrollContainerRef.current?.children[currentIdx] as HTMLElement | undefined;
+        if (child) child.scrollIntoView({ block: "start" });
+      });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedItems.length > 0]);
+  }, [feedItems.length, currentIdx]);
+
+  // Wheel handler — one post at a time, block native scroll
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (programmaticScroll.current) return;
+      if (Math.abs(e.deltaY) < 5) return;
+      if (e.deltaY > 0) goNext(); else goPrev();
+    };
+    container.addEventListener("wheel", onWheel, { passive: false });
+    return () => container.removeEventListener("wheel", onWheel);
+  }, [goNext, goPrev]);
 
   // Sync currentIdx from scroll position via IntersectionObserver
   useEffect(() => {
@@ -1065,7 +1083,7 @@ function FeedContent() {
               const isNearby = Math.abs(idx - currentIdx) <= 2;
               const key = item.kind === "live" ? `live-${item.stream.roomId}` : item.posts[0].id;
               return (
-                <div key={key} data-idx={idx} className="h-[calc(100vh-56px)] snap-start snap-always">
+                <div key={key} data-idx={idx} className="h-[calc(100vh-56px)] snap-start">
                   {isNearby ? (
                     item.kind === "live" ? (
                       <LiveFeedCard
