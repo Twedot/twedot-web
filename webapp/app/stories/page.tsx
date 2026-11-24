@@ -1065,7 +1065,7 @@ function FeedContent() {
               const isNearby = Math.abs(idx - currentIdx) <= 2;
               const key = item.kind === "live" ? `live-${item.stream.roomId}` : item.posts[0].id;
               return (
-                <div key={key} data-idx={idx} className="h-[calc(100vh-56px)] snap-start">
+                <div key={key} data-idx={idx} className="h-[calc(100vh-56px)] snap-start snap-always">
                   {isNearby ? (
                     item.kind === "live" ? (
                       <LiveFeedCard
