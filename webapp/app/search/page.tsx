@@ -167,7 +167,7 @@ function SearchPage() {
   }
 
   return (
-    <div className="px-4 pb-16 pt-4">
+    <div className="px-4 pb-16 -mt-2">
 
       {/* Tab bar + sort — sticky so they don't scroll away */}
       <div className="sticky top-14 z-10 bg-background pb-2">
