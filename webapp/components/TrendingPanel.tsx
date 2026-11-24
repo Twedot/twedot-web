@@ -131,7 +131,7 @@ export default function TrendingPanel() {
   if (posts.length === 0 && users.length === 0) return null;
 
   return (
-    <aside className="no-scrollbar sticky top-14 hidden max-h-[calc(100vh-3.5rem)] w-[340px] flex-shrink-0 self-start overflow-y-auto py-4 pl-4 pr-3 lg:block xl:w-[360px] 2xl:w-[360px] 2xl:pl-8">
+    <aside className="no-scrollbar hidden h-full w-[340px] flex-shrink-0 overflow-y-auto py-4 pl-4 pr-3 lg:block xl:w-[360px] 2xl:w-[360px] 2xl:pl-8">
 
       {/* Live Now */}
       {liveStreams.length > 0 && (

@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { UiProvider, useUi } from "@/lib/UiContext";
 import { JobSocketProvider } from "@/lib/jobSocket";
@@ -67,20 +67,25 @@ function UploadProgress() {
 function AppShellLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { postPanelId } = useUi();
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar />
-      <div className="flex w-full flex-1">
+      <div className="grid w-full flex-1 grid-cols-1 overflow-hidden md:grid-cols-[auto_1fr_auto]">
         <SideNav />
-        <main className={`min-w-0 flex-1 overflow-x-clip overflow-y-auto pb-14 md:pb-0 ${
+        <main ref={mainRef} className={`min-w-0 overflow-y-auto pb-14 md:pb-0 ${
           pathname === "/stories" || pathname.startsWith("/p/")
             ? ""
             : ((pathname.startsWith("/channels/") && pathname !== "/channels/create") || pathname.startsWith("/c/"))
             ? "2xl:pl-40"
-            : (pathname.startsWith("/settings") || pathname.startsWith("/wallet") || pathname.startsWith("/analytics") || pathname.startsWith("/ads") || pathname.startsWith("/invite") || pathname.startsWith("/help") || pathname.startsWith("/service-history") || pathname.startsWith("/job-request") || pathname.startsWith("/boost") || pathname.startsWith("/inventory"))
+            : (pathname.startsWith("/settings") || pathname.startsWith("/wallet") || pathname.startsWith("/analytics") || pathname.startsWith("/ads") || pathname.startsWith("/invite") || pathname.startsWith("/help") || pathname.startsWith("/service-history") || pathname.startsWith("/job-request") || pathname.startsWith("/boost") || pathname.startsWith("/inventory") || pathname === "/search")
             ? "md:max-w-[800px] xl:max-w-[860px]"
-            : "md:max-w-[500px] xl:max-w-[580px] 2xl:ml-40 2xl:max-w-[620px]"
+            : "md:max-w-[500px] xl:max-w-[580px] 2xl:max-w-[620px]"
         }`}>
           {children}
         </main>

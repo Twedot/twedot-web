@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 interface UiContextValue {
   sidebarCollapsed: boolean;
@@ -27,26 +27,12 @@ const UiContext = createContext<UiContextValue>({
 });
 
 export function UiProvider({ children }: { children: ReactNode }) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 1280;
-  });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [postPanelId, setPostPanelId] = useState<string | null>(null);
-  const userToggledRef = useRef(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1280px)");
-    const onChange = (e: MediaQueryListEvent) => {
-      if (!userToggledRef.current) setSidebarCollapsed(!e.matches);
-    };
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
 
   const toggleSidebar = useCallback(() => {
-    userToggledRef.current = true;
     setSidebarCollapsed((v) => !v);
   }, []);
   const openDrawer = useCallback(() => setDrawerOpen(true), []);

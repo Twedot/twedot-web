@@ -98,9 +98,9 @@ export default function SideNav() {
   const width = sidebarCollapsed ? "w-[68px]" : "w-[280px]";
 
   return (
-    <div className="sticky top-14 hidden flex-shrink-0 md:block">
+    <div className="hidden flex-shrink-0 md:block">
       <nav
-        className={`no-scrollbar sticky top-14 h-[calc(100vh-3.5rem)] ${width} flex flex-col gap-0 overflow-y-auto border-r border-border bg-background p-0 transition-[width] duration-150`}
+        className={`no-scrollbar h-full ${width} flex flex-col gap-0 overflow-y-auto border-r border-border bg-background p-0 transition-[width] duration-150`}
       >
         {/* centered wrapper — equal left/right margin so items sit in the middle of the column */}
         <div className={`mx-auto flex flex-1 flex-col gap-0 pb-3 pt-4 ${sidebarCollapsed ? "w-full px-1" : "w-[85%]"}`}>
