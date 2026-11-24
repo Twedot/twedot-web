@@ -74,7 +74,7 @@ function SearchPanelInner() {
   if (!q.trim()) return null;
 
   return (
-    <aside className="sticky top-14 hidden h-fit w-[340px] flex-shrink-0 self-start py-4 pl-4 pr-3 lg:block xl:w-[360px] 2xl:w-[360px] 2xl:pl-8">
+    <aside className="sticky top-14 hidden h-fit w-[340px] flex-shrink-0 self-start pt-1 pb-4 pl-4 pr-3 lg:block xl:w-[360px] 2xl:w-[360px] 2xl:pl-8">
 
       {/* Search history */}
       {history.length > 0 && (
