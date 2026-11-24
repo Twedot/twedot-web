@@ -98,7 +98,7 @@ export default function SideNav() {
   const width = sidebarCollapsed ? "w-[68px]" : "w-[280px]";
 
   return (
-    <div className="hidden min-h-0 flex-shrink-0 md:block">
+    <div className="hidden flex-shrink-0 md:block">
       <nav
         className={`no-scrollbar h-full ${width} flex flex-col gap-0 overflow-y-auto border-r border-border bg-background p-0 transition-[width] duration-150`}
       >

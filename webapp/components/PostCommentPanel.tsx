@@ -245,7 +245,7 @@ export default function PostCommentPanel() {
   if (!postPanelId) return null;
 
   return (
-    <aside className="hidden min-h-0 lg:flex lg:flex-col w-[340px] xl:w-[360px] 2xl:w-[380px] flex-shrink-0 border-l border-border bg-background h-full">
+    <aside className="hidden lg:flex lg:flex-col w-[340px] xl:w-[360px] 2xl:w-[380px] flex-shrink-0 border-l border-border bg-background h-full">
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border px-4 py-3">
         {threadCommentId ? (
