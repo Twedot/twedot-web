@@ -98,7 +98,7 @@ export default function SideNav() {
   const width = sidebarCollapsed ? "w-[68px]" : "w-[280px]";
 
   return (
-    <div className="sticky top-14 hidden flex-shrink-0 lg:block">
+    <div className="sticky top-14 hidden flex-shrink-0 md:block">
       <nav
         className={`no-scrollbar sticky top-14 h-[calc(100vh-3.5rem)] ${width} flex flex-col gap-0 overflow-y-auto border-r border-border bg-background p-0 transition-[width] duration-150`}
       >

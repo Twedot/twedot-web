@@ -58,7 +58,7 @@ export default function MobileBottomNav() {
   }, [pathname]);
 
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 z-30 flex h-14 items-center justify-around border-t border-border bg-background lg:hidden transition-transform duration-300 ${navHidden ? "translate-y-full" : "translate-y-0"}`}>
+    <nav className={`fixed bottom-0 left-0 right-0 z-30 flex h-14 items-center justify-around border-t border-border bg-background md:hidden transition-transform duration-300 ${navHidden ? "translate-y-full" : "translate-y-0"}`}>
       {NAV_ITEMS.map((item) => {
         const active = !item.external && (
           item.href === "/profile"

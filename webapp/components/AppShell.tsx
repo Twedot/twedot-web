@@ -73,14 +73,14 @@ function AppShellLayout({ children }: { children: ReactNode }) {
       <TopBar />
       <div className="flex w-full flex-1">
         <SideNav />
-        <main className={`min-w-0 flex-1 overflow-x-clip overflow-y-auto pb-14 lg:pb-0 ${
+        <main className={`min-w-0 flex-1 overflow-x-clip overflow-y-auto pb-14 md:pb-0 ${
           pathname === "/stories" || pathname.startsWith("/p/")
             ? ""
             : ((pathname.startsWith("/channels/") && pathname !== "/channels/create") || pathname.startsWith("/c/"))
             ? "2xl:pl-40"
             : (pathname.startsWith("/settings") || pathname.startsWith("/wallet") || pathname.startsWith("/analytics") || pathname.startsWith("/ads") || pathname.startsWith("/invite") || pathname.startsWith("/help") || pathname.startsWith("/service-history") || pathname.startsWith("/job-request") || pathname.startsWith("/boost") || pathname.startsWith("/inventory"))
-            ? "lg:max-w-[800px] xl:max-w-[860px]"
-            : "lg:max-w-[500px] xl:max-w-[580px] 2xl:ml-40 2xl:max-w-[620px]"
+            ? "md:max-w-[800px] xl:max-w-[860px]"
+            : "md:max-w-[500px] xl:max-w-[580px] 2xl:ml-40 2xl:max-w-[620px]"
         }`}>
           {children}
         </main>
