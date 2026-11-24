@@ -927,34 +927,37 @@ function FeedContent() {
   }, [currentIdx, feedItems.length, loadPage]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const programmaticScroll = useRef(false);
+  const scrollLocked = useRef(false);
 
-  const scrollToIdx = useCallback((idx: number) => {
+  const scrollToIdx = useCallback((idx: number, smooth = true) => {
     const el = scrollContainerRef.current;
     if (!el) return;
-    const child = el.children[idx] as HTMLElement | undefined;
-    if (!child) return;
-    programmaticScroll.current = true;
-    child.scrollIntoView({ behavior: "smooth", block: "start" });
-    setTimeout(() => { programmaticScroll.current = false; }, 600);
+    const cardH = el.clientHeight;
+    el.scrollTo({ top: idx * cardH, behavior: smooth ? "smooth" : "instant" });
   }, []);
 
   const goNext = useCallback(() => {
+    if (scrollLocked.current) return;
+    scrollLocked.current = true;
     setCurrentIdx((i) => {
       const next = Math.min(i + 1, feedItems.length - 1);
       try { sessionStorage.setItem("stories_idx", String(next)); } catch {}
       scrollToIdx(next);
       return next;
     });
+    setTimeout(() => { scrollLocked.current = false; }, 600);
   }, [feedItems.length, scrollToIdx]);
 
   const goPrev = useCallback(() => {
+    if (scrollLocked.current) return;
+    scrollLocked.current = true;
     setCurrentIdx((i) => {
       const prev = Math.max(i - 1, 0);
       try { sessionStorage.setItem("stories_idx", String(prev)); } catch {}
       scrollToIdx(prev);
       return prev;
     });
+    setTimeout(() => { scrollLocked.current = false; }, 600);
   }, [scrollToIdx]);
 
   // Keyboard navigation
@@ -969,26 +972,12 @@ function FeedContent() {
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
-  // Scroll to saved position once feed loads
-  const didRestoreScroll = useRef(false);
-  useEffect(() => {
-    if (didRestoreScroll.current || feedItems.length === 0) return;
-    didRestoreScroll.current = true;
-    if (currentIdx > 0) {
-      requestAnimationFrame(() => {
-        const child = scrollContainerRef.current?.children[currentIdx] as HTMLElement | undefined;
-        if (child) child.scrollIntoView({ block: "start" });
-      });
-    }
-  }, [feedItems.length, currentIdx]);
-
-  // Wheel handler — one post at a time, block native scroll
+  // Wheel — block native scroll, one post per gesture
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (programmaticScroll.current) return;
       if (Math.abs(e.deltaY) < 5) return;
       if (e.deltaY > 0) goNext(); else goPrev();
     };
@@ -996,28 +985,13 @@ function FeedContent() {
     return () => container.removeEventListener("wheel", onWheel);
   }, [goNext, goPrev]);
 
-  // Sync currentIdx from scroll position via IntersectionObserver
+  // Restore scroll position once feed loads
+  const didRestore = useRef(false);
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (programmaticScroll.current) return;
-        for (const entry of entries) {
-          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-            const idx = Number((entry.target as HTMLElement).dataset.idx);
-            if (!isNaN(idx)) {
-              setCurrentIdx(idx);
-              try { sessionStorage.setItem("stories_idx", String(idx)); } catch {}
-            }
-          }
-        }
-      },
-      { root: container, threshold: 0.5 }
-    );
-    Array.from(container.children).forEach((child) => observer.observe(child));
-    return () => observer.disconnect();
-  }, [feedItems.length]);
+    if (didRestore.current || feedItems.length === 0) return;
+    didRestore.current = true;
+    if (currentIdx > 0) requestAnimationFrame(() => scrollToIdx(currentIdx, false));
+  }, [feedItems.length, currentIdx, scrollToIdx]);
 
   const currentFeedItem = feedItems[currentIdx];
   const currentGroup = currentFeedItem?.kind === "post" ? currentFeedItem.posts : undefined;
@@ -1077,13 +1051,13 @@ function FeedContent() {
         {feedItems.length > 0 && (
           <div
             ref={scrollContainerRef}
-            className="no-scrollbar h-full snap-y snap-mandatory overflow-y-auto"
+            className="no-scrollbar h-full overflow-y-auto"
           >
             {feedItems.map((item, idx) => {
               const isNearby = Math.abs(idx - currentIdx) <= 2;
               const key = item.kind === "live" ? `live-${item.stream.roomId}` : item.posts[0].id;
               return (
-                <div key={key} data-idx={idx} className="h-[calc(100vh-56px)] snap-start">
+                <div key={key} data-idx={idx} className="h-[calc(100vh-56px)]">
                   {isNearby ? (
                     item.kind === "live" ? (
                       <LiveFeedCard
