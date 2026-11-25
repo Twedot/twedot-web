@@ -84,6 +84,9 @@ function handleBuyClick(head: StatusPost, requireLogin: () => boolean) {
       metadata: meta,
     }, true);
   }
+  if (typeof window !== "undefined" && window.innerWidth < 640) {
+    window.location.href = `/messages?userId=${head.userId}`;
+  }
 }
 
 function groupPosts(items: StatusPost[]): StatusPost[][] {
@@ -928,7 +931,8 @@ function FeedContent() {
 
   const desktopRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const mobileScrollRef = useRef<HTMLDivElement>(null);
+  const mobileSwipeX = useRef(0);
+  const mobileSwipeY = useRef(0);
   const lastNavTime = useRef(0);
   const accDelta = useRef(0);
 
@@ -937,8 +941,6 @@ function FeedContent() {
     try { sessionStorage.setItem("stories_idx", String(idx)); } catch {}
     const el = scrollRef.current;
     if (el) el.scrollTo({ top: idx * el.clientHeight, behavior: smooth ? "smooth" : "instant" });
-    const mel = mobileScrollRef.current;
-    if (mel) mel.scrollTo({ top: idx * mel.clientHeight, behavior: smooth ? "smooth" : "instant" });
   }, []);
 
   const goNext = useCallback(() => {
@@ -1107,8 +1109,19 @@ function FeedContent() {
         )}
       </div>
 
-      {/* ── Mobile view (TikTok fullscreen, scroll-snap) ── */}
-      <div className="hidden max-sm:block relative h-[calc(100vh-112px)]">
+      {/* ── Mobile view (TikTok fullscreen, swipe between posts) ── */}
+      <div
+        className="hidden max-sm:block relative h-[calc(100vh-112px)]"
+        onTouchStart={(e) => { mobileSwipeX.current = e.touches[0].clientX; mobileSwipeY.current = e.touches[0].clientY; }}
+        onTouchEnd={(e) => {
+          const dx = e.changedTouches[0].clientX - mobileSwipeX.current;
+          const dy = e.changedTouches[0].clientY - mobileSwipeY.current;
+          if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 60) {
+            if (dy < 0) goNext();
+            else goPrev();
+          }
+        }}
+      >
         {!isAuthenticated && <LoginBanner />}
 
         {isFetching && posts.length === 0 && (
@@ -1130,54 +1143,26 @@ function FeedContent() {
           </div>
         )}
 
-        {feedItems.length > 0 && (
-          <div
-            ref={mobileScrollRef}
-            className="no-scrollbar h-full overflow-y-auto snap-y snap-mandatory"
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              const h = el.clientHeight;
-              if (h === 0) return;
-              const idx = Math.round(el.scrollTop / h);
-              if (idx !== currentIdx) {
-                setCurrentIdx(idx);
-                try { sessionStorage.setItem("stories_idx", String(idx)); } catch {}
-                if (idx >= feedItems.length - 2 && hasMore && !isFetching) {
-                  loadPage(pageRef.current + 1);
-                }
-              }
-            }}
-          >
-            {feedItems.map((item, idx) => {
-              const isNearby = Math.abs(idx - currentIdx) <= 2;
-              const key = item.kind === "live" ? `live-m-${item.stream.roomId}` : item.posts[0].id;
-              return (
-                <div key={key} className="h-full snap-start">
-                  {isNearby ? (
-                    item.kind === "live" ? (
-                      <LiveFeedCard
-                        stream={item.stream}
-                        onPrev={goPrev}
-                        onNext={goNext}
-                        hasPrev={idx > 0}
-                        hasNext={idx < feedItems.length - 1 || hasMore}
-                      />
-                    ) : (
-                      <MobileShortsCard
-                        items={item.posts}
-                        onComment={openComment}
-                        onPrev={goPrev}
-                        onNext={goNext}
-                        hasPrev={idx > 0}
-                        hasNext={idx < feedItems.length - 1 || hasMore}
-                      />
-                    )
-                  ) : <div className="h-full" />}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {currentFeedItem?.kind === "live" ? (
+          <LiveFeedCard
+            key={`live-m-${currentFeedItem.stream.roomId}`}
+            stream={currentFeedItem.stream}
+            onPrev={goPrev}
+            onNext={goNext}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < feedItems.length - 1 || hasMore}
+          />
+        ) : currentGroup ? (
+          <MobileShortsCard
+            key={currentGroup[0].id}
+            items={currentGroup}
+            onComment={openComment}
+            onPrev={goPrev}
+            onNext={goNext}
+            hasPrev={currentIdx > 0}
+            hasNext={currentIdx < feedItems.length - 1 || hasMore}
+          />
+        ) : null}
 
         <CommentsDrawer
           postId={commentPanelPostId}
