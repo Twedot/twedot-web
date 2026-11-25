@@ -138,7 +138,7 @@ export default function TrendingPanel() {
         <div className="mb-3 rounded-2xl bg-feed-bg">
           <div className="flex items-center gap-1.5 px-4 py-3">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-light-text">Live Now</h2>
+            <h2 className="text-xs font-medium uppercase tracking-wide text-light-text">Live Now</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {liveStreams.map((s) => (
@@ -184,7 +184,7 @@ export default function TrendingPanel() {
       {posts.length > 0 && (
         <div className="rounded-2xl bg-feed-bg">
           <div className="flex items-center justify-between px-4 py-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-light-text">Recent Posts</h2>
+            <h2 className="text-xs font-medium uppercase tracking-wide text-light-text">Recent Posts</h2>
             <button onClick={load} className="text-xs font-medium text-primary hover:underline">
               Refresh
             </button>
@@ -231,7 +231,7 @@ export default function TrendingPanel() {
       {users.length > 0 && (
         <div className="mt-3 rounded-2xl bg-feed-bg">
           <div className="px-4 pb-1 pt-3">
-            <h2 className="text-sm font-bold text-text">You May Know</h2>
+            <h2 className="text-sm font-semibold text-text">You May Know</h2>
           </div>
           <ul>
             {users.map((u) => (
@@ -251,7 +251,7 @@ export default function TrendingPanel() {
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="truncate text-[13px] font-semibold text-text">{u.name}</span>
+                        <span className="truncate text-[13px] font-medium text-text">{u.name}</span>
                         <RankBadge activityScore={u.global_activity_score ?? 0} rankVisible={u.rank_visible ?? true} />
                       </div>
                       {u.occupation && <p className="truncate text-[11px] text-light-text">{u.occupation}</p>}
@@ -259,7 +259,7 @@ export default function TrendingPanel() {
                   </div>
                   <button
                     onClick={() => toggleFollow(u.id)}
-                    className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
+                    className={`flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
                       followingIds.has(u.id)
                         ? "border border-border bg-feed-bg text-text hover:bg-border/40"
                         : "bg-primary text-white hover:opacity-90"

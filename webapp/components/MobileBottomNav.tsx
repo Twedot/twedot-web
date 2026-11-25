@@ -66,7 +66,7 @@ export default function MobileBottomNav() {
             : pathname === item.href || pathname.startsWith(item.href + "/")
         );
         const Icon = active ? item.activeIcon : item.icon;
-        const cls = `relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-semibold ${item.liveDot ? "text-[#FF3B30]" : active ? "text-primary" : "text-light-text"}`;
+        const cls = `relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium ${item.liveDot ? "text-[#FF3B30]" : active ? "text-primary" : "text-light-text"}`;
         const inner = (
           <>
             <div className="relative">
