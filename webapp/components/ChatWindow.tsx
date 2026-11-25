@@ -762,22 +762,22 @@ export default function ChatWindow({ userId }: { userId: string }) {
       </div>
       {/* Context menu */}
       {ctxMenu && (
-        <div ref={ctxRef} className="fixed z-[200] min-w-[120px] rounded-lg bg-[#222] border border-[#444] shadow-2xl py-1 text-[11px]"
-          style={{ left: Math.min(ctxMenu.x, window.innerWidth - 140), top: Math.max(ctxMenu.y - 10, 8), transform: "translateY(-100%)" }}>
+        <div ref={ctxRef} className="fixed z-[200] whitespace-nowrap rounded-lg bg-[#222] border border-[#444] shadow-2xl py-1 text-[11px]"
+          style={{ left: Math.min(ctxMenu.x, window.innerWidth - 170), top: Math.max(ctxMenu.y - 10, 8), transform: "translateY(-100%)" }}>
           {(ctxMenu.msg.messageType === "text" || !ctxMenu.msg.content.startsWith("http")) && (
             <button onClick={handleCopy} className="flex w-full items-center gap-2 px-3 py-1.5 text-white/80 hover:bg-white/10">
-              <IoCopyOutline size={13} /> Copy
+              <IoCopyOutline size={13} className="shrink-0" /> Copy
             </button>
           )}
           <button onClick={handleReply} className="flex w-full items-center gap-2 px-3 py-1.5 text-white/80 hover:bg-white/10">
-            <IoArrowUndoOutline size={13} /> Reply
+            <IoArrowUndoOutline size={13} className="shrink-0" /> Reply
           </button>
           <button onClick={handleDelete} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-white/10">
-            <IoTrashOutline size={13} /> Delete
+            <IoTrashOutline size={13} className="shrink-0" /> Delete
           </button>
           {ctxMenu.msg.senderId === myUserId && (
             <button onClick={handleDeleteEverywhere} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-white/10">
-              <IoTrashOutline size={13} /> Delete Everywhere
+              <IoTrashOutline size={13} className="shrink-0" /> Delete Everywhere
             </button>
           )}
         </div>
