@@ -6,6 +6,7 @@ import {
   IoChatbubbleEllipsesOutline,
   IoPersonOutline,
   IoArrowUndoOutline,
+  IoChevronBack,
   IoSend,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
@@ -49,9 +50,11 @@ function autoGrow(el: HTMLTextAreaElement) {
 function CommentRow({
   comment,
   onReply,
+  replyCount,
 }: {
   comment: Comment;
-  onReply: (name: string) => void;
+  onReply: (name: string, commentId: string) => void;
+  replyCount: number;
 }) {
   return (
     <div className="flex gap-2.5 py-3 border-b border-border/40 last:border-0">
@@ -71,11 +74,11 @@ function CommentRow({
         </div>
         <p className="text-[13px] leading-[18px] text-text/80 break-words">{comment.content}</p>
         <button
-          onClick={() => onReply(comment.userName)}
+          onClick={() => onReply(comment.userName, comment.id)}
           className="mt-1 flex items-center gap-1 text-[11px] text-light-text hover:text-text transition-colors"
         >
           <IoArrowUndoOutline size={11} />
-          Reply
+          Reply{replyCount > 0 ? ` (${replyCount})` : ""}
         </button>
       </div>
     </div>
@@ -97,7 +100,8 @@ export default function CommentsDrawer({
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState("");
-  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<{ name: string; commentId: string } | null>(null);
+  const [threadCommentId, setThreadCommentId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [count, setCount] = useState(commentCount);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -108,8 +112,10 @@ export default function CommentsDrawer({
   }, [commentCount]);
 
   useEffect(() => {
-    if (!postId) { setComments([]); return; }
+    if (!postId) { setComments([]); setThreadCommentId(null); setReplyTo(null); return; }
     setLoading(true);
+    setThreadCommentId(null);
+    setReplyTo(null);
     apiGet<Comment[]>(`/status/${postId}/comments`)
       .then((data) => setComments(data ?? []))
       .catch(() => {})
@@ -120,13 +126,18 @@ export default function CommentsDrawer({
     if (!socket || !postId) return;
     socket.emit("join_status_room", { statusId: postId });
 
-    const onCommented = (data: Comment) => {
+    const onCommented = (data: { statusId: string; commentId: string; commenterId: string; commenterName: string; commenterPhoto: string | null; content: string; parentCommentId: string | null; commentCount: number }) => {
       if (data.statusId !== postId) return;
       setComments((prev) => {
-        if (prev.some((c) => c.id === data.id)) return prev;
-        return [...prev, data];
+        if (prev.some((c) => c.id === data.commentId)) return prev;
+        return [...prev, {
+          id: data.commentId, statusId: data.statusId, userId: data.commenterId,
+          userName: data.commenterName, userPhoto: data.commenterPhoto, content: data.content,
+          parentCommentId: data.parentCommentId, createdAt: new Date().toISOString(),
+          agreeCount: 0, disagreeCount: 0, myReaction: null,
+        }];
       });
-      setCount((c) => c + 1);
+      setCount(data.commentCount);
     };
 
     socket.on("status_commented", onCommented);
@@ -136,7 +147,6 @@ export default function CommentsDrawer({
     };
   }, [socket, postId]);
 
-  // Scroll to bottom when new comments arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -147,7 +157,9 @@ export default function CommentsDrawer({
     if (!text.trim() || submitting || !postId) return;
     setSubmitting(true);
     try {
-      const body: Record<string, unknown> = { content: replyTo ? `@${replyTo} ${text.trim()}` : text.trim() };
+      const body: Record<string, unknown> = { content: text.trim() };
+      const parentId = replyTo?.commentId ?? (threadCommentId ?? undefined);
+      if (parentId) body.parentCommentId = parentId;
       const newComment = await apiPost<Comment>(`/status/${postId}/comments`, body);
       if (newComment) {
         setComments((prev) => {
@@ -164,11 +176,14 @@ export default function CommentsDrawer({
     } finally {
       setSubmitting(false);
     }
-  }, [text, submitting, postId, replyTo, notify]);
+  }, [text, submitting, postId, replyTo, threadCommentId, notify]);
 
   if (!postId) return null;
 
   const topLevel = comments.filter((c) => !c.parentCommentId);
+  const threadReplies = threadCommentId ? comments.filter((c) => c.parentCommentId === threadCommentId) : [];
+  const threadComment = threadCommentId ? comments.find((c) => c.id === threadCommentId) : null;
+  const replyCountFor = (id: string) => comments.filter((c) => c.parentCommentId === id).length;
 
   return (
     <>
@@ -180,9 +195,20 @@ export default function CommentsDrawer({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
-            <IoChatbubbleEllipsesOutline size={18} className="text-light-text" />
-            <span className="text-[14px] font-bold text-text">Comments</span>
-            {count > 0 && <span className="text-[12px] text-light-text">({count})</span>}
+            {threadCommentId ? (
+              <button
+                onClick={() => { setThreadCommentId(null); setReplyTo(null); }}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-light-text hover:bg-feed-bg"
+              >
+                <IoChevronBack size={18} />
+              </button>
+            ) : (
+              <IoChatbubbleEllipsesOutline size={18} className="text-light-text" />
+            )}
+            <span className="text-[14px] font-semibold text-text">
+              {threadCommentId ? "Replies" : "Comments"}
+            </span>
+            {!threadCommentId && count > 0 && <span className="text-[12px] text-light-text">({count})</span>}
           </div>
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-feed-bg text-light-text hover:text-text transition-colors">
             <IoClose size={18} />
@@ -196,22 +222,60 @@ export default function CommentsDrawer({
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-light-text/30 border-t-light-text" />
             </div>
           )}
-          {!loading && topLevel.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-10 text-center">
-              <IoChatbubbleEllipsesOutline size={28} className="text-light-text/30" />
-              <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
-            </div>
+
+          {threadCommentId && threadComment ? (
+            <>
+              {/* Parent comment */}
+              <div className="border-b border-border/40 pb-1">
+                <CommentRow
+                  comment={threadComment}
+                  onReply={(name, id) => {
+                    setReplyTo({ name, commentId: id });
+                    setTimeout(() => inputRef.current?.focus(), 50);
+                  }}
+                  replyCount={threadReplies.length}
+                />
+              </div>
+              {/* Replies */}
+              <div className="pl-5">
+                {threadReplies.length === 0 && (
+                  <p className="py-6 text-center text-[12px] text-light-text">No replies yet</p>
+                )}
+                {threadReplies.map((reply) => (
+                  <CommentRow
+                    key={reply.id}
+                    comment={reply}
+                    onReply={(name) => {
+                      setReplyTo({ name, commentId: threadCommentId });
+                      setTimeout(() => inputRef.current?.focus(), 50);
+                    }}
+                    replyCount={0}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              {!loading && topLevel.length === 0 && (
+                <div className="flex flex-col items-center gap-2 py-10 text-center">
+                  <IoChatbubbleEllipsesOutline size={28} className="text-light-text/30" />
+                  <p className="text-[13px] text-light-text">No comments yet. Be the first!</p>
+                </div>
+              )}
+              {topLevel.map((comment) => (
+                <CommentRow
+                  key={comment.id}
+                  comment={comment}
+                  onReply={(name, id) => {
+                    setThreadCommentId(id);
+                    setReplyTo({ name, commentId: id });
+                    setTimeout(() => inputRef.current?.focus(), 50);
+                  }}
+                  replyCount={replyCountFor(comment.id)}
+                />
+              ))}
+            </>
           )}
-          {topLevel.map((comment) => (
-            <CommentRow
-              key={comment.id}
-              comment={comment}
-              onReply={(name) => {
-                setReplyTo(name);
-                setTimeout(() => inputRef.current?.focus(), 50);
-              }}
-            />
-          ))}
         </div>
 
         {/* Composer */}
@@ -219,8 +283,8 @@ export default function CommentsDrawer({
           {replyTo && (
             <div className="mb-2 flex items-center gap-1.5 text-[11px] text-light-text">
               <IoArrowUndoOutline size={11} />
-              <span>Replying to <strong className="text-text">@{replyTo}</strong></span>
-              <button onClick={() => setReplyTo(null)} className="ml-auto hover:text-text">✕</button>
+              <span>Replying to <strong className="text-text">@{replyTo.name}</strong></span>
+              <button onClick={() => { setReplyTo(null); if (threadCommentId) setThreadCommentId(null); }} className="ml-auto hover:text-text">✕</button>
             </div>
           )}
           <div className="flex items-center gap-2">
@@ -238,7 +302,7 @@ export default function CommentsDrawer({
                 value={text}
                 onChange={(e) => { setText(e.target.value); autoGrow(e.target); }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-                placeholder={isAuthenticated ? (replyTo ? `Reply to @${replyTo}…` : "Write a comment…") : "Log in to comment"}
+                placeholder={isAuthenticated ? (replyTo ? `Reply to @${replyTo.name}…` : "Write a comment…") : "Log in to comment"}
                 disabled={!isAuthenticated}
                 rows={1}
                 className="w-full resize-none overflow-hidden bg-transparent text-[13px] text-text placeholder-light-text outline-none"
