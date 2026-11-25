@@ -96,8 +96,7 @@ export default function ProductBuyModal({ visible, productId, sellerId, onClose 
         setBuying(false);
         return;
       }
-      window.open(data.authorizationUrl, "_blank");
-      onClose();
+      window.location.href = data.authorizationUrl;
     } catch {
       alert("Could not initiate payment. Please try again.");
     }
@@ -275,7 +274,7 @@ export default function ProductBuyModal({ visible, productId, sellerId, onClose 
                 {buying ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  "Buy Now"
+                  "Pay Now"
                 )}
               </button>
             </div>
