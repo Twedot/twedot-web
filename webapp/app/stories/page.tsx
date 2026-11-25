@@ -85,7 +85,7 @@ function handleBuyClick(head: StatusPost, requireLogin: () => boolean) {
     }, true);
   }
   if (typeof window !== "undefined" && window.innerWidth < 640) {
-    window.location.href = `/messages?userId=${head.userId}`;
+    window.location.href = `/messages?chat=${head.userId}`;
   }
 }
 
@@ -478,6 +478,7 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
   const followLoadingRef = useRef(false);
   const { isBookmarked, toggle: toggleBookmark } = useBookmark(head.id);
   const [captionExpanded, setCaptionExpanded] = useState(false);
+  const [buyLoading, setBuyLoading] = useState(false);
 
   const isOwnPost = user?.id === head.userId;
   const swipeStartX = useRef(0);
@@ -528,7 +529,7 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
 
   return (
     <div
-      className="relative h-[calc(100vh-112px)] w-full overflow-hidden bg-background p-2"
+      className="relative h-full w-full overflow-hidden bg-background p-2"
       onTouchStart={(e) => { swipeStartX.current = e.touches[0].clientX; swipeStartY.current = e.touches[0].clientY; }}
       onTouchEnd={(e) => {
         const dx = e.changedTouches[0].clientX - swipeStartX.current;
@@ -604,11 +605,15 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
         </div>
         {head.product && head.product.availableQuantity > 0 && !isOwnPost && (
           <button
-            onClick={(e) => { e.stopPropagation(); handleBuyClick(head, requireLogin); }}
-            className="w-full flex items-center justify-center gap-1.5 rounded-full bg-red-500 py-2 text-[12px] font-bold text-white"
+            disabled={buyLoading}
+            onClick={(e) => { e.stopPropagation(); setBuyLoading(true); handleBuyClick(head, requireLogin); }}
+            className="w-full flex items-center justify-center gap-1.5 rounded-full bg-red-500 py-2 text-[12px] font-bold text-white disabled:opacity-50"
           >
-            <IoCartOutline size={13} />
-            Buy
+            {buyLoading ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            ) : (
+              <><IoCartOutline size={13} /> Buy</>
+            )}
           </button>
         )}
         {head.product && (
@@ -933,6 +938,7 @@ function FeedContent() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const mobileSwipeX = useRef(0);
   const mobileSwipeY = useRef(0);
+  const mobileSwipeT = useRef(0);
   const lastNavTime = useRef(0);
   const accDelta = useRef(0);
 
@@ -1111,12 +1117,15 @@ function FeedContent() {
 
       {/* ── Mobile view (TikTok fullscreen, swipe between posts) ── */}
       <div
-        className="hidden max-sm:block relative h-[calc(100vh-112px)]"
-        onTouchStart={(e) => { mobileSwipeX.current = e.touches[0].clientX; mobileSwipeY.current = e.touches[0].clientY; }}
+        className="hidden max-sm:block relative h-[calc(100dvh-152px)]"
+        onTouchStart={(e) => { mobileSwipeX.current = e.touches[0].clientX; mobileSwipeY.current = e.touches[0].clientY; mobileSwipeT.current = Date.now(); }}
         onTouchEnd={(e) => {
           const dx = e.changedTouches[0].clientX - mobileSwipeX.current;
           const dy = e.changedTouches[0].clientY - mobileSwipeY.current;
-          if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 60) {
+          const dt = Date.now() - mobileSwipeT.current;
+          const isQuickFlick = dt < 400 && Math.abs(dy) > 80;
+          const isLongSwipe = Math.abs(dy) > 160;
+          if (Math.abs(dy) > Math.abs(dx) * 1.5 && (isQuickFlick || isLongSwipe)) {
             if (dy < 0) goNext();
             else goPrev();
           }
