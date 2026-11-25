@@ -450,7 +450,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
 
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-2 py-1.5 flex flex-col-reverse">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1.5 flex flex-col-reverse">
         <div className="flex flex-col gap-0.5">
           {messages.length === 0 && (
             <div className="flex items-center justify-center py-16 text-white/30 text-[11px]">
@@ -594,11 +594,11 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               );
                             } catch { return null; }
                           })()}
-                        <div className={`px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words [overflow-wrap:anywhere] overflow-hidden ${
+                        <div className={`px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] overflow-hidden ${
                           isMine
                             ? "text-white rounded-br-sm"
                             : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
-                        }`} style={isMine ? { background: color } : undefined}>
+                        }`} style={{ overflowWrap: "anywhere", wordBreak: "break-word", ...(isMine ? { background: color } : {}) }}>
                           {msg.messageType === "voice" ? (
                             <MiniVoicePlayer src={msg.content} duration={msg.duration || 0} isMine={isMine} color={color} />
                           ) : msg.messageType === "payment_receipt" ? (

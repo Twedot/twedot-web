@@ -737,9 +737,9 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             return <span className="text-[13px]">{msg.content}</span>;
                           })()
                         ) : (
-                        <div className={`rounded-2xl text-[13px] leading-[1.4] break-words [overflow-wrap:anywhere] overflow-hidden ${isCard ? "p-0" : "px-3 py-1"} ${
+                        <div className={`rounded-2xl text-[13px] leading-[1.4] overflow-hidden ${isCard ? "p-0" : "px-3 py-1"} ${
                           isMine ? "text-white rounded-br-sm" : "bg-feed-bg text-text rounded-bl-sm"
-                        }`} style={isMine && !isCard ? { background: color } : undefined}>
+                        }`} style={{ overflowWrap: "anywhere", wordBreak: "break-word", ...(isMine && !isCard ? { background: color } : {}) }}>
                           {replySnap && (
                             <div className={`text-[11px] px-2 py-1 mb-1 rounded-lg border-l-2 opacity-80 ${isMine ? "bg-white/10 border-white/60" : "bg-black/10 border-primary"}`}>
                               <span className="font-semibold block truncate">{replySnap.senderId === myUserId ? "You" : (replySnap as any).senderName || contact.name}</span>
