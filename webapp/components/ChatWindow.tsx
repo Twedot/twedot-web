@@ -6,7 +6,7 @@ import { useChatStore } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage, type ProductInquiryMeta } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
 import { apiUploadFile, apiPost, apiGet } from "@/lib/api";
-import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle, IoShieldCheckmarkOutline, IoAlertCircleOutline, IoPlayOutline, IoPauseOutline, IoMicOutline, IoCloseOutline } from "react-icons/io5";
+import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle, IoShieldCheckmarkOutline, IoAlertCircleOutline, IoPlayOutline, IoPauseOutline, IoMicOutline, IoCloseOutline, IoCopyOutline, IoArrowUndoOutline, IoTrashOutline } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import dynamic from "next/dynamic";
 import ProductBuyModal from "@/components/ProductBuyModal";
@@ -188,6 +188,10 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const [buyModal, setBuyModal] = useState<{ productId: string; sellerId: string } | null>(null);
   const [viewingImages, setViewingImages] = useState<{ urls: string[]; index: number } | null>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; msg: ChatMessage } | null>(null);
+  const ctxRef = useRef<HTMLDivElement>(null);
+  const removeMessage = useChatStore((s) => s.removeMessage);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -230,11 +234,27 @@ export default function ChatWindow({ userId }: { userId: string }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showEmoji]);
 
+  // Close context menu on outside click or scroll
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = (e: MouseEvent) => {
+      if (ctxRef.current && !ctxRef.current.contains(e.target as Node)) setCtxMenu(null);
+    };
+    const closeScroll = () => setCtxMenu(null);
+    document.addEventListener("mousedown", close);
+    document.addEventListener("scroll", closeScroll, true);
+    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("scroll", closeScroll, true); };
+  }, [ctxMenu]);
+
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
     if (!trimmed || !myUserId) return;
-    const clientMessageId = chatSocket.send(userId, trimmed);
+    const replyExtra = replyTo ? {
+      replyToId: replyTo.id,
+      replySnapshot: JSON.stringify({ senderId: replyTo.senderId, senderName: replyTo.senderName ?? thread?.contact?.name, content: replyTo.content, messageType: replyTo.messageType }),
+    } : undefined;
+    const clientMessageId = chatSocket.send(userId, trimmed, "text", replyExtra);
     useChatStore.getState().addMessage(userId, {
       id: clientMessageId ?? crypto.randomUUID(),
       clientMessageId: clientMessageId ?? undefined,
@@ -244,12 +264,15 @@ export default function ChatWindow({ userId }: { userId: string }) {
       messageType: "text",
       timestamp: Date.now(),
       status: clientMessageId ? "sending" : "failed",
+      replyToId: replyExtra?.replyToId,
+      replySnapshot: replyExtra?.replySnapshot,
     }, true);
     setText("");
+    setReplyTo(null);
     setShowEmoji(false);
     chatSocket.sendTyping(userId, false);
     inputRef.current?.focus();
-  }, [text, myUserId, userId]);
+  }, [text, myUserId, userId, replyTo, thread]);
 
   const handleSendMedia = useCallback(async () => {
     if (!mediaPreviews.length || !myUserId || uploading) return;
@@ -318,6 +341,32 @@ export default function ChatWindow({ userId }: { userId: string }) {
     setText((prev) => prev + emoji.native);
     inputRef.current?.focus();
   };
+
+  const handleMsgContext = useCallback((e: React.MouseEvent, msg: ChatMessage) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY, msg });
+  }, []);
+
+  const handleCopy = useCallback(() => {
+    if (!ctxMenu) return;
+    const content = ctxMenu.msg.content;
+    navigator.clipboard.writeText(content).catch(() => {});
+    setCtxMenu(null);
+  }, [ctxMenu]);
+
+  const handleReply = useCallback(() => {
+    if (!ctxMenu) return;
+    setReplyTo(ctxMenu.msg);
+    setCtxMenu(null);
+    inputRef.current?.focus();
+  }, [ctxMenu]);
+
+  const handleDelete = useCallback(() => {
+    if (!ctxMenu) return;
+    removeMessage(userId, ctxMenu.msg.id);
+    setCtxMenu(null);
+  }, [ctxMenu, userId, removeMessage]);
 
   if (!thread) return null;
   const { contact, messages, isTyping, isOnline } = thread;
@@ -389,7 +438,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                       const isProductInquiry = msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId;
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
-                      <div key={msg.id ?? msg.clientMessageId} className={`flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-8" : ""}`}>
+                      <div key={msg.id ?? msg.clientMessageId} className={`group/msg relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-8" : ""}`} onContextMenu={(e) => handleMsgContext(e, msg)}>
                         {!isMine && (
                           <div className="absolute left-0 bottom-0 w-5 h-5" style={{ position: "relative", marginLeft: -24, alignSelf: "flex-end", marginRight: 3 }}>
                             {isLastInCluster && (
@@ -503,6 +552,17 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             ? "text-white rounded-br-sm"
                             : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
                         }`} style={isMine ? { background: color } : undefined}>
+                          {msg.replySnapshot && (() => {
+                            try {
+                              const snap = JSON.parse(msg.replySnapshot);
+                              return (
+                                <div className="mb-0.5 rounded-md px-1.5 py-0.5 border-l-2 border-white/40 bg-white/10 text-[9px] leading-tight">
+                                  <span className="font-semibold block truncate">{snap.senderName ?? "User"}</span>
+                                  <span className="block truncate text-white/60">{snap.messageType === "image" ? "Photo" : snap.messageType === "voice" ? "Voice message" : snap.content}</span>
+                                </div>
+                              );
+                            } catch { return null; }
+                          })()}
                           {msg.messageType === "voice" ? (
                             <MiniVoicePlayer src={msg.content} duration={msg.duration || 0} isMine={isMine} color={color} />
                           ) : msg.messageType === "payment_receipt" ? (
@@ -568,6 +628,13 @@ export default function ChatWindow({ userId }: { userId: string }) {
                           )}
                         </div>
                         )}
+                        <button
+                          onClick={() => { setReplyTo(msg); inputRef.current?.focus(); }}
+                          className={`absolute top-1/2 -translate-y-1/2 hidden group-hover/msg:flex items-center justify-center w-5 h-5 rounded-full bg-[#333] hover:bg-[#444] text-white/50 hover:text-white/80 transition-colors ${isMine ? "-left-6" : "-right-1"}`}
+                          title="Reply"
+                        >
+                          <IoArrowUndoOutline size={10} />
+                        </button>
                       </div>
                       );
                     })}
@@ -644,6 +711,23 @@ export default function ChatWindow({ userId }: { userId: string }) {
         </div>
       )}
 
+      {/* Reply-to bar */}
+      {replyTo && (
+        <div className="flex items-center gap-1.5 px-2 py-1 border-t border-[#333] bg-[#161616] shrink-0">
+          <div className="flex-1 min-w-0 border-l-2 border-[#6B4EFF] pl-1.5">
+            <p className="text-[9px] font-semibold text-[#6B4EFF] truncate">
+              {replyTo.senderId === myUserId ? "You" : contact?.name ?? "User"}
+            </p>
+            <p className="text-[9px] text-white/50 truncate">
+              {replyTo.messageType === "image" ? "Photo" : replyTo.messageType === "voice" ? "Voice message" : replyTo.content}
+            </p>
+          </div>
+          <button onClick={() => setReplyTo(null)} className="p-0.5 text-white/40 hover:text-white/70">
+            <IoClose size={12} />
+          </button>
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex items-center gap-1 px-2 py-1.5 border-t border-[#333] bg-[#111] shrink-0">
         <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-white/40 hover:text-white/70 transition-colors">
@@ -671,6 +755,24 @@ export default function ChatWindow({ userId }: { userId: string }) {
           <IoSend size={12} />
         </button>
       </div>
+      {/* Context menu */}
+      {ctxMenu && (
+        <div ref={ctxRef} className="fixed z-[200] min-w-[120px] rounded-lg bg-[#222] border border-[#444] shadow-2xl py-1 text-[11px]"
+          style={{ left: ctxMenu.x, top: ctxMenu.y, transform: "translate(-50%, -100%)" }}>
+          {(ctxMenu.msg.messageType === "text" || !ctxMenu.msg.content.startsWith("http")) && (
+            <button onClick={handleCopy} className="flex w-full items-center gap-2 px-3 py-1.5 text-white/80 hover:bg-white/10">
+              <IoCopyOutline size={13} /> Copy
+            </button>
+          )}
+          <button onClick={handleReply} className="flex w-full items-center gap-2 px-3 py-1.5 text-white/80 hover:bg-white/10">
+            <IoArrowUndoOutline size={13} /> Reply
+          </button>
+          <button onClick={handleDelete} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-white/10">
+            <IoTrashOutline size={13} /> Delete
+          </button>
+        </div>
+      )}
+
       {viewingImages && (
         <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingImages(null)}>
           <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingImages(null)}>

@@ -113,6 +113,7 @@ interface ChatState {
   openChatWithProduct: (contact: ChatContact, product: ProductContext) => void;
   clearProductContext: (userId: string) => void;
   closeChat: (userId: string) => void;
+  removeMessage: (chatUserId: string, messageId: string) => void;
   removeThread: (userId: string) => void;
   minimizeChat: (userId: string) => void;
   restoreChat: (userId: string) => void;
@@ -322,6 +323,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const openChatIds = state.openChatIds.filter((id) => id !== userId);
     saveOpenIds(openChatIds);
     return { openChatIds, minimizedChatIds: state.minimizedChatIds.filter((id) => id !== userId) };
+  }),
+
+  removeMessage: (chatUserId, messageId) => set((state) => {
+    const threads = new Map(state.threads);
+    const existing = threads.get(chatUserId);
+    if (!existing) return state;
+    const messages = existing.messages.filter((m) => m.id !== messageId);
+    if (messages.length === existing.messages.length) return state;
+    threads.set(chatUserId, {
+      ...existing,
+      messages,
+      lastMessage: messages[messages.length - 1] ?? null,
+    });
+    saveMessages(threads);
+    return { threads };
   }),
 
   removeThread: (userId) => set((state) => {
