@@ -274,13 +274,13 @@ function ShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }: {
           </button>
         )}
         {head.product && (
-          <p className="text-[14px] leading-[20px] font-semibold">
+          <p className="text-[14px] leading-[20px] font-medium">
             <span className="text-text">{head.product.name} · </span>
             <span className="text-green-500">₦{head.product.price.toLocaleString()}</span>
           </p>
         )}
         {active.caption && active.type !== "text" && (
-          <p onClick={() => setCaptionExpanded(e => !e)} className="text-[14px] leading-[20px] text-text font-semibold cursor-pointer">
+          <p onClick={() => setCaptionExpanded(e => !e)} className="text-[14px] leading-[20px] text-text font-normal cursor-pointer">
             {captionExpanded ? active.caption : active.caption.slice(0, 150)}
             {!captionExpanded && active.caption.length > 150 && (
               <span className="text-light-text font-normal">... <span className="text-primary">more</span></span>
@@ -609,13 +609,13 @@ function MobileShortsCard({ items, onComment, onPrev, onNext, hasPrev, hasNext }
           </button>
         )}
         {head.product && (
-          <p className="text-[13px] leading-[18px] font-semibold">
+          <p className="text-[13px] leading-[18px] font-medium">
             <span className="text-text">{head.product.name} · </span>
             <span className="text-green-500">₦{head.product.price.toLocaleString()}</span>
           </p>
         )}
         {active.caption && !isText && (
-          <p onClick={() => setCaptionExpanded(e => !e)} className="text-[13px] leading-[18px] text-text font-semibold cursor-pointer">
+          <p onClick={() => setCaptionExpanded(e => !e)} className="text-[13px] leading-[18px] text-text font-normal cursor-pointer">
             {captionExpanded ? active.caption : active.caption.slice(0, 150)}
             {!captionExpanded && active.caption.length > 150 && (
               <span className="text-light-text font-normal">... <span className="text-primary">more</span></span>
