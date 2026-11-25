@@ -368,6 +368,16 @@ export default function ChatWindow({ userId }: { userId: string }) {
     setCtxMenu(null);
   }, [ctxMenu, userId, removeMessage]);
 
+  const handleDeleteEverywhere = useCallback(async () => {
+    if (!ctxMenu) return;
+    const msg = ctxMenu.msg;
+    setCtxMenu(null);
+    removeMessage(userId, msg.id);
+    try {
+      await apiPost("/messages/delete-forwarded", { messageId: msg.id, recipientId: userId });
+    } catch {}
+  }, [ctxMenu, userId, removeMessage]);
+
   if (!thread) return null;
   const { contact, messages, isTyping, isOnline } = thread;
   const grouped = groupMessages(messages);
@@ -770,6 +780,11 @@ export default function ChatWindow({ userId }: { userId: string }) {
           <button onClick={handleDelete} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-white/10">
             <IoTrashOutline size={13} /> Delete
           </button>
+          {ctxMenu.msg.senderId === myUserId && (
+            <button onClick={handleDeleteEverywhere} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-white/10">
+              <IoTrashOutline size={13} /> Delete Everywhere
+            </button>
+          )}
         </div>
       )}
 
