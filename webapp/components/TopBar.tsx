@@ -337,7 +337,7 @@ export default function TopBar() {
 
         {/* Right actions */}
         <div className="ml-auto flex flex-shrink-0 items-center gap-1">
-          <button onClick={() => router.push("/create-post")} className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold text-light-text hover:bg-feed-bg">
+          <button onClick={() => router.push("/create-post")} className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-light-text hover:bg-feed-bg">
             <IoAddCircleOutline size={18} />
             New Story
           </button>
