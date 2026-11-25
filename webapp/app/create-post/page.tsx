@@ -210,6 +210,12 @@ export default function CreatePostPage() {
   const [productName, setProductName] = useState("");
   const [productDesc, setProductDesc] = useState("");
   const [productPrice, setProductPrice] = useState("");
+  const formatNaira = (v: string) => {
+    const digits = v.replace(/[^0-9]/g, "");
+    if (!digits) return "";
+    return Number(digits).toLocaleString("en-NG");
+  };
+  const rawPrice = (v: string) => v.replace(/,/g, "");
   const [productQty, setProductQty] = useState("1");
   const [productCondition, setProductCondition] = useState<"new" | "used">("new");
   const [productCategory, setProductCategory] = useState("other");
@@ -301,7 +307,7 @@ export default function CreatePostPage() {
 
   const current = mediaItems[currentIndex] ?? null;
 
-  const productValid = !isSelling || (productName.trim().length > 0 && parseFloat(productPrice) > 0);
+  const productValid = !isSelling || (productName.trim().length > 0 && parseFloat(rawPrice(productPrice)) > 0);
   const canPost =
     !posting && productValid &&
     (mode === "text" ? textContent.trim().length > 0 : mediaItems.length > 0);
@@ -314,11 +320,11 @@ export default function CreatePostPage() {
     // Navigate to stories immediately — upload continues in the background
     router.push("/stories");
 
-    const productPayload = isSelling && productName.trim() && parseFloat(productPrice) > 0
+    const productPayload = isSelling && productName.trim() && parseFloat(rawPrice(productPrice)) > 0
       ? {
           name: productName.trim(),
           description: productDesc.trim() || undefined,
-          price: parseFloat(productPrice),
+          price: parseFloat(rawPrice(productPrice)),
           quantity: parseInt(productQty, 10) || 1,
           condition: productCondition,
           category: productCategory,
@@ -609,16 +615,18 @@ export default function CreatePostPage() {
             />
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="mb-1 block text-[11px] font-medium text-light-text">Price (₦) *</label>
-                <input
-                  type="number"
-                  value={productPrice}
-                  onChange={(e) => setProductPrice(e.target.value)}
-                  placeholder="0.00"
-                  min="1"
-                  step="0.01"
-                  className="w-full rounded-xl bg-feed-bg px-3 py-2.5 text-[13px] text-text outline-none placeholder-light-text border border-transparent focus:border-primary/50"
-                />
+                <label className="mb-1 block text-[11px] font-medium text-light-text">Price *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-light-text pointer-events-none">₦</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={productPrice}
+                    onChange={(e) => setProductPrice(formatNaira(e.target.value))}
+                    placeholder="0"
+                    className="w-full rounded-xl bg-feed-bg pl-7 pr-3 py-2.5 text-[13px] text-text outline-none placeholder-light-text border border-transparent focus:border-primary/50"
+                  />
+                </div>
               </div>
               <div className="w-24">
                 <label className="mb-1 block text-[11px] font-medium text-light-text">Qty</label>
