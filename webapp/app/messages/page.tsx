@@ -325,7 +325,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   const color = userColor(userId);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
-  const [mediaPreview, setMediaPreview] = useState<{ file: File; url: string; kind: "image" | "video" | "file" } | null>(null);
+  const [mediaPreviews, setMediaPreviews] = useState<{ file: File; url: string; kind: "image" | "video" | "file" }[]>([]);
   const [uploading, setUploading] = useState(false);
   const emojiRef = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<import("@/lib/chatSocket").ChatMessage | null>(null);
@@ -469,43 +469,49 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   }, [userId, myUserId, ioSocket]);
 
   const handleSendMedia = useCallback(async () => {
-    if (!mediaPreview || !myUserId || uploading) return;
+    if (!mediaPreviews.length || !myUserId || uploading) return;
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", mediaPreview.file);
-      form.append("type", "chat");
-      const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
-      const url = result.url;
-      const msgType = mediaPreview.kind === "video" ? "video" : mediaPreview.kind === "file" ? "file" : "image";
-      const replyToId = replyTo?.id;
-      const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId, senderName: replyTo.senderId === myUserId ? undefined : (replyTo.senderName ?? contact?.name) }) : undefined;
-      const clientMessageId = chatSocket.send(userId, url, msgType, { fileName: mediaPreview.file.name, fileSize: mediaPreview.file.size, replyToId, replySnapshot });
-      useChatStore.getState().addMessage(userId, {
-        id: clientMessageId,
-        clientMessageId,
-        senderId: myUserId,
-        recipientId: userId,
-        content: url,
-        messageType: msgType,
-        fileName: mediaPreview.file.name,
-        fileSize: mediaPreview.file.size,
-        timestamp: Date.now(),
-        status: "sending",
-        replyToId,
-        replySnapshot,
-      }, true);
+      for (let i = 0; i < mediaPreviews.length; i++) {
+        const preview = mediaPreviews[i];
+        const form = new FormData();
+        form.append("file", preview.file);
+        form.append("type", "chat");
+        const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
+        const url = result.url;
+        const msgType = preview.kind === "video" ? "video" : preview.kind === "file" ? "file" : "image";
+        const replyToId = i === 0 ? replyTo?.id : undefined;
+        const replySnapshot = i === 0 && replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId, senderName: replyTo.senderId === myUserId ? undefined : (replyTo.senderName ?? contact?.name) }) : undefined;
+        const clientMessageId = chatSocket.send(userId, url, msgType, { fileName: preview.file.name, fileSize: preview.file.size, replyToId, replySnapshot });
+        useChatStore.getState().addMessage(userId, {
+          id: clientMessageId,
+          clientMessageId,
+          senderId: myUserId,
+          recipientId: userId,
+          content: url,
+          messageType: msgType,
+          fileName: preview.file.name,
+          fileSize: preview.file.size,
+          timestamp: Date.now(),
+          status: "sending",
+          replyToId,
+          replySnapshot,
+        }, true);
+        URL.revokeObjectURL(preview.url);
+      }
       setReplyTo(null);
     } catch {}
-    URL.revokeObjectURL(mediaPreview.url);
-    setMediaPreview(null);
+    setMediaPreviews([]);
     setUploading(false);
-  }, [mediaPreview, myUserId, userId, uploading, replyTo]);
+  }, [mediaPreviews, myUserId, userId, uploading, replyTo]);
 
   const handleFileSelect = (kind: "image" | "video" | "file") => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setMediaPreview({ file, url: URL.createObjectURL(file), kind });
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setMediaPreviews((prev) => [
+      ...prev,
+      ...files.map((f) => ({ file: f, url: URL.createObjectURL(f), kind })),
+    ]);
     setShowAttach(false);
     e.target.value = "";
   };
@@ -879,30 +885,44 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       )}
 
       {/* Media preview */}
-      {mediaPreview && (
-        <div className="relative px-3 py-2 border-t border-border bg-background">
-          {mediaPreview.kind === "image" ? (
-            <img src={mediaPreview.url} alt="Preview" className="h-28 rounded-lg object-cover" />
-          ) : mediaPreview.kind === "video" ? (
-            <video src={mediaPreview.url} className="h-28 rounded-lg object-cover" />
-          ) : (
-            <div className="flex items-center gap-2 h-12 px-2">
-              <IoDocumentOutline size={24} className="text-light-text" />
-              <span className="text-[13px] text-text truncate">{mediaPreview.file.name}</span>
-              <span className="text-[11px] text-light-text shrink-0">{(mediaPreview.file.size / 1024).toFixed(0)}KB</span>
-            </div>
-          )}
-          <button onClick={() => { URL.revokeObjectURL(mediaPreview.url); setMediaPreview(null); }} className="absolute top-3 right-4 text-text/80 hover:text-text">
-            <IoCloseCircle size={22} />
-          </button>
-          <button
-            onClick={handleSendMedia}
-            disabled={uploading}
-            className="absolute bottom-3 right-4 p-2 rounded-full transition-colors"
-            style={{ background: color, opacity: uploading ? 0.5 : 1 }}
-          >
-            <IoSend size={16} className="text-white" />
-          </button>
+      {mediaPreviews.length > 0 && (
+        <div className="px-3 py-2 border-t border-border bg-background">
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            {mediaPreviews.map((p, i) => (
+              <div key={i} className="relative flex-shrink-0">
+                {p.kind === "image" ? (
+                  <img src={p.url} alt="Preview" className="h-16 w-16 rounded-lg object-cover" />
+                ) : p.kind === "video" ? (
+                  <video src={p.url} className="h-16 w-16 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex items-center gap-1.5 h-16 px-2 bg-feed-bg rounded-lg">
+                    <IoDocumentOutline size={18} className="text-light-text" />
+                    <span className="text-[11px] text-text truncate max-w-[80px]">{p.file.name}</span>
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    URL.revokeObjectURL(p.url);
+                    setMediaPreviews((prev) => prev.filter((_, j) => j !== i));
+                  }}
+                  className="absolute -top-1.5 -right-1.5 text-text/80 hover:text-text"
+                >
+                  <IoCloseCircle size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleSendMedia}
+              disabled={uploading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[12px] font-semibold transition-opacity disabled:opacity-50"
+              style={{ background: color }}
+            >
+              <IoSend size={13} />
+              {uploading ? "Sending…" : `Send${mediaPreviews.length > 1 ? ` (${mediaPreviews.length})` : ""}`}
+            </button>
+          </div>
         </div>
       )}
 
@@ -977,7 +997,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
               </div>
             )}
           </div>
-          <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect("image")} />
+          <input ref={imageRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect("image")} />
           <input ref={videoRef} type="file" accept="video/*" className="hidden" onChange={handleFileSelect("video")} />
           <input ref={docRef} type="file" accept="*/*" className="hidden" onChange={handleFileSelect("file")} />
           <input
