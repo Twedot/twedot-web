@@ -506,6 +506,9 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                         metadata: meta,
                       }, true);
                     }
+                    if (typeof window !== "undefined" && window.innerWidth < 640) {
+                      router.push(`/messages?userId=${head.userId}`);
+                    }
                   }}
                   className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[12px] font-bold text-white hover:opacity-90 transition-opacity flex-shrink-0"
                 >

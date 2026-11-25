@@ -15,11 +15,11 @@ import {
 } from "@/lib/globalRank";
 
 const BOOST_TIPS = [
-  "Chatting — every message you send in a 1:1 conversation counts",
+  "Spending time on the app — your rank grows the more you use Twedot",
+  "Chatting — every message you send in a conversation counts",
   "Posting your own videos and statuses",
   "Commenting on statuses, and liking others' posts",
-  "Making real connections — accepted chat requests with other users",
-  "Being active in channels/rooms — messages, reactions, polls and upvotes there also count",
+  "Being active in channels/rooms — messages, reactions, polls and upvotes",
   "Completing service bookings as a vendor",
 ];
 
