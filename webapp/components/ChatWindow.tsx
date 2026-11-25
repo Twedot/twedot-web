@@ -448,7 +448,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                       const isProductInquiry = msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId;
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
-                      <div key={msg.id ?? msg.clientMessageId} className={`group/msg relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-8" : ""}`} onContextMenu={(e) => handleMsgContext(e, msg)}>
+                      <div key={msg.id ?? msg.clientMessageId} className={`group/msg relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-8" : ""}`} onClick={(e) => handleMsgContext(e, msg)} onContextMenu={(e) => handleMsgContext(e, msg)}>
                         {!isMine && (
                           <div className="absolute left-0 bottom-0 w-5 h-5" style={{ position: "relative", marginLeft: -24, alignSelf: "flex-end", marginRight: 3 }}>
                             {isLastInCluster && (
@@ -489,7 +489,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                   <div className={`grid overflow-hidden rounded-[11px] ${isGroup ? "grid-cols-2" : "grid-cols-1"}`} style={{ width: 170 }}>
                                     {mediaUrls.map((url, idx) => (
                                       <div key={idx} className="relative overflow-hidden cursor-pointer" style={{ height: isGroup ? 100 : 210 }}
-                                        onClick={() => setViewingImages({ urls: mediaUrls, index: idx })}
+                                        onClick={(e) => { e.stopPropagation(); setViewingImages({ urls: mediaUrls, index: idx }); }}
                                       >
                                         <img src={url} alt="" className="absolute inset-0 h-full w-full object-cover" />
                                       </div>
@@ -540,7 +540,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                     </div>
                                     {isBuyer && meta?.productId && (
                                       <button
-                                        onClick={() => handleOpenBuyModal(meta.productId, meta.sellerId || userId)}
+                                        onClick={(e) => { e.stopPropagation(); handleOpenBuyModal(meta.productId, meta.sellerId || userId); }}
                                         className="flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-red-500 hover:bg-red-400 text-white text-[9px] font-semibold transition-colors"
                                       >
                                         <IoCartOutline size={9} />
@@ -557,22 +557,23 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             );
                           })()
                         ) : (
-                        <div className={`max-w-[80%] px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
-                          isMine
-                            ? "text-white rounded-br-sm"
-                            : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
-                        }`} style={isMine ? { background: color } : undefined}>
+                        <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[80%]`}>
                           {msg.replySnapshot && (() => {
                             try {
                               const snap = JSON.parse(msg.replySnapshot);
                               return (
-                                <div className="mb-0.5 rounded-md px-1.5 py-0.5 border-l-2 border-white/40 bg-white/10 text-[9px] leading-tight">
-                                  <span className="font-semibold block truncate">{snap.senderName ?? "User"}</span>
-                                  <span className="block truncate text-white/60">{snap.messageType === "image" ? "Photo" : snap.messageType === "voice" ? "Voice message" : snap.content}</span>
+                                <div className="mb-0.5 rounded-lg px-1.5 py-0.5 border-l-2 border-[#6B4EFF] bg-white/5 text-[9px] leading-tight max-w-full">
+                                  <span className="font-semibold block truncate text-[#6B4EFF]">{snap.senderName ?? "User"}</span>
+                                  <span className="block truncate text-white/40">{snap.messageType === "image" ? "Photo" : snap.messageType === "voice" ? "Voice message" : snap.content}</span>
                                 </div>
                               );
                             } catch { return null; }
                           })()}
+                        <div className={`px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
+                          isMine
+                            ? "text-white rounded-br-sm"
+                            : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
+                        }`} style={isMine ? { background: color } : undefined}>
                           {msg.messageType === "voice" ? (
                             <MiniVoicePlayer src={msg.content} duration={msg.duration || 0} isMine={isMine} color={color} />
                           ) : msg.messageType === "payment_receipt" ? (
@@ -637,14 +638,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             <span className="block text-[8px] text-red-400">Not connected</span>
                           )}
                         </div>
+                        </div>
                         )}
-                        <button
-                          onClick={() => { setReplyTo(msg); inputRef.current?.focus(); }}
-                          className={`absolute top-1/2 -translate-y-1/2 hidden group-hover/msg:flex items-center justify-center w-5 h-5 rounded-full bg-[#333] hover:bg-[#444] text-white/50 hover:text-white/80 transition-colors ${isMine ? "-left-6" : "-right-1"}`}
-                          title="Reply"
-                        >
-                          <IoArrowUndoOutline size={10} />
-                        </button>
                       </div>
                       );
                     })}
@@ -768,7 +763,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
       {/* Context menu */}
       {ctxMenu && (
         <div ref={ctxRef} className="fixed z-[200] min-w-[120px] rounded-lg bg-[#222] border border-[#444] shadow-2xl py-1 text-[11px]"
-          style={{ left: ctxMenu.x, top: ctxMenu.y, transform: "translate(-50%, -100%)" }}>
+          style={{ left: Math.min(ctxMenu.x, window.innerWidth - 140), top: Math.max(ctxMenu.y - 10, 8), transform: "translateY(-100%)" }}>
           {(ctxMenu.msg.messageType === "text" || !ctxMenu.msg.content.startsWith("http")) && (
             <button onClick={handleCopy} className="flex w-full items-center gap-2 px-3 py-1.5 text-white/80 hover:bg-white/10">
               <IoCopyOutline size={13} /> Copy
