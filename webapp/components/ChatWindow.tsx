@@ -408,7 +408,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const grouped = groupMessages(messages);
 
   return (
-    <div className="flex flex-col w-[280px] h-[360px] bg-[#1a1a1a] rounded-t-lg shadow-2xl border border-[#333] overflow-hidden">
+    <div className="flex flex-col w-[280px] h-[360px] bg-background rounded-t-lg shadow-2xl border border-border overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2 px-2 py-1.5 shrink-0" style={{ background: color }}>
         <button
@@ -453,16 +453,16 @@ export default function ChatWindow({ userId }: { userId: string }) {
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1.5 flex flex-col-reverse">
         <div className="flex flex-col gap-0.5">
           {messages.length === 0 && (
-            <div className="flex items-center justify-center py-16 text-white/30 text-[11px]">
+            <div className="flex items-center justify-center py-16 text-light-text text-[11px]">
               Start a conversation
             </div>
           )}
           {grouped.map((group) => (
             <div key={group.date}>
               <div className="flex items-center gap-2 my-2">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-[9px] text-white/30 font-medium">{group.date}</span>
-                <div className="flex-1 h-px bg-white/10" />
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[9px] text-light-text font-medium">{group.date}</span>
+                <div className="flex-1 h-px bg-border" />
               </div>
               {group.clusters.map((cluster, ci) => {
                 const isMine = cluster.senderId === myUserId;
@@ -509,7 +509,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               return (
                                 <div
                                   className="rounded-xl overflow-hidden p-[1px] relative"
-                                  style={{ backgroundColor: isMine ? color : "#2a2a2a", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
+                                  style={{ backgroundColor: isMine ? color : "var(--feed-bg)", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
                                 >
                                   <div className={`grid overflow-hidden rounded-[11px] ${isGroup ? "grid-cols-2" : "grid-cols-1"}`} style={{ width: 170 }}>
                                     {mediaUrls.map((url, idx) => (
@@ -531,7 +531,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               return (
                                 <div
                                   className="rounded-xl overflow-hidden p-[1px] relative"
-                                  style={{ backgroundColor: isMine ? color : "#2a2a2a", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
+                                  style={{ backgroundColor: isMine ? color : "var(--feed-bg)", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
                                 >
                                   <video src={videoUrl} controls className="w-[170px] max-h-[210px] rounded-[11px] object-cover block" />
                                   <div className="absolute bottom-1 right-1.5 bg-black/50 rounded-full px-1 py-0.5">
@@ -551,8 +551,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               ? myUserId !== thread.productContext.sellerId
                               : meta?.sellerId ? myUserId !== meta.sellerId : false;
                             return (
-                              <div className={`w-[180px] rounded-xl overflow-hidden ${isMine ? "text-white" : "text-white/90"}`}
-                                style={{ backgroundColor: isMine ? color : "#2a2a2a", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}>
+                              <div className={`w-[180px] rounded-xl overflow-hidden ${isMine ? "text-white" : "text-text"}`}
+                                style={{ backgroundColor: isMine ? color : "var(--feed-bg)", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}>
                                 {displayImage && (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img src={displayImage} alt="" className="w-full h-[110px] object-cover" />
@@ -576,7 +576,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                 )}
                                 <p className="text-[11px] leading-[1.4] px-1.5 pb-1">{msg.content}</p>
                                 <div className="text-right px-1.5 pb-0.5">
-                                  <span className="text-[8px] text-white/50">{timeLabel(toDate(msg.timestamp))}</span>
+                                  <span className="text-[8px] text-light-text">{timeLabel(toDate(msg.timestamp))}</span>
                                 </div>
                               </div>
                             );
@@ -587,9 +587,9 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             try {
                               const snap = JSON.parse(msg.replySnapshot);
                               return (
-                                <div className="mb-0.5 rounded-lg px-1.5 py-0.5 border-l-2 border-[#6B4EFF] bg-white/5 text-[9px] leading-tight max-w-full">
+                                <div className="mb-0.5 rounded-lg px-1.5 py-0.5 border-l-2 border-[#6B4EFF] bg-feed-bg text-[9px] leading-tight max-w-full">
                                   <span className="font-semibold block truncate text-[#6B4EFF]">{snap.senderId === myUserId ? "You" : snap.senderName || contact?.name || "User"}</span>
-                                  <span className="block truncate text-white/40">{replyPreviewText(snap.messageType, snap.content)}</span>
+                                  <span className="block truncate text-light-text">{replyPreviewText(snap.messageType, snap.content)}</span>
                                 </div>
                               );
                             } catch { return null; }
@@ -597,7 +597,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                         <div className={`px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] overflow-hidden ${
                           isMine
                             ? "text-white rounded-br-sm"
-                            : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"
+                            : "bg-feed-bg text-text rounded-bl-sm"
                         }`} style={{ overflowWrap: "anywhere", wordBreak: "break-word", ...(isMine ? { background: color } : {}) }}>
                           {msg.messageType === "voice" ? (
                             <MiniVoicePlayer src={msg.content} duration={msg.duration || 0} isMine={isMine} color={color} />
@@ -619,8 +619,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                     <span className="text-[9px] font-semibold truncate">{(meta as any).variantLabel ? `${meta.productName} (${(meta as any).variantLabel})` : meta.productName}{(meta as any).quantity > 1 ? ` × ${(meta as any).quantity}` : ""}</span>
                                   </div>
                                   <p className="text-[11px] font-bold text-green-300">{formatPrice(meta.amount)}</p>
-                                  <p className="text-[8px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
-                                  <p className="text-[8px] text-white/50 mt-0.5">Funds held safely — released when delivery is confirmed</p>
+                                  <p className="text-[8px] opacity-60 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
+                                  <p className="text-[8px] opacity-70 mt-0.5">Funds held safely — released when delivery is confirmed</p>
                                   {isBuyer && (
                                     <div className="flex gap-1 mt-1.5">
                                       <button onClick={() => handleConfirmDelivery(meta.orderId)} className="flex-1 text-[8px] px-1.5 py-0.5 rounded bg-green-600 hover:bg-green-500 text-white font-semibold">
@@ -641,8 +641,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               const isReleased = meta.escrowEvent === "released";
                               const isDisputed = meta.escrowEvent === "disputed";
                               const isRefunded = meta.escrowEvent === "refunded";
-                              const borderColor = isReleased ? "border-green-600/30" : isDisputed ? "border-yellow-600/30" : isRefunded ? "border-red-600/30" : "border-white/10";
-                              const textColor = isReleased ? "text-green-400" : isDisputed ? "text-yellow-400" : isRefunded ? "text-red-400" : "text-white/60";
+                              const borderColor = isReleased ? "border-green-600/30" : isDisputed ? "border-yellow-600/30" : isRefunded ? "border-red-600/30" : "border-border";
+                              const textColor = isReleased ? "text-green-400" : isDisputed ? "text-yellow-400" : isRefunded ? "text-red-400" : "text-light-text";
                               const label = isReleased ? "Funds Released" : isDisputed ? "Dispute Opened" : isRefunded ? "Order Refunded" : "Escrow Update";
                               return (
                                 <div className={`p-1.5 rounded bg-black/20 border ${borderColor}`}>
@@ -652,7 +652,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                   </div>
                                   <span className="text-[9px] font-semibold truncate">{meta.productName}</span>
                                   <p className={`text-[11px] font-bold ${textColor}`}>{formatPrice(meta.amount)}</p>
-                                  <p className="text-[8px] text-white/40 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
+                                  <p className="text-[8px] opacity-60 mt-0.5">Order #{meta.orderId.slice(0, 8)}</p>
                                 </div>
                               );
                             })()
@@ -668,7 +668,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                       </div>
                       );
                     })}
-                    <p className={`text-[8px] text-white/25 mt-0.5 ${isMine ? "text-right pr-1" : "pl-1"}`}>
+                    <p className={`text-[8px] text-light-text mt-0.5 ${isMine ? "text-right pr-1" : "pl-1"}`}>
                       {cluster.time}
                     </p>
                   </div>
@@ -678,11 +678,11 @@ export default function ChatWindow({ userId }: { userId: string }) {
           ))}
           {isTyping && (
             <div className="flex justify-start">
-              <div className="px-2 py-1 rounded-2xl bg-[#2a2a2a] rounded-bl-sm">
+              <div className="px-2 py-1 rounded-2xl bg-feed-bg rounded-bl-sm">
                 <div className="flex gap-1">
-                  <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:0ms]" />
-                  <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1 h-1 rounded-full bg-white/40 animate-bounce [animation-delay:300ms]" />
+                  <span className="w-1 h-1 rounded-full bg-light-text animate-bounce [animation-delay:0ms]" />
+                  <span className="w-1 h-1 rounded-full bg-light-text animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1 h-1 rounded-full bg-light-text animate-bounce [animation-delay:300ms]" />
                 </div>
               </div>
             </div>
@@ -693,7 +693,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
 
       {/* Media preview */}
       {mediaPreviews.length > 0 && (
-        <div className="px-2 py-1.5 border-t border-[#333] bg-[#111]">
+        <div className="px-2 py-1.5 border-t border-border bg-background">
           <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
             {mediaPreviews.map((p, i) => (
               <div key={i} className="relative flex-shrink-0">
@@ -703,7 +703,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                     URL.revokeObjectURL(p.url);
                     setMediaPreviews((prev) => prev.filter((_, j) => j !== i));
                   }}
-                  className="absolute -top-1 -right-1 text-white/80 hover:text-white"
+                  className="absolute -top-1 -right-1 text-light-text hover:text-text"
                 >
                   <IoCloseCircle size={14} />
                 </button>
@@ -743,27 +743,27 @@ export default function ChatWindow({ userId }: { userId: string }) {
 
       {/* Reply-to bar */}
       {replyTo && (
-        <div className="flex items-center gap-1.5 px-2 py-1 border-t border-[#333] bg-[#161616] shrink-0">
+        <div className="flex items-center gap-1.5 px-2 py-1 border-t border-border bg-background shrink-0">
           <div className="flex-1 min-w-0 border-l-2 border-[#6B4EFF] pl-1.5">
             <p className="text-[9px] font-semibold text-[#6B4EFF] truncate">
               {replyTo.senderId === myUserId ? "You" : contact?.name ?? "User"}
             </p>
-            <p className="text-[9px] text-white/50 truncate">
+            <p className="text-[9px] text-light-text truncate">
               {replyPreviewText(replyTo.messageType, replyTo.content)}
             </p>
           </div>
-          <button onClick={() => setReplyTo(null)} className="p-0.5 text-white/40 hover:text-white/70">
+          <button onClick={() => setReplyTo(null)} className="p-0.5 text-light-text hover:text-text">
             <IoClose size={12} />
           </button>
         </div>
       )}
 
       {/* Input */}
-      <div className="flex items-center gap-1 px-2 py-1.5 border-t border-[#333] bg-[#111] shrink-0">
-        <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-white/40 hover:text-white/70 transition-colors">
+      <div className="flex items-center gap-1 px-2 py-1.5 border-t border-border bg-background shrink-0">
+        <button onClick={() => setShowEmoji((p) => !p)} className="p-1 text-light-text hover:text-text transition-colors">
           <IoHappyOutline size={16} />
         </button>
-        <button onClick={() => fileRef.current?.click()} className="p-1 text-white/40 hover:text-white/70 transition-colors">
+        <button onClick={() => fileRef.current?.click()} className="p-1 text-light-text hover:text-text transition-colors">
           <IoImageOutline size={16} />
         </button>
         <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
@@ -774,12 +774,12 @@ export default function ChatWindow({ userId }: { userId: string }) {
           onChange={(e) => handleTyping(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder="Write a message..."
-          className="flex-1 bg-[#2a2a2a] text-white text-[11px] px-2.5 py-1 rounded-full outline-none placeholder:text-white/30 border border-transparent focus:border-[#6B4EFF]/50"
+          className="flex-1 bg-feed-bg text-text text-[11px] px-2.5 py-1 rounded-full outline-none placeholder:text-light-text border border-transparent focus:border-[#6B4EFF]/50"
         />
         <button
           onClick={handleSend}
           disabled={!text.trim() || uploading}
-          className="p-1 rounded-full hover:bg-white/5 disabled:text-white/20 transition-colors"
+          className="p-1 rounded-full hover:bg-feed-bg disabled:text-light-text transition-colors"
           style={{ color: text.trim() ? color : undefined }}
         >
           <IoSend size={12} />
@@ -787,21 +787,21 @@ export default function ChatWindow({ userId }: { userId: string }) {
       </div>
       {/* Context menu */}
       {ctxMenu && (
-        <div ref={ctxRef} className="fixed z-[200] whitespace-nowrap rounded-lg bg-[#222] border border-[#444] shadow-2xl py-1 text-[11px]"
+        <div ref={ctxRef} className="fixed z-[200] whitespace-nowrap rounded-lg bg-background border border-border shadow-2xl py-1 text-[11px]"
           style={{ left: Math.min(ctxMenu.x, window.innerWidth - 170), top: Math.max(ctxMenu.y - 10, 8), transform: "translateY(-100%)" }}>
           {(ctxMenu.msg.messageType === "text" || !ctxMenu.msg.content.startsWith("http")) && (
-            <button onClick={handleCopy} className="flex w-full items-center gap-2 px-3 py-1.5 text-white/80 hover:bg-white/10">
+            <button onClick={handleCopy} className="flex w-full items-center gap-2 px-3 py-1.5 text-text hover:bg-feed-bg">
               <IoCopyOutline size={13} className="shrink-0" /> Copy
             </button>
           )}
-          <button onClick={handleReply} className="flex w-full items-center gap-2 px-3 py-1.5 text-white/80 hover:bg-white/10">
+          <button onClick={handleReply} className="flex w-full items-center gap-2 px-3 py-1.5 text-text hover:bg-feed-bg">
             <IoArrowUndoOutline size={13} className="shrink-0" /> Reply
           </button>
-          <button onClick={handleDelete} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-white/10">
+          <button onClick={handleDelete} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-feed-bg">
             <IoTrashOutline size={13} className="shrink-0" /> Delete
           </button>
           {ctxMenu.msg.senderId === myUserId && (
-            <button onClick={handleDeleteEverywhere} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-white/10">
+            <button onClick={handleDeleteEverywhere} className="flex w-full items-center gap-2 px-3 py-1.5 text-red-400 hover:bg-feed-bg">
               <IoTrashOutline size={13} className="shrink-0" /> Delete Everywhere
             </button>
           )}
