@@ -582,7 +582,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                             );
                           })()
                         ) : (
-                        <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[80%]`}>
+                        <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} max-w-[80%] min-w-0`}>
                           {msg.replySnapshot && (() => {
                             try {
                               const snap = JSON.parse(msg.replySnapshot);

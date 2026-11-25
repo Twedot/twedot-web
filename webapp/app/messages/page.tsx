@@ -657,7 +657,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             )}
                           </div>
                         )}
-                        <div className="group relative inline-flex flex-col max-w-[80%]">
+                        <div className="group relative inline-flex flex-col max-w-[80%] min-w-0">
                         {/* Reply + React overlay — inside the bubble corner */}
                         <div className={`absolute top-0.5 ${isMine ? "left-0.5" : "right-0.5"} flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10`}>
                           <div className="relative">
