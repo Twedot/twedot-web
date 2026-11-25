@@ -594,7 +594,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               );
                             } catch { return null; }
                           })()}
-                        <div className={`px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words ${
+                        <div className={`px-2 py-0.5 rounded-2xl text-[11px] leading-[1.4] break-words [overflow-wrap:anywhere] overflow-hidden ${
                           isMine
                             ? "text-white rounded-br-sm"
                             : "bg-[#2a2a2a] text-white/90 rounded-bl-sm"

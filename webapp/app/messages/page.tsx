@@ -737,7 +737,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                             return <span className="text-[13px]">{msg.content}</span>;
                           })()
                         ) : (
-                        <div className={`rounded-2xl text-[13px] leading-[1.4] break-words ${isCard ? "p-0" : "px-3 py-1"} ${
+                        <div className={`rounded-2xl text-[13px] leading-[1.4] break-words [overflow-wrap:anywhere] overflow-hidden ${isCard ? "p-0" : "px-3 py-1"} ${
                           isMine ? "text-white rounded-br-sm" : "bg-feed-bg text-text rounded-bl-sm"
                         }`} style={isMine && !isCard ? { background: color } : undefined}>
                           {replySnap && (
