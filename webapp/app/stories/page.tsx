@@ -927,24 +927,32 @@ function FeedContent() {
   }, [currentIdx, feedItems.length, loadPage]);
 
   const desktopRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const lastNavTime = useRef(0);
   const accDelta = useRef(0);
+
+  const navigateTo = useCallback((idx: number, smooth = true) => {
+    setCurrentIdx(idx);
+    try { sessionStorage.setItem("stories_idx", String(idx)); } catch {}
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: idx * el.clientHeight, behavior: smooth ? "smooth" : "instant" });
+  }, []);
 
   const goNext = useCallback(() => {
     setCurrentIdx((i) => {
       const next = Math.min(i + 1, feedItems.length - 1);
-      try { sessionStorage.setItem("stories_idx", String(next)); } catch {}
+      navigateTo(next);
       return next;
     });
-  }, [feedItems.length]);
+  }, [feedItems.length, navigateTo]);
 
   const goPrev = useCallback(() => {
     setCurrentIdx((i) => {
       const prev = Math.max(i - 1, 0);
-      try { sessionStorage.setItem("stories_idx", String(prev)); } catch {}
+      navigateTo(prev);
       return prev;
     });
-  }, []);
+  }, [navigateTo]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -958,12 +966,13 @@ function FeedContent() {
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev]);
 
-  // Wheel navigation — accumulate delta, 700ms cooldown between navigations
+  // Wheel — block native scroll, navigate one post with 700ms cooldown
   useEffect(() => {
-    const el = desktopRef.current;
+    const el = scrollRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       const now = Date.now();
       if (now - lastNavTime.current < 700) { accDelta.current = 0; return; }
       accDelta.current += e.deltaY;
@@ -975,6 +984,14 @@ function FeedContent() {
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, [goNext, goPrev]);
+
+  // Restore saved position once feed loads
+  const didRestore = useRef(false);
+  useEffect(() => {
+    if (didRestore.current || feedItems.length === 0) return;
+    didRestore.current = true;
+    if (currentIdx > 0) requestAnimationFrame(() => navigateTo(currentIdx, false));
+  }, [feedItems.length, currentIdx, navigateTo]);
 
   const currentFeedItem = feedItems[currentIdx];
   const currentGroup = currentFeedItem?.kind === "post" ? currentFeedItem.posts : undefined;
@@ -1031,26 +1048,38 @@ function FeedContent() {
           </div>
         )}
 
-        {currentFeedItem?.kind === "live" ? (
-          <LiveFeedCard
-            key={`live-${currentFeedItem.stream.roomId}`}
-            stream={currentFeedItem.stream}
-            onPrev={goPrev}
-            onNext={goNext}
-            hasPrev={currentIdx > 0}
-            hasNext={currentIdx < feedItems.length - 1 || hasMore}
-          />
-        ) : currentGroup ? (
-          <ShortsCard
-            key={currentGroup[0].id}
-            items={currentGroup}
-            onComment={openComment}
-            onPrev={goPrev}
-            onNext={goNext}
-            hasPrev={currentIdx > 0}
-            hasNext={currentIdx < feedItems.length - 1 || hasMore}
-          />
-        ) : null}
+        {feedItems.length > 0 && (
+          <div ref={scrollRef} className="no-scrollbar h-full overflow-y-auto" style={{ touchAction: "none" }}>
+            {feedItems.map((item, idx) => {
+              const isNearby = Math.abs(idx - currentIdx) <= 2;
+              const key = item.kind === "live" ? `live-${item.stream.roomId}` : item.posts[0].id;
+              return (
+                <div key={key} className="h-full">
+                  {isNearby ? (
+                    item.kind === "live" ? (
+                      <LiveFeedCard
+                        stream={item.stream}
+                        onPrev={goPrev}
+                        onNext={goNext}
+                        hasPrev={idx > 0}
+                        hasNext={idx < feedItems.length - 1 || hasMore}
+                      />
+                    ) : (
+                      <ShortsCard
+                        items={item.posts}
+                        onComment={openComment}
+                        onPrev={goPrev}
+                        onNext={goNext}
+                        hasPrev={idx > 0}
+                        hasNext={idx < feedItems.length - 1 || hasMore}
+                      />
+                    )
+                  ) : <div className="h-full" />}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <CommentsDrawer
           postId={commentPanelPostId}
