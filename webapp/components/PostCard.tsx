@@ -623,13 +623,13 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                 <button onClick={handleLike} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
                   {isLiked ? <IoHeart size={18} /> : <IoHeartOutline size={18} />}
                 </button>
-                <span className="text-[11px] font-semibold text-light-text">{likeCount}</span>
+                <span className="text-[11px] font-medium text-light-text">{likeCount}</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
                 <button onClick={(e) => { e.stopPropagation(); if (requireLogin()) openDetail(); }} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
                   <IoChatbubbleEllipsesOutline size={18} />
                 </button>
-                <span className="text-[11px] font-semibold text-light-text">{active.commentCount}</span>
+                <span className="text-[11px] font-medium text-light-text">{active.commentCount}</span>
               </div>
               <div className="flex flex-col items-center gap-0.5">
                 <button onClick={(e) => { e.stopPropagation(); if (requireLogin()) toggleBookmark(); }} className={`flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg transition-colors hover:bg-border/50 ${isBookmarked ? "text-[#D4A400]" : "text-light-text"}`}>
@@ -647,7 +647,7 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
                 <button onClick={(e) => { e.stopPropagation(); notify("Share is coming soon"); }} className="flex h-9 w-9 items-center justify-center rounded-full bg-feed-bg text-light-text transition-colors hover:bg-border/50">
                   <IoShareOutline size={18} />
                 </button>
-                <span className="text-[11px] font-semibold text-light-text">Share</span>
+                <span className="text-[11px] font-medium text-light-text">Share</span>
               </div>
             </div>
           </div>
@@ -657,11 +657,11 @@ export default function PostCard({ items, compact = false }: { items: StatusPost
       {/* ── Action bar — mobile: below media / desktop: below caption for text posts only ── */}
       {!compact && (
         <footer className={`flex items-center gap-1.5 pt-0.5 ${hasMedia ? "sm:hidden" : "sm:ml-[46px]"}`}>
-          <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-semibold transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
+          <button onClick={handleLike} className={`flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-medium transition-colors hover:bg-border/50 ${isLiked ? "text-red-500" : "text-light-text"}`}>
             {isLiked ? <IoHeart size={16} /> : <IoHeartOutline size={16} />}
             <span>{likeCount}</span>
           </button>
-          <button onClick={(e) => { e.stopPropagation(); if (requireLogin()) openDetail(); }} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-semibold text-light-text transition-colors hover:bg-border/50">
+          <button onClick={(e) => { e.stopPropagation(); if (requireLogin()) openDetail(); }} className="flex items-center gap-1.5 rounded-full bg-feed-bg px-3 py-1.5 text-[13px] font-medium text-light-text transition-colors hover:bg-border/50">
             <IoChatbubbleEllipsesOutline size={16} />
             <span>{active.commentCount}</span>
           </button>
