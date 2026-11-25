@@ -22,6 +22,31 @@ interface ReceiptMeta { orderId: string; productName: string; productImage?: str
 interface EscrowMeta { orderId: string; productName: string; amount: number; escrowEvent: string; reason?: string; }
 interface ProductInquiryMeta { productId: string; productName: string; productPrice: number; productImage?: string; postImage?: string; sellerId?: string; }
 
+function replyPreviewText(messageType?: string, content?: string): string {
+  switch (messageType) {
+    case "image": return "📷 Photo";
+    case "video": return "🎥 Video";
+    case "voice": return "🎤 Voice message";
+    case "audio": return "🎵 Audio";
+    case "album": return "🖼️ Album";
+    case "file":
+    case "document": return "📎 File";
+    case "item_reference":
+    case "product_inquiry": return "🛒 Product";
+    case "payment_receipt": return "💳 Payment";
+    default: break;
+  }
+  if (!content) return "";
+  if (content.startsWith("http") && !content.includes(" ")) {
+    const lc = content.toLowerCase();
+    if (lc.match(/\.(jpg|jpeg|png|gif|webp|heic|svg)/)) return "📷 Photo";
+    if (lc.match(/\.(mp4|mov|webm|avi)/)) return "🎥 Video";
+    if (lc.match(/\.(mp3|ogg|wav|m4a|aac)/)) return "🎵 Audio";
+    return "📎 Attachment";
+  }
+  return content;
+}
+
 function parseMeta<T>(msg: ChatMessage): T | null {
   if (!msg.metadata) return null;
   try { return JSON.parse(msg.metadata) as T; } catch { return null; }
@@ -404,7 +429,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
     const trimmed = text.trim();
     if (!trimmed || !myUserId) return;
     const replyToId = replyTo?.id;
-    const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId }) : undefined;
+    const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId, senderName: replyTo.senderId === myUserId ? undefined : (replyTo.senderName ?? contact?.name) }) : undefined;
     const clientMessageId = chatSocket.send(userId, trimmed, "text", { replyToId, replySnapshot });
     useChatStore.getState().addMessage(userId, {
       id: clientMessageId,
@@ -454,7 +479,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       const url = result.url;
       const msgType = mediaPreview.kind === "video" ? "video" : mediaPreview.kind === "file" ? "file" : "image";
       const replyToId = replyTo?.id;
-      const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId }) : undefined;
+      const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId, senderName: replyTo.senderId === myUserId ? undefined : (replyTo.senderName ?? contact?.name) }) : undefined;
       const clientMessageId = chatSocket.send(userId, url, msgType, { fileName: mediaPreview.file.name, fileSize: mediaPreview.file.size, replyToId, replySnapshot });
       useChatStore.getState().addMessage(userId, {
         id: clientMessageId,
@@ -516,7 +541,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       form.append("type", "chat");
       const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
       const replyToId = replyTo?.id;
-      const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId }) : undefined;
+      const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId, senderName: replyTo.senderId === myUserId ? undefined : (replyTo.senderName ?? contact?.name) }) : undefined;
       const clientMessageId = chatSocket.send(userId, result.url, "voice", { duration, replyToId, replySnapshot });
       useChatStore.getState().addMessage(userId, {
         id: clientMessageId,
@@ -711,8 +736,8 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                         }`} style={isMine && !isCard ? { background: color } : undefined}>
                           {replySnap && (
                             <div className={`text-[11px] px-2 py-1 mb-1 rounded-lg border-l-2 opacity-80 ${isMine ? "bg-white/10 border-white/60" : "bg-black/10 border-primary"}`}>
-                              <span className="font-semibold block truncate">{replySnap.senderId === myUserId ? "You" : contact.name}</span>
-                              <span className="truncate block">{replySnap.messageType === "image" || replySnap.messageType === "album" ? "📷 Photo" : replySnap.messageType === "video" ? "🎥 Video" : replySnap.messageType === "voice" ? "🎤 Voice" : replySnap.messageType === "file" ? "📎 File" : replySnap.content?.slice(0, 60)}</span>
+                              <span className="font-semibold block truncate">{replySnap.senderId === myUserId ? "You" : (replySnap as any).senderName || contact.name}</span>
+                              <span className="truncate block">{replyPreviewText(replySnap.messageType, replySnap.content)}</span>
                             </div>
                           )}
                           {msg.messageType === "voice" ? (
@@ -845,7 +870,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
         <div className="flex items-center gap-2 px-3 py-1.5 border-t border-border bg-background">
           <div className="flex-1 border-l-2 border-primary pl-2">
             <p className="text-[10px] font-semibold text-primary">{replyTo.senderId === myUserId ? "You" : contact.name}</p>
-            <p className="text-[11px] text-light-text truncate">{replyTo.messageType === "image" || replyTo.messageType === "album" ? "📷 Photo" : replyTo.messageType === "video" ? "🎥 Video" : replyTo.messageType === "voice" ? "🎤 Voice" : replyTo.messageType === "file" ? "📎 File" : replyTo.content?.slice(0, 80)}</p>
+            <p className="text-[11px] text-light-text truncate">{replyPreviewText(replyTo.messageType, replyTo.content)}</p>
           </div>
           <button onClick={() => setReplyTo(null)} className="text-light-text hover:text-text shrink-0">
             <IoCloseOutline size={18} />

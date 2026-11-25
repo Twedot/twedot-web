@@ -27,6 +27,31 @@ function userColor(userId: string) {
   return HEADER_COLORS[Math.abs(hash) % HEADER_COLORS.length];
 }
 
+function replyPreviewText(messageType?: string, content?: string): string {
+  switch (messageType) {
+    case "image": return "📷 Photo";
+    case "video": return "🎥 Video";
+    case "voice": return "🎤 Voice message";
+    case "audio": return "🎵 Audio";
+    case "album": return "🖼️ Album";
+    case "file":
+    case "document": return "📎 File";
+    case "item_reference":
+    case "product_inquiry": return "🛒 Product";
+    case "payment_receipt": return "💳 Payment";
+    default: break;
+  }
+  if (!content) return "";
+  if (content.startsWith("http") && !content.includes(" ")) {
+    const lc = content.toLowerCase();
+    if (lc.match(/\.(jpg|jpeg|png|gif|webp|heic|svg)/)) return "📷 Photo";
+    if (lc.match(/\.(mp4|mov|webm|avi)/)) return "🎥 Video";
+    if (lc.match(/\.(mp3|ogg|wav|m4a|aac)/)) return "🎵 Audio";
+    return "📎 Attachment";
+  }
+  return content;
+}
+
 function parseMeta<T>(msg: ChatMessage): T | null {
   if (!msg.metadata) return null;
   try { return JSON.parse(msg.metadata) as T; } catch { return null; }
@@ -563,8 +588,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               const snap = JSON.parse(msg.replySnapshot);
                               return (
                                 <div className="mb-0.5 rounded-lg px-1.5 py-0.5 border-l-2 border-[#6B4EFF] bg-white/5 text-[9px] leading-tight max-w-full">
-                                  <span className="font-semibold block truncate text-[#6B4EFF]">{snap.senderName ?? "User"}</span>
-                                  <span className="block truncate text-white/40">{snap.messageType === "image" ? "Photo" : snap.messageType === "voice" ? "Voice message" : snap.content}</span>
+                                  <span className="font-semibold block truncate text-[#6B4EFF]">{snap.senderId === myUserId ? "You" : snap.senderName || contact?.name || "User"}</span>
+                                  <span className="block truncate text-white/40">{replyPreviewText(snap.messageType, snap.content)}</span>
                                 </div>
                               );
                             } catch { return null; }
@@ -724,7 +749,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
               {replyTo.senderId === myUserId ? "You" : contact?.name ?? "User"}
             </p>
             <p className="text-[9px] text-white/50 truncate">
-              {replyTo.messageType === "image" ? "Photo" : replyTo.messageType === "voice" ? "Voice message" : replyTo.content}
+              {replyPreviewText(replyTo.messageType, replyTo.content)}
             </p>
           </div>
           <button onClick={() => setReplyTo(null)} className="p-0.5 text-white/40 hover:text-white/70">
