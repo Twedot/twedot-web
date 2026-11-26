@@ -21,6 +21,34 @@ const HEADER_COLORS = [
   "#9B59B6", "#E06B4E", "#1ABC9C", "#F39C12", "#8E44AD",
 ];
 
+const URL_RE = /((https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}(\/[^\s]*)?))/gi;
+
+function Linkify({ children, className }: { children: string; className?: string }) {
+  const text = children;
+  const parts: { type: "text" | "link"; value: string }[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  URL_RE.lastIndex = 0;
+  while ((m = URL_RE.exec(text)) !== null) {
+    if (m.index > last) parts.push({ type: "text", value: text.slice(last, m.index) });
+    parts.push({ type: "link", value: m[0] });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({ type: "text", value: text.slice(last) });
+  if (parts.length <= 1 && parts[0]?.type === "text") return <span className={className}>{text}</span>;
+  return (
+    <span className={className}>
+      {parts.map((p, i) => {
+        if (p.type === "link") {
+          const href = p.value.startsWith("http") ? p.value : `https://${p.value}`;
+          return <a key={i} href={href} target="_blank" rel="noopener noreferrer" className="underline break-all hover:opacity-80">{p.value}</a>;
+        }
+        return <span key={i}>{p.value}</span>;
+      })}
+    </span>
+  );
+}
+
 function userColor(userId: string) {
   let hash = 0;
   for (let i = 0; i < userId.length; i++) hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
@@ -541,7 +569,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               );
                             }
 
-                            return <span className="text-[11px]">{msg.content}</span>;
+                            return <Linkify className="text-[11px]">{msg.content}</Linkify>;
                           })()
                         ) : isProductInquiry ? (
                           (() => {
@@ -574,7 +602,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                     )}
                                   </div>
                                 )}
-                                <p className="text-[11px] leading-[1.4] px-1.5 pb-1">{msg.content}</p>
+                                <p className="text-[11px] leading-[1.4] px-1.5 pb-1"><Linkify>{msg.content}</Linkify></p>
                                 <div className="text-right px-1.5 pb-0.5">
                                   <span className="text-[8px] text-light-text">{timeLabel(toDate(msg.timestamp))}</span>
                                 </div>
@@ -657,7 +685,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                               );
                             })()
                           ) : (
-                            <span>{msg.content}</span>
+                            <Linkify>{msg.content}</Linkify>
                           )}
                           {msg.status === "failed" && (
                             <span className="block text-[8px] text-red-400">Not connected</span>
