@@ -265,6 +265,26 @@ export default function SideNav() {
               <>
                 {PLUGIN_ITEMS.map((p) => {
                   const PluginIcon = p.icon;
+                  const opensConnect = p.type === "ecommerce" || p.type === "service";
+                  if (opensConnect) {
+                    return (
+                      <a
+                        key={p.type}
+                        href="/connect"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-light-text hover:bg-feed-bg"
+                      >
+                        <span className={`icon-bold flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${p.color}`}>
+                          <PluginIcon size={14} className="text-white" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-medium">{p.label}</div>
+                          <div className="truncate text-[11px] text-light-text">{p.desc}</div>
+                        </span>
+                      </a>
+                    );
+                  }
                   return (
                     <Link
                       key={p.type}

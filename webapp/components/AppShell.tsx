@@ -149,7 +149,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const isLoginOrVerify = pathname === "/login" || pathname === "/verify";
   const isCompleteProfile = pathname === "/complete-profile";
   const isAuthBridge = pathname === "/auth-bridge";
-  const isFullscreen = pathname.startsWith("/live/watch");
+  const isFullscreen = pathname.startsWith("/live/watch") || pathname.startsWith("/connect");
   const profileComplete = !!user?.profileComplete;
   const isPublic = isPublicRoute(pathname);
 
@@ -181,6 +181,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }, [isLoading, isAuthenticated, profileComplete, isLoginOrVerify, isCompleteProfile, isAuthBridge, isPublic, router]);
 
   if (isAuthBridge) return <>{children}</>;
+  if (isFullscreen) return <>{children}</>;
   if (isLoading) return null;
 
   if (!isAuthenticated) {
@@ -202,8 +203,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }
 
   if (isLoginOrVerify || isCompleteProfile) return null;
-
-  if (isFullscreen) return <>{children}</>;
 
   return (
     <JobSocketProvider>
