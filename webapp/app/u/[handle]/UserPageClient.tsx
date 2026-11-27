@@ -20,6 +20,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { apiGet, apiPost, apiDelete, ApiError } from "@/lib/api";
 import { useJobSocket } from "@/lib/jobSocket";
+import { useChatStore } from "@/lib/chatStore";
 import RankBadge from "@/components/RankBadge";
 import type { UserProfile, StatusPost } from "@/lib/types";
 import { postDetailStore } from "@/lib/postDetailStore";
@@ -305,7 +306,14 @@ export default function UserPageClient() {
               {isFollowing ? "Following" : "Follow"}
             </button>
             <button
-              onClick={() => requireLogin(() => router.push(`/inbox?userId=${profile.id}`))}
+              onClick={() => requireLogin(() => {
+                const contact = { userId: profile.id, name: profile.name ?? "", photo: profile.profile_photo_url ?? null, occupation: profile.occupation ?? null };
+                if (typeof window !== "undefined" && window.innerWidth < 640) {
+                  router.push(`/messages?chat=${profile.id}`);
+                } else {
+                  useChatStore.getState().openChat(contact);
+                }
+              })}
               className="flex items-center gap-1 rounded-full border border-border px-3.5 py-1.5 text-[12px] font-semibold text-text hover:bg-feed-bg"
             >
               Message
