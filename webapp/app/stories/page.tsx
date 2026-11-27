@@ -826,6 +826,7 @@ function FeedContent() {
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentIdx, setCurrentIdx] = useState(() => {
+    if (!cached) return 0;
     try { return parseInt(sessionStorage.getItem("stories_idx") ?? "0") || 0; } catch { return 0; }
   });
   const [hasNewPosts, setHasNewPosts] = useState(false);
@@ -1001,7 +1002,9 @@ function FeedContent() {
   useEffect(() => {
     if (didRestore.current || feedItems.length === 0) return;
     didRestore.current = true;
-    if (currentIdx > 0) requestAnimationFrame(() => navigateTo(currentIdx, false));
+    const clamped = Math.min(currentIdx, feedItems.length - 1);
+    if (clamped > 0) requestAnimationFrame(() => navigateTo(clamped, false));
+    else if (currentIdx !== clamped) setCurrentIdx(0);
   }, [feedItems.length, currentIdx, navigateTo]);
 
   const currentFeedItem = feedItems[currentIdx];
