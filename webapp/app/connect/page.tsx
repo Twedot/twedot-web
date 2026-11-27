@@ -3,18 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  IoGlobeOutline,
   IoChevronForward,
   IoAddOutline,
   IoEllipsisHorizontal,
   IoCheckmarkCircle,
   IoTimeOutline,
   IoStorefrontOutline,
-  IoTrendingUpOutline,
-  IoCodeSlashOutline,
-  IoWalletOutline,
   IoOpenOutline,
   IoLinkOutline,
+  IoWalletOutline,
 } from "react-icons/io5";
 import { useAuth } from "@/lib/AuthContext";
 import { apiGet } from "@/lib/api";
@@ -26,7 +23,6 @@ interface ConnectedStore {
   platform: string;
   store_name: string | null;
   store_url: string;
-  external_store_id: string | null;
   connection_status: "active" | "pending" | "error" | "expired" | "disconnected";
   checkout_configuration: {
     twedotEnabled: boolean;
@@ -50,38 +46,192 @@ function timeAgo(dateStr: string | null | undefined): string {
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function domainOf(url: string): string {
-  try { return new URL(url).hostname; } catch { return url; }
-}
+// ─── Inline SVG logos ────────────────────────────────────────────────────────
 
-// ─── Sparkle SVG (decorative) ────────────────────────────────────────────────
-
-function Sparkle({ className }: { className?: string }) {
+function ShopifyBagLogo({ size = 48 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="currentColor" />
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+      <path d="M37.2 10.8c-.1-.5-.5-.8-1-.8h-.1l-3.5-.3-2.4-2.4c-.3-.3-.7-.3-1-.2l-1.5.5C26.9 5.5 25.5 4 23.5 4c-.2 0-.4 0-.5.1C22.3 3.3 21.5 3 20.7 3c-3.2 0-6.3 4-7.8 9.6l-3.4 1.1c-1 .3-1.1.4-1.2 1.4L6 36.5 28.6 41l12.3-3L37.2 10.8z" fill="#95BF47"/>
+      <path d="M32.6 9.7l-3.5-.3-2.4-2.4c-.1-.1-.3-.2-.4-.2v33.7L40.9 38l-3.7-27.2c-.1-.5-.5-.8-1-.8l-3.6-.3z" fill="#5E8E3E"/>
+      <path d="M23.5 16.5l-1.7 5s-1.5-.8-3.3-.8c-2.7 0-2.8 1.7-2.8 2.1 0 2.3 6 3.2 6 8.6 0 4.3-2.7 7-6.3 7a8.6 8.6 0 01-4.6-1.3l.8-3.2s1.6 1.1 3 1.1c.9 0 1.6-.6 1.6-1.6 0-2.8-4.9-2.9-4.9-8.1 0-4.2 3-8.2 9-8.2 2.4 0 3.2.7 3.2.7z" fill="white"/>
     </svg>
   );
 }
 
-// ─── Platform logos (inline SVG to match the screenshot) ─────────────────────
-
-function ShopifyLogo({ className }: { className?: string }) {
+function WooCommerceLogo({ size = 48 }: { size?: number }) {
+  const h = size * 0.7;
   return (
-    <div className={`flex items-center justify-center rounded-xl ${className}`} style={{ background: "#95BF47" }}>
-      <span className="text-[20px] font-black text-white">S</span>
+    <svg width={size} height={h} viewBox="0 0 120 70" fill="none">
+      <rect width="120" height="70" rx="14" fill="#7F54B3"/>
+      <text x="60" y="47" textAnchor="middle" fontFamily="Arial,sans-serif" fontWeight="900" fontSize="34" fill="white" letterSpacing="-1">Woo</text>
+    </svg>
+  );
+}
+
+function CustomWebsiteIcon() {
+  return (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+      <rect width="48" height="48" rx="12" fill="#EDE9FE"/>
+      <circle cx="24" cy="24" r="12" stroke="#6B4EFF" strokeWidth="2.2" fill="none"/>
+      <ellipse cx="24" cy="24" rx="6" ry="12" stroke="#6B4EFF" strokeWidth="2" fill="none"/>
+      <line x1="12" y1="24" x2="36" y2="24" stroke="#6B4EFF" strokeWidth="2"/>
+      <line x1="14" y1="18" x2="34" y2="18" stroke="#6B4EFF" strokeWidth="1.4"/>
+      <line x1="14" y1="30" x2="34" y2="30" stroke="#6B4EFF" strokeWidth="1.4"/>
+    </svg>
+  );
+}
+
+function OtherPlatformsIcon() {
+  return (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+      <rect width="48" height="48" rx="12" fill="#EDE9FE"/>
+      <text x="24" y="31" textAnchor="middle" fontFamily="monospace" fontWeight="bold" fontSize="20" fill="#6B4EFF">&lt;/&gt;</text>
+    </svg>
+  );
+}
+
+// ─── Hero storefront illustration ────────────────────────────────────────────
+
+function HeroIllustration() {
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 440, height: 300 }}>
+      {/* Large background circle */}
+      <div className="absolute" style={{ width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,78,255,0.08) 0%, rgba(107,78,255,0.03) 70%, transparent 100%)" }} />
+
+      {/* Phone / storefront card */}
+      <div className="relative z-10" style={{ width: 190, height: 240 }}>
+        {/* Card frame */}
+        <div className="overflow-hidden rounded-2xl bg-white shadow-2xl" style={{ border: "2px solid rgba(107,78,255,0.12)" }}>
+          {/* Purple awning */}
+          <div className="flex" style={{ height: 32 }}>
+            {[0,1,2,3,4,5,6,7].map(i => (
+              <div key={i} className="flex-1" style={{
+                background: i % 2 === 0 ? "#7C5CFC" : "#9B7FFF",
+                borderRadius: "0 0 50% 50%",
+                marginTop: -4,
+              }} />
+            ))}
+          </div>
+
+          {/* Shopping bags */}
+          <div className="flex items-end justify-center gap-1 px-3" style={{ height: 56, marginTop: -2 }}>
+            {/* Green bag */}
+            <div style={{ width: 28, height: 36, background: "linear-gradient(180deg, #7BC67E 0%, #4CAF50 100%)", borderRadius: "3px 3px 6px 6px", position: "relative" }}>
+              <div style={{ position: "absolute", top: -4, left: 6, width: 16, height: 8, border: "2px solid #388E3C", borderBottom: "none", borderRadius: "8px 8px 0 0" }} />
+            </div>
+            {/* Orange/yellow bag */}
+            <div style={{ width: 32, height: 42, background: "linear-gradient(180deg, #FFD54F 0%, #FFB300 100%)", borderRadius: "3px 3px 6px 6px", position: "relative" }}>
+              <div style={{ position: "absolute", top: -4, left: 8, width: 16, height: 8, border: "2px solid #F57F17", borderBottom: "none", borderRadius: "8px 8px 0 0" }} />
+            </div>
+            {/* Purple bag */}
+            <div style={{ width: 26, height: 34, background: "linear-gradient(180deg, #B39DDB 0%, #7E57C2 100%)", borderRadius: "3px 3px 6px 6px", position: "relative" }}>
+              <div style={{ position: "absolute", top: -4, left: 5, width: 16, height: 8, border: "2px solid #5E35B1", borderBottom: "none", borderRadius: "8px 8px 0 0" }} />
+            </div>
+          </div>
+
+          {/* Product card area */}
+          <div className="mx-3 mt-2 overflow-hidden rounded-lg" style={{ background: "#F5F3FF", height: 80 }}>
+            <div className="flex h-full items-center gap-2 px-2">
+              {/* Sneaker placeholder */}
+              <div className="flex-shrink-0 overflow-hidden rounded-md" style={{ width: 60, height: 60, background: "#EDE9FE" }}>
+                <svg viewBox="0 0 60 60" fill="none" width="60" height="60">
+                  <rect width="60" height="60" fill="#EDE9FE"/>
+                  <path d="M12 38c0-2 4-14 8-16s10-2 14 0 8 6 10 8 4 6 4 8-2 4-6 4H16c-3 0-4-2-4-4z" fill="#6B4EFF" opacity="0.7"/>
+                  <path d="M14 36c2-8 6-12 10-12s10 2 14 6 4 6 4 8H14z" fill="#8B6FFF"/>
+                  <circle cx="20" cy="38" r="3" fill="white" opacity="0.5"/>
+                  <circle cx="34" cy="38" r="3" fill="white" opacity="0.5"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <div className="h-2 w-16 rounded-full" style={{ background: "#C4B5FD" }} />
+                <div className="mt-1.5 h-1.5 w-10 rounded-full" style={{ background: "#DDD6FE" }} />
+                <div className="mt-1.5 h-1.5 w-12 rounded-full" style={{ background: "#DDD6FE" }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Shop Now button */}
+          <div className="flex justify-center py-3">
+            <div className="rounded-full px-5 py-1.5" style={{ background: "#1a1a2e" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "white" }}>Shop Now</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Shopify logo */}
+      <div className="absolute z-20" style={{ left: 20, top: 30 }}>
+        <div className="rounded-2xl shadow-lg" style={{ background: "#95BF47", padding: 8 }}>
+          <svg width="36" height="40" viewBox="0 0 36 40" fill="none">
+            <path d="M28.8 7.5c-.1-.4-.4-.6-.8-.6h-.1l-2.8-.2-1.9-2c-.2-.2-.5-.2-.8-.1l-1.2.4C20.5 3.5 19.4 2.3 17.8 2.3c-.1 0-.3 0-.4 0C16.8 1.7 16.2 1.4 15.5 1.4c-2.5 0-5 3.2-6.2 7.7l-2.7.9c-.8.3-.9.3-1 1.1L4 29.6l18 3.5 9.8-2.4-3-23.2z" fill="white"/>
+            <path d="M17.8 12.5l-1.4 4s-1.2-.6-2.6-.6c-2.1 0-2.2 1.3-2.2 1.7 0 1.8 4.8 2.5 4.8 6.8 0 3.4-2.1 5.5-5 5.5a7 7 0 01-3.6-1l.6-2.5s1.3.9 2.4.9c.7 0 1.3-.5 1.3-1.3 0-2.2-3.9-2.3-3.9-6.4 0-3.3 2.4-6.5 7.1-6.5 1.9 0 2.5.6 2.5.6z" fill="#95BF47"/>
+          </svg>
+        </div>
+        <p style={{ fontSize: 11, fontWeight: 600, color: "#4a4a68", textAlign: "center", marginTop: 4 }}>Shopify</p>
+      </div>
+
+      {/* Floating WooCommerce logo */}
+      <div className="absolute z-20" style={{ right: 30, top: 50 }}>
+        <div className="flex items-center justify-center rounded-2xl shadow-lg" style={{ background: "#7F54B3", width: 72, height: 42, padding: "4px 8px" }}>
+          <span style={{ fontSize: 16, fontWeight: 900, color: "white", letterSpacing: -0.5 }}>Woo</span>
+        </div>
+        <p style={{ fontSize: 11, fontWeight: 600, color: "#4a4a68", textAlign: "center", marginTop: 4 }}>WooCommerce</p>
+      </div>
+
+      {/* Floating Other Platforms icon */}
+      <div className="absolute z-20" style={{ right: 10, bottom: 50 }}>
+        <div className="flex items-center justify-center rounded-2xl shadow-lg" style={{ background: "rgba(107,78,255,0.12)", width: 44, height: 44 }}>
+          <span style={{ fontSize: 18, fontWeight: 800, fontFamily: "monospace", color: "#6B4EFF" }}>&lt;/&gt;</span>
+        </div>
+        <p style={{ fontSize: 10, fontWeight: 600, color: "#4a4a68", textAlign: "center", marginTop: 3 }}>Other Platforms</p>
+      </div>
+
+      {/* Sparkles / stars */}
+      <svg className="absolute z-0" style={{ right: 15, top: 10 }} width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="#7C5CFC" opacity="0.35"/>
+      </svg>
+      <svg className="absolute z-0" style={{ left: 60, top: 8 }} width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="#7C5CFC" opacity="0.25"/>
+      </svg>
+      <svg className="absolute z-0" style={{ left: 10, bottom: 40 }} width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="#7C5CFC" opacity="0.2"/>
+      </svg>
+      <svg className="absolute z-0" style={{ right: 80, bottom: 20 }} width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="#7C5CFC" opacity="0.2"/>
+      </svg>
+
+      {/* Small decorative dots */}
+      <div className="absolute rounded-full" style={{ width: 6, height: 6, background: "#B39DDB", left: 50, bottom: 60 }} />
+      <div className="absolute rounded-full" style={{ width: 4, height: 4, background: "#7C5CFC", right: 60, top: 40, opacity: 0.4 }} />
     </div>
   );
 }
 
-function WooLogo({ className }: { className?: string }) {
+// ─── Bottom CTA illustration ─────────────────────────────────────────────────
+
+function CtaIllustration() {
   return (
-    <div className={`flex items-center justify-center rounded-xl ${className}`} style={{ background: "#7F54B3" }}>
-      <span className="text-[13px] font-black text-white tracking-tight">Woo</span>
+    <div className="relative hidden md:flex" style={{ width: 260, height: "100%" }}>
+      {/* Purple shopping bag */}
+      <div className="absolute" style={{ right: 60, bottom: 20 }}>
+        <div style={{ width: 48, height: 56, background: "linear-gradient(180deg, #B39DDB 0%, #7E57C2 100%)", borderRadius: "4px 4px 10px 10px", position: "relative" }}>
+          <div style={{ position: "absolute", top: -6, left: 10, width: 28, height: 12, border: "3px solid #5E35B1", borderBottom: "none", borderRadius: "14px 14px 0 0" }} />
+        </div>
+      </div>
+      {/* Smaller bag */}
+      <div className="absolute" style={{ right: 30, bottom: 15 }}>
+        <div style={{ width: 36, height: 44, background: "linear-gradient(180deg, #CE93D8 0%, #AB47BC 100%)", borderRadius: "3px 3px 8px 8px", position: "relative" }}>
+          <div style={{ position: "absolute", top: -5, left: 7, width: 22, height: 10, border: "2.5px solid #8E24AA", borderBottom: "none", borderRadius: "11px 11px 0 0" }} />
+        </div>
+      </div>
+      {/* Decorative circles */}
+      <div className="absolute rounded-full" style={{ width: 80, height: 80, background: "rgba(107,78,255,0.1)", right: 10, top: 10 }} />
+      <div className="absolute rounded-full" style={{ width: 40, height: 40, background: "rgba(107,78,255,0.08)", right: 100, bottom: 10 }} />
+      <div className="absolute rounded-full" style={{ width: 16, height: 16, background: "rgba(139,111,255,0.3)", right: 80, top: 30 }} />
+      <div className="absolute rounded-full" style={{ width: 10, height: 10, background: "rgba(139,111,255,0.25)", right: 20, bottom: 50 }} />
     </div>
   );
 }
@@ -118,98 +268,66 @@ export default function ConnectPage() {
 
   return (
     <div className="h-[calc(100vh-3.5rem)] overflow-y-auto">
-      <div className="mx-auto max-w-[1200px] px-5 py-6 md:px-8">
+      <div className="mx-auto max-w-[1240px] px-5 py-6 md:px-8">
 
-        {/* ── Hero Banner ────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden rounded-3xl" style={{ background: "linear-gradient(135deg, #EDE9FE 0%, #F3E8FF 40%, #E8DEF8 100%)" }}>
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center">
-            {/* Left text */}
+        {/* ══════════════════════════════════════════════════════════════
+            HERO BANNER
+            ══════════════════════════════════════════════════════════ */}
+        <section
+          className="relative overflow-hidden rounded-3xl"
+          style={{ background: "linear-gradient(135deg, #F0ECFF 0%, #EDE9FE 30%, #E8E0FD 60%, #F3EDFF 100%)" }}
+        >
+          <div className="relative z-10 flex items-center">
+            {/* Left content */}
             <div className="flex-1 px-8 py-10 md:px-12 md:py-14">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3.5 py-1.5 text-[12px] font-semibold text-primary">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5"
+                style={{ background: "rgba(107,78,255,0.12)", color: "#6B4EFF", fontSize: 12, fontWeight: 600 }}
+              >
                 <IoLinkOutline size={13} />
                 Twedot Connect
               </span>
-              <h1 className="mt-5 text-[32px] font-extrabold leading-[1.15] text-[#1a1a2e] md:text-[40px]">
-                Connect Your Store{" "}
+
+              <h1 className="mt-5" style={{ fontSize: 38, fontWeight: 800, lineHeight: 1.15, color: "#1a1a2e" }}>
+                Connect Your Store
                 <br />
-                to <span className="text-primary">Twedot</span>
+                to <span style={{ color: "#6B4EFF" }}>Twedot</span>
               </h1>
-              <p className="mt-4 max-w-sm text-[15px] leading-[1.6] text-[#4a4a68]">
+
+              <p className="mt-4" style={{ maxWidth: 360, fontSize: 15, lineHeight: 1.65, color: "#4a4a68" }}>
                 Bring your online store to Twedot and let more people discover your products.
               </p>
+
               <button
-                onClick={() => router.push("/connect/new")}
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-[14px] font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/30"
+                className="mt-6 inline-flex items-center gap-2 rounded-full text-white"
+                style={{ background: "#6B4EFF", padding: "12px 28px", fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(107,78,255,0.3)" }}
               >
                 Get Started
                 <IoChevronForward size={15} />
               </button>
             </div>
 
-            {/* Right illustration area */}
-            <div className="relative hidden flex-shrink-0 md:flex md:w-[460px] md:items-center md:justify-center md:py-8">
-              {/* Storefront illustration */}
-              <div className="relative">
-                {/* Phone / store mockup */}
-                <div className="relative z-10 h-[220px] w-[180px] rounded-2xl border-2 border-white/60 bg-white/80 p-3 shadow-2xl backdrop-blur-sm">
-                  <div className="flex h-full flex-col items-center justify-center gap-3 rounded-xl bg-gradient-to-b from-primary/5 to-primary/10">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
-                      <IoStorefrontOutline size={28} className="text-primary" />
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="h-2 w-20 rounded-full bg-primary/20" />
-                      <div className="h-2 w-14 rounded-full bg-primary/15" />
-                    </div>
-                    <div className="rounded-full bg-primary px-4 py-1.5">
-                      <span className="text-[10px] font-bold text-white">Shop Now</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Floating Shopify badge */}
-                <div className="absolute -left-12 top-2 z-20 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#95BF47] shadow-lg">
-                  <span className="text-[22px] font-black text-white">S</span>
-                </div>
-                <p className="absolute -left-14 top-[70px] text-[11px] font-semibold text-[#4a4a68]">Shopify</p>
-
-                {/* Floating WooCommerce badge */}
-                <div className="absolute -right-10 top-10 z-20 flex h-12 w-20 items-center justify-center rounded-2xl bg-[#7F54B3] shadow-lg">
-                  <span className="text-[14px] font-black text-white tracking-tight">Woo</span>
-                </div>
-                <p className="absolute -right-16 top-[72px] text-[11px] font-semibold text-[#4a4a68]">WooCommerce</p>
-
-                {/* Floating code badge */}
-                <div className="absolute -right-6 bottom-6 z-20 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/20 shadow-lg backdrop-blur-sm">
-                  <IoCodeSlashOutline size={22} className="text-primary" />
-                </div>
-                <p className="absolute -right-14 bottom-0 text-[10px] font-semibold text-[#4a4a68]">Other Platforms</p>
-
-                {/* Shopping bags decorative */}
-                <div className="absolute -left-6 bottom-4 z-0 flex h-10 w-10 items-center justify-center rounded-xl bg-green-400/20">
-                  <span className="text-[18px]">🛍️</span>
-                </div>
-              </div>
-
-              {/* Sparkles */}
-              <Sparkle className="absolute right-8 top-6 h-6 w-6 text-primary/30" />
-              <Sparkle className="absolute left-16 top-10 h-4 w-4 text-primary/20" />
-              <Sparkle className="absolute right-24 bottom-10 h-5 w-5 text-primary/25" />
+            {/* Right illustration */}
+            <div className="hidden flex-shrink-0 md:block">
+              <HeroIllustration />
             </div>
           </div>
 
-          {/* Background decorative circles */}
-          <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-primary/[0.06]" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-primary/[0.05]" />
+          {/* Background decorative shapes */}
+          <div className="pointer-events-none absolute rounded-full" style={{ width: 300, height: 300, right: -60, top: -80, background: "rgba(107,78,255,0.04)" }} />
+          <div className="pointer-events-none absolute rounded-full" style={{ width: 200, height: 200, left: -40, bottom: -60, background: "rgba(107,78,255,0.03)" }} />
         </section>
 
-        {/* ── Supported Platforms ─────────────────────────────────────── */}
+        {/* ══════════════════════════════════════════════════════════════
+            SUPPORTED PLATFORMS
+            ══════════════════════════════════════════════════════════ */}
         <section className="mt-10">
           <div className="flex items-end justify-between">
             <div>
-              <h2 className="text-[20px] font-bold text-text">Supported Platforms</h2>
-              <p className="mt-1 text-[13px] text-light-text">Choose a platform to connect your store</p>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text)" }}>Supported Platforms</h2>
+              <p style={{ marginTop: 4, fontSize: 13, color: "var(--light-text)" }}>Choose a platform to connect your store</p>
             </div>
-            <button className="flex items-center gap-1 text-[13px] font-semibold text-primary hover:underline">
+            <button className="flex items-center gap-1" style={{ fontSize: 13, fontWeight: 600, color: "#6B4EFF" }}>
               View all platforms
               <IoChevronForward size={14} />
             </button>
@@ -217,74 +335,72 @@ export default function ConnectPage() {
 
           <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Custom Website */}
-            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-5 py-5 text-left transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <IoGlobeOutline size={24} className="text-primary" />
-              </div>
+            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-5 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+              <CustomWebsiteIcon />
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-bold text-text">Custom Website</p>
-                <p className="mt-0.5 text-[11px] text-light-text">Connect any website with our API</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Custom Website</p>
+                <p style={{ marginTop: 3, fontSize: 11, color: "var(--light-text)" }}>Connect any website with our API</p>
               </div>
               <IoChevronForward size={16} className="flex-shrink-0 text-light-text transition-colors group-hover:text-primary" />
             </button>
 
             {/* Shopify */}
-            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-5 py-5 text-left transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
-              <ShopifyLogo className="h-12 w-12 flex-shrink-0" />
+            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-5 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+              <ShopifyBagLogo size={48} />
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-bold text-text">Shopify</p>
-                <p className="mt-0.5 text-[11px] text-light-text">Link your Shopify store</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Shopify</p>
+                <p style={{ marginTop: 3, fontSize: 11, color: "var(--light-text)" }}>Link your Shopify store</p>
               </div>
               <IoChevronForward size={16} className="flex-shrink-0 text-light-text transition-colors group-hover:text-primary" />
             </button>
 
             {/* WooCommerce */}
-            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-5 py-5 text-left transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
-              <WooLogo className="h-12 w-12 flex-shrink-0" />
+            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-5 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+              <WooCommerceLogo size={48} />
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-bold text-text">WooCommerce</p>
-                <p className="mt-0.5 text-[11px] text-light-text">Connect your WooCommerce store</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>WooCommerce</p>
+                <p style={{ marginTop: 3, fontSize: 11, color: "var(--light-text)" }}>Connect your WooCommerce store</p>
               </div>
               <IoChevronForward size={16} className="flex-shrink-0 text-light-text transition-colors group-hover:text-primary" />
             </button>
 
             {/* Other Platforms */}
-            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-5 py-5 text-left transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <IoCodeSlashOutline size={24} className="text-primary" />
-              </div>
+            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-5 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+              <OtherPlatformsIcon />
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-bold text-text">Other Platforms</p>
-                <p className="mt-0.5 text-[11px] text-light-text">Use our API for custom integrations</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Other Platforms</p>
+                <p style={{ marginTop: 3, fontSize: 11, color: "var(--light-text)" }}>Use our API for custom integrations</p>
               </div>
               <IoChevronForward size={16} className="flex-shrink-0 text-light-text transition-colors group-hover:text-primary" />
             </button>
           </div>
         </section>
 
-        {/* ── Your Connected Stores ───────────────────────────────────── */}
+        {/* ══════════════════════════════════════════════════════════════
+            YOUR CONNECTED STORES
+            ══════════════════════════════════════════════════════════ */}
         <section className="mt-10">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <IoStorefrontOutline size={20} className="text-primary" />
+              <div className="flex items-center justify-center rounded-xl" style={{ width: 42, height: 42, background: "rgba(107,78,255,0.1)" }}>
+                <IoStorefrontOutline size={22} style={{ color: "#6B4EFF" }} />
               </div>
               <div>
-                <h2 className="text-[20px] font-bold text-text">Your Connected Stores</h2>
-                <p className="mt-0.5 text-[13px] text-light-text">Manage your connected stores and update settings anytime.</p>
+                <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text)" }}>Your Connected Stores</h2>
+                <p style={{ marginTop: 3, fontSize: 13, color: "var(--light-text)" }}>Manage your connected stores and update settings anytime.</p>
               </div>
             </div>
             <button
-              onClick={() => router.push("/connect/new")}
-              className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
+              className="flex items-center gap-2 rounded-full text-white"
+              style={{ background: "#6B4EFF", padding: "10px 22px", fontSize: 13, fontWeight: 600 }}
             >
               Connect a Store
               <IoAddOutline size={16} />
             </button>
           </div>
 
-          {/* Store list */}
-          <div className="mt-5 overflow-hidden rounded-2xl border border-border">
+          {/* Store list table */}
+          <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-background">
             {loading ? (
               <div className="divide-y divide-border">
                 {[0, 1].map((i) => (
@@ -294,124 +410,152 @@ export default function ConnectPage() {
                       <div className="h-4 w-40 animate-pulse rounded bg-feed-bg" />
                       <div className="h-3 w-56 animate-pulse rounded bg-feed-bg" />
                     </div>
+                    <div className="space-y-2">
+                      <div className="h-3 w-20 animate-pulse rounded bg-feed-bg" />
+                      <div className="h-3 w-28 animate-pulse rounded bg-feed-bg" />
+                    </div>
+                    <div className="h-8 w-20 animate-pulse rounded-full bg-feed-bg" />
                   </div>
                 ))}
               </div>
             ) : stores.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 px-8 py-16 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-feed-bg">
+                <div className="flex items-center justify-center rounded-2xl" style={{ width: 64, height: 64, background: "var(--feed-bg)" }}>
                   <IoStorefrontOutline size={28} className="text-light-text" />
                 </div>
-                <p className="text-[15px] font-semibold text-text">No connected stores yet</p>
-                <p className="max-w-xs text-[13px] text-light-text">
+                <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text)" }}>No connected stores yet</p>
+                <p style={{ maxWidth: 300, fontSize: 13, color: "var(--light-text)" }}>
                   Connect your first store and start showing your products to the Twedot network.
                 </p>
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {stores.map((store) => (
-                  <div key={store.id} className="flex items-center gap-5 px-6 py-4 transition-colors hover:bg-feed-bg/50">
-                    {/* Store image */}
-                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-feed-bg">
-                      {store.store_image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={store.store_image_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <IoStorefrontOutline size={24} className="text-light-text" />
-                      )}
-                    </div>
-
-                    {/* Name + URL */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-[15px] font-bold text-text">{store.store_name || domainOf(store.store_url)}</p>
-                        {store.verified && (
-                          <IoCheckmarkCircle size={16} className="flex-shrink-0 text-primary" />
-                        )}
-                      </div>
-                      <div className="mt-1 flex items-center gap-1.5 text-[12px] text-light-text">
-                        <IoOpenOutline size={12} />
-                        <span className="truncate">{store.store_url.replace(/^https?:\/\//, "")}</span>
-                      </div>
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex flex-shrink-0 flex-col items-start gap-1 min-w-[140px]">
-                      <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${
-                        store.connection_status === "active" ? "text-green-500" : store.connection_status === "pending" ? "text-yellow-500" : "text-red-500"
-                      }`}>
-                        <span className={`h-2 w-2 rounded-full ${
-                          store.connection_status === "active" ? "bg-green-500" : store.connection_status === "pending" ? "bg-yellow-500" : "bg-red-500"
-                        }`} />
-                        {store.connection_status === "active" ? "Connected" : store.connection_status === "pending" ? "Pending" : "Error"}
-                      </span>
-                      <span className="flex items-center gap-1 text-[11px] text-light-text">
-                        <IoTimeOutline size={11} />
-                        Last synced: {timeAgo(store.last_synced_at)}
-                      </span>
-                    </div>
-
-                    {/* Checkout Options */}
-                    <div className="hidden flex-shrink-0 flex-col items-start gap-1 min-w-[120px] lg:flex">
-                      <span className="text-[12px] font-semibold text-text">Checkout Options</span>
-                      <div className="flex items-center gap-2">
-                        {(store.checkout_configuration?.twedotEnabled !== false) && (
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full border border-border" title="Twedot Checkout">
-                            <IoWalletOutline size={14} className="text-primary" />
-                          </div>
-                        )}
-                        {store.checkout_configuration?.externalEnabled && (
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full border border-border" title="External Checkout">
-                            <IoOpenOutline size={14} className="text-light-text" />
+                {stores.map((store) => {
+                  const domain = store.store_url.replace(/^https?:\/\//, "");
+                  return (
+                    <div key={store.id} className="flex items-center gap-5 px-6 py-4 transition-colors hover:bg-feed-bg/40">
+                      {/* Store image */}
+                      <div className="flex-shrink-0 overflow-hidden rounded-xl border border-border" style={{ width: 64, height: 64, background: "var(--feed-bg)" }}>
+                        {store.store_image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={store.store_image_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <IoStorefrontOutline size={24} className="text-light-text" />
                           </div>
                         )}
                       </div>
-                    </div>
 
-                    {/* Manage */}
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <button
-                        onClick={() => router.push(`/connect/${store.id}`)}
-                        className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-[12px] font-semibold text-text transition-colors hover:border-primary hover:text-primary"
-                      >
-                        Manage
-                        <IoChevronForward size={13} />
-                      </button>
-                      <button className="flex h-8 w-8 items-center justify-center rounded-full text-light-text transition-colors hover:bg-feed-bg hover:text-text">
-                        <IoEllipsisHorizontal size={18} />
-                      </button>
+                      {/* Name + URL */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{store.store_name || domain}</span>
+                          {(store.verified || store.connection_status === "active") && (
+                            <IoCheckmarkCircle size={16} style={{ color: "#6B4EFF", flexShrink: 0 }} />
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-center gap-1.5" style={{ fontSize: 12, color: "var(--light-text)" }}>
+                          <IoOpenOutline size={12} />
+                          <span className="truncate">{domain}</span>
+                        </div>
+                      </div>
+
+                      {/* Status + Last synced */}
+                      <div className="hidden flex-shrink-0 flex-col items-start gap-1 sm:flex" style={{ minWidth: 150 }}>
+                        <span className="inline-flex items-center gap-1.5" style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: store.connection_status === "active" ? "#22C55E" : store.connection_status === "pending" ? "#EAB308" : "#EF4444",
+                        }}>
+                          <span style={{
+                            width: 8, height: 8, borderRadius: "50%", display: "inline-block",
+                            background: store.connection_status === "active" ? "#22C55E" : store.connection_status === "pending" ? "#EAB308" : "#EF4444",
+                          }} />
+                          {store.connection_status === "active" ? "Connected" : store.connection_status === "pending" ? "Pending" : "Error"}
+                        </span>
+                        <span className="flex items-center gap-1" style={{ fontSize: 11, color: "var(--light-text)" }}>
+                          <IoTimeOutline size={11} />
+                          Last synced: {timeAgo(store.last_synced_at)}
+                        </span>
+                      </div>
+
+                      {/* Checkout Options */}
+                      <div className="hidden flex-shrink-0 flex-col items-start gap-1 lg:flex" style={{ minWidth: 120 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>Checkout Options</span>
+                        <div className="flex items-center gap-2">
+                          {(store.checkout_configuration?.twedotEnabled !== false) && (
+                            <div className="flex items-center justify-center rounded-full border border-border" style={{ width: 30, height: 30 }} title="Twedot Checkout">
+                              <IoWalletOutline size={15} style={{ color: "#6B4EFF" }} />
+                            </div>
+                          )}
+                          {store.checkout_configuration?.externalEnabled && (
+                            <div className="flex items-center justify-center rounded-full border border-border" style={{ width: 30, height: 30 }} title="External Checkout">
+                              <IoOpenOutline size={15} style={{ color: "var(--light-text)" }} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Manage + Menu */}
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <button
+                          onClick={() => router.push(`/connect/${store.id}`)}
+                          className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 transition-colors hover:border-primary hover:text-primary"
+                          style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}
+                        >
+                          Manage
+                          <IoChevronForward size={13} />
+                        </button>
+                        <button className="flex items-center justify-center rounded-full transition-colors hover:bg-feed-bg" style={{ width: 32, height: 32, color: "var(--light-text)" }}>
+                          <IoEllipsisHorizontal size={18} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         </section>
 
-        {/* ── Bottom CTA Banner ───────────────────────────────────────── */}
-        <section className="mt-10 mb-8 overflow-hidden rounded-3xl" style={{ background: "linear-gradient(135deg, #EDE9FE 0%, #E8DEF8 50%, #DDD6FE 100%)" }}>
-          <div className="flex items-center justify-between px-8 py-10 md:px-12">
+        {/* ══════════════════════════════════════════════════════════════
+            BOTTOM CTA BANNER
+            ══════════════════════════════════════════════════════════ */}
+        <section
+          className="relative mt-10 mb-8 overflow-hidden rounded-3xl"
+          style={{ background: "linear-gradient(135deg, #EDE9FE 0%, #E0D4FC 40%, #D8CCFA 70%, #DDD6FE 100%)" }}
+        >
+          <div className="relative z-10 flex items-center justify-between px-8 py-10 md:px-12">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/15">
-                <IoTrendingUpOutline size={24} className="text-primary" />
+              {/* Trending icon */}
+              <div className="flex-shrink-0 flex items-center justify-center rounded-xl" style={{ width: 48, height: 48, background: "rgba(107,78,255,0.15)" }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 17l6-6 4 4 8-8" stroke="#6B4EFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 7h7v7" stroke="#6B4EFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
               <div>
-                <h3 className="text-[22px] font-extrabold text-[#1a1a2e]">Grow Your Business with Twedot Connect</h3>
-                <p className="mt-2 max-w-lg text-[14px] leading-[1.6] text-[#4a4a68]">
+                <h3 style={{ fontSize: 22, fontWeight: 800, color: "#1a1a2e" }}>
+                  Grow Your Business with Twedot Connect
+                </h3>
+                <p className="mt-2" style={{ maxWidth: 500, fontSize: 14, lineHeight: 1.6, color: "#4a4a68" }}>
                   Reach more customers, showcase your products, and grow your brand across the Twedot network.
                 </p>
               </div>
             </div>
-            <button className="hidden flex-shrink-0 items-center gap-2 rounded-full bg-primary px-6 py-3 text-[14px] font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 hover:shadow-xl md:flex">
+
+            <button
+              className="hidden flex-shrink-0 items-center gap-2 rounded-full text-white md:flex"
+              style={{ background: "#6B4EFF", padding: "12px 28px", fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(107,78,255,0.3)" }}
+            >
               Learn More
               <IoChevronForward size={15} />
             </button>
           </div>
 
-          {/* Decorative elements */}
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3">
-            <div className="absolute right-10 top-1/2 h-20 w-20 -translate-y-1/2 rounded-full bg-primary/[0.08]" />
-            <div className="absolute right-32 bottom-4 h-10 w-10 rounded-full bg-primary/[0.06]" />
+          {/* Right-side decorative illustration */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full" style={{ width: 260 }}>
+            <CtaIllustration />
           </div>
         </section>
 
