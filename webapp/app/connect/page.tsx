@@ -1,43 +1,59 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   IoStorefrontOutline,
   IoAddOutline,
   IoChevronForward,
-  IoChevronBack,
-  IoGlobeOutline,
+  IoArrowBack,
   IoCloseOutline,
   IoCheckmarkCircle,
-  IoTrashOutline,
   IoCartOutline,
-  IoOpenOutline,
   IoTimeOutline,
   IoLinkOutline,
-  IoGridOutline,
-  IoListOutline,
-  IoArrowBack,
-  IoEllipsisVertical,
   IoCodeSlashOutline,
   IoSyncOutline,
   IoCheckmark,
   IoArrowForward,
+  IoSettingsOutline,
+  IoEllipsisVertical,
   IoInformationCircleOutline,
-  IoLayersOutline,
-  IoRefreshOutline,
-  IoRocketOutline,
+  IoSearchOutline,
+  IoTrashOutline,
+  IoCubeOutline,
   IoEyeOutline,
   IoBagHandleOutline,
-  IoCubeOutline,
-  IoFlashOutline,
+  IoNotificationsOutline,
+  IoCardOutline,
+  IoColorPaletteOutline,
   IoShieldCheckmarkOutline,
-  IoSettingsOutline,
-  IoTrendingUpOutline,
-  IoSearchOutline,
+  IoOptionsOutline,
+  IoFlashOutline,
+  IoGridOutline,
 } from "react-icons/io5";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Design tokens ──────────────────────────────────────────────────────────
+
+const P = {
+  primary: "#6B4EFF",
+  primaryLight: "#EDE9FF",
+  primaryDark: "#5438DB",
+  bg: "#FFFFFF",
+  bg2: "#F8F7FC",
+  fg: "#1A1A2E",
+  fg2: "#555",
+  muted: "#999",
+  green: "#22C55E",
+  greenSoft: "#ECFDF5",
+  red: "#EF4444",
+  redSoft: "#FEF2F2",
+  orange: "#F59E0B",
+  blue: "#3B82F6",
+  border: "#E5E5EE",
+  radius: 12,
+};
+
+// ─── Types & Mock Data ──────────────────────────────────────────────────────
 
 interface Store {
   id: string;
@@ -64,21 +80,19 @@ interface Product {
   category: string;
 }
 
-// ─── Mock Data ───────────────────────────────────────────────────────────────
-
 const STORES: Store[] = [
   {
     id: "s1", name: "Creator's Fashion Store", url: "https://creatorsfashion.com",
-    platform: "custom_api", status: "active", products: 1200, views: 24500, orders: 342,
+    platform: "custom_api", status: "active", products: 120, views: 24500, orders: 342,
     connectedAt: "2026-11-20T10:30:00Z", lastSync: "2026-11-26T08:22:00Z",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=500&fit=crop",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop",
     checkout: { mode: "both", syncFreq: "Every 15 minutes" },
   },
   {
     id: "s2", name: "BizMart Online", url: "https://bizmart.com",
-    platform: "shopify", status: "active", products: 850, views: 18200, orders: 198,
+    platform: "shopify", status: "active", products: 85, views: 18200, orders: 198,
     connectedAt: "2026-11-18T08:15:00Z", lastSync: "2026-11-26T07:50:00Z",
-    image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=500&fit=crop",
+    image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=400&fit=crop",
     checkout: { mode: "twedot", syncFreq: "Every 30 minutes" },
   },
 ];
@@ -100,14 +114,13 @@ const PRODUCTS: Record<string, Product[]> = {
   ],
 };
 
-const PLAT: Record<string, { label: string; tag: string }> = {
-  custom_api: { label: "Custom API", tag: "bg-violet-100 text-violet-700" },
-  shopify: { label: "Shopify", tag: "bg-green-100 text-green-700" },
-  woocommerce: { label: "WooCommerce", tag: "bg-fuchsia-100 text-fuchsia-700" },
+const PLAT_META: Record<string, { label: string }> = {
+  custom_api: { label: "Custom API" },
+  shopify: { label: "Shopify" },
+  woocommerce: { label: "WooCommerce" },
 };
 
 const fmt = (n: number) => `₦${n.toLocaleString()}`;
-const short = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K` : `${n}`;
 
 function ago(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -117,45 +130,596 @@ function ago(d: string) {
   return h < 24 ? `${h}h ago` : `${Math.floor(h / 24)}d ago`;
 }
 
-// ─── Shared Nav ──────────────────────────────────────────────────────────────
+const ACTIVITY = [
+  { id: "a1", action: "Product synced", detail: "Classic Leather Handbag updated", store: "Creator's Fashion Store", time: "2m ago" },
+  { id: "a2", action: "New order", detail: "Order #1024 — ₦85,000", store: "Creator's Fashion Store", time: "15m ago" },
+  { id: "a3", action: "Store connected", detail: "BizMart Online linked via Shopify", store: "BizMart Online", time: "1h ago" },
+  { id: "a4", action: "Sync completed", detail: "85 products synced", store: "BizMart Online", time: "3h ago" },
+];
 
-function Nav({ tab, onTab, onAdd }: { tab: string; onTab: (t: string) => void; onAdd: () => void }) {
+// ─── Settings Sidebar Items (from wireframe screen 1) ──────────────────────
+
+const SETTINGS_ITEMS = [
+  { id: "account", label: "Account Settings", icon: <IoSettingsOutline size={16} /> },
+  { id: "privacy", label: "Privacy & Security", icon: <IoShieldCheckmarkOutline size={16} /> },
+  { id: "stores", label: "Connected Stores", icon: <IoStorefrontOutline size={16} /> },
+  { id: "notifs", label: "Notifications", icon: <IoNotificationsOutline size={16} /> },
+  { id: "payment", label: "Payment Methods", icon: <IoCardOutline size={16} /> },
+  { id: "appearance", label: "Appearance", icon: <IoColorPaletteOutline size={16} /> },
+  { id: "other", label: "Other Preferences", icon: <IoOptionsOutline size={16} /> },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 2-4: Connect Wizard (Choose Platform → Enter Details → Config)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ConnectWizard({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const [step, setStep] = useState(0); // 0=choose platform, 1=enter details, 2=configuration, 3=done
+  const [plat, setPlat] = useState("");
+  const [url, setUrl] = useState("");
+  const [co, setCo] = useState<"both" | "twedot">("both");
+  const [sync, setSync] = useState("15");
+  const [busy, setBusy] = useState(false);
+
+  const stepLabels = ["Choose Platform", "Enter Details", "Authorize", "Confirm"];
+
+  function next() {
+    if (step === 2) {
+      setBusy(true);
+      setTimeout(() => { setBusy(false); setStep(3); }, 1500);
+      return;
+    }
+    setStep(step + 1);
+  }
+
+  const canContinue = step === 0 ? !!plat : step === 1 ? !!url.trim() : true;
+
+  const platforms = [
+    { id: "custom_api", name: "Custom Website", desc: "Connect your custom-built store or business website", icon: <IoCodeSlashOutline size={28} /> },
+    { id: "shopify", name: "Shopify", desc: "Connect your Shopify store", icon: <ShopifyLogo /> },
+    { id: "woocommerce", name: "WooCommerce", desc: "Connect your WooCommerce store", icon: <WooLogo /> },
+  ];
+
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background">
-      <div className="mx-auto flex h-[52px] max-w-6xl items-center justify-between px-5">
-        <div className="flex items-center gap-6">
-          <Link href="/stories" className="flex items-center gap-1.5 text-light-text hover:text-text transition-colors">
-            <IoArrowBack size={16} />
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
-              <IoStorefrontOutline size={12} className="text-white" />
-            </div>
-            <span className="text-[14px] font-bold text-text tracking-tight">Connect</span>
-          </div>
-          <nav className="ml-4 flex items-center">
-            {["stores", "activity"].map(t => (
-              <button key={t} onClick={() => onTab(t)}
-                className={`px-3 py-1.5 text-[13px] font-medium capitalize transition-colors rounded-lg ${
-                  tab === t ? "bg-feed-bg text-text" : "text-light-text hover:text-text"
-                }`}>{t}</button>
-            ))}
-          </nav>
-        </div>
-        <button onClick={onAdd}
-          className="flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-[12px] font-semibold text-white hover:bg-primary/90 transition-colors">
-          <IoAddOutline size={14} /> New Store
+    <div style={{ minHeight: "100vh", background: P.bg, fontFamily: "'Poppins', system-ui, sans-serif" }}>
+      {/* Top bar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 32px", borderBottom: `1px solid ${P.border}` }}>
+        <button onClick={step > 0 && step < 3 ? () => setStep(step - 1) : onClose}
+          style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", color: P.fg, padding: 0 }}>
+          <IoArrowBack size={20} />
         </button>
+        <span style={{ fontSize: 18, fontWeight: 700, color: P.fg }}>
+          {step < 3 ? "Connect a Store" : "Store Configuration"}
+        </span>
       </div>
-    </header>
+
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px" }}>
+
+        {/* ── Step 0: Choose Platform (Screen 2) ── */}
+        {step === 0 && (
+          <>
+            <p style={{ fontSize: 15, color: P.fg2, margin: "0 0 28px", fontWeight: 400 }}>
+              Select the type of store you want to connect
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              {platforms.map(p => (
+                <button key={p.id} onClick={() => setPlat(p.id)}
+                  style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+                    padding: "24px 12px", borderRadius: 14,
+                    border: `2px solid ${plat === p.id ? P.primary : P.border}`,
+                    background: plat === p.id ? P.primaryLight : P.bg,
+                    cursor: "pointer", textAlign: "center", position: "relative", transition: "all 0.15s",
+                  }}>
+                  {plat === p.id && (
+                    <div style={{ position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 10, background: P.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <IoCheckmark size={12} color="#fff" />
+                    </div>
+                  )}
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: P.bg2, display: "flex", alignItems: "center", justifyContent: "center", color: P.primary }}>
+                    {p.icon}
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>{p.name}</div>
+                  <div style={{ fontSize: 11, color: P.muted, fontWeight: 400, lineHeight: 1.4 }}>{p.desc}</div>
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 32 }}>
+              <button onClick={next} disabled={!canContinue}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, height: 44, padding: "0 24px",
+                  borderRadius: 10, background: canContinue ? P.primary : P.border,
+                  color: canContinue ? "#fff" : P.muted, border: "none",
+                  fontSize: 14, fontWeight: 600, cursor: canContinue ? "pointer" : "default",
+                }}>
+                Continue <IoArrowForward size={16} />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── Step 1: Enter Details (Screen 3) ── */}
+        {step === 1 && (
+          <>
+            {/* Stepper */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, marginBottom: 32 }}>
+              {stepLabels.map((label, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center",
+                      background: i < 1 ? P.primary : i === 1 ? P.primary : P.bg2,
+                      color: i <= 1 ? "#fff" : P.muted, fontSize: 12, fontWeight: 700,
+                      border: i > 1 ? `2px solid ${P.border}` : "none",
+                    }}>
+                      {i < 1 ? <IoCheckmark size={14} /> : i + 1}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: i <= 1 ? 600 : 400, color: i <= 1 ? P.primary : P.muted, whiteSpace: "nowrap" }}>{label}</span>
+                  </div>
+                  {i < 3 && <div style={{ width: 40, height: 2, background: i < 1 ? P.primary : P.border, margin: "0 4px", marginBottom: 20 }} />}
+                </div>
+              ))}
+            </div>
+
+            {/* Illustration area */}
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ width: 80, height: 80, margin: "0 auto 16px", borderRadius: 20, background: P.primaryLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IoCartOutline size={36} color={P.primary} />
+              </div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: P.fg, margin: "0 0 6px" }}>Enter Your Store URL</h2>
+              <p style={{ fontSize: 13, color: P.muted, margin: 0, fontWeight: 400 }}>Provide the URL of your store or website to connect it with Twedot.</p>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://creatorsstore.com"
+                style={{
+                  width: "100%", height: 48, borderRadius: 10, border: `1px solid ${P.border}`,
+                  padding: "0 16px", fontSize: 15, color: P.fg, outline: "none", boxSizing: "border-box",
+                  transition: "border 0.15s",
+                }}
+                onFocus={e => (e.currentTarget.style.borderColor = P.primary)}
+                onBlur={e => (e.currentTarget.style.borderColor = P.border)} />
+            </div>
+
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", borderRadius: 10, background: P.bg2 }}>
+              <IoInformationCircleOutline size={18} color={P.blue} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span style={{ fontSize: 12, color: P.fg2, lineHeight: 1.5 }}>
+                Make sure your website supports Twedot integration (for best results, use a secure HTTPS URL).
+              </span>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
+              <button onClick={onClose}
+                style={{ fontSize: 14, fontWeight: 500, color: P.fg2, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                Cancel
+              </button>
+              <button onClick={next} disabled={!canContinue}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, height: 44, padding: "0 24px",
+                  borderRadius: 10, background: canContinue ? P.primary : P.border,
+                  color: canContinue ? "#fff" : P.muted, border: "none",
+                  fontSize: 14, fontWeight: 600, cursor: canContinue ? "pointer" : "default",
+                }}>
+                Continue <IoArrowForward size={16} />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── Step 2: Store Configuration (Screen 4) ── */}
+        {step === 2 && (
+          <>
+            {/* Store card */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", borderRadius: 14, border: `1px solid ${P.border}`, marginBottom: 28 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: P.primaryLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IoStorefrontOutline size={22} color={P.primary} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: P.fg }}>
+                  {url || "Your Store"}
+                </div>
+                <div style={{ fontSize: 12, color: P.muted }}>{url || "https://..."}</div>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 600, color: P.green, background: P.greenSoft, padding: "4px 12px", borderRadius: 20 }}>Connected</span>
+            </div>
+
+            {/* Checkout Preferences */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: P.fg, margin: "0 0 4px" }}>Checkout Preferences</h3>
+              <p style={{ fontSize: 13, color: P.muted, margin: "0 0 14px" }}>Choose how buyers can purchase products from this store.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 16px", borderRadius: 12, border: `1px solid ${co === "both" ? P.primary : P.border}`, cursor: "pointer", background: co === "both" ? P.primaryLight : P.bg }}>
+                  <input type="radio" name="checkout" checked={co === "both"} onChange={() => setCo("both")}
+                    style={{ accentColor: P.primary, marginTop: 2, width: 18, height: 18, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>Both Twedot & External Checkout</div>
+                    <div style={{ fontSize: 12, color: P.muted, marginTop: 2 }}>Let buyers choose between Twedot checkout or your website checkout.</div>
+                  </div>
+                </label>
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 16px", borderRadius: 12, border: `1px solid ${co === "twedot" ? P.primary : P.border}`, cursor: "pointer", background: co === "twedot" ? P.primaryLight : P.bg }}>
+                  <input type="radio" name="checkout" checked={co === "twedot"} onChange={() => setCo("twedot")}
+                    style={{ accentColor: P.primary, marginTop: 2, width: 18, height: 18, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>Twedot Checkout Only</div>
+                    <div style={{ fontSize: 12, color: P.muted, marginTop: 2 }}>Buyers will use Twedot's secure checkout.</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Sync Settings */}
+            <div style={{ marginBottom: 28 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: P.fg, margin: "0 0 4px" }}>Sync Settings</h3>
+              <p style={{ fontSize: 13, color: P.muted, margin: "0 0 14px" }}>Control how often we fetch your products.</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <IoSyncOutline size={18} color={P.primary} />
+                <select value={sync} onChange={e => setSync(e.target.value)}
+                  style={{ flex: 1, height: 44, borderRadius: 10, border: `1px solid ${P.border}`, padding: "0 14px", fontSize: 14, color: P.fg, background: P.bg, cursor: "pointer", outline: "none" }}>
+                  <option value="5">Every 5 minutes</option>
+                  <option value="15">Every 15 minutes</option>
+                  <option value="30">Every 30 minutes</option>
+                  <option value="60">Every hour</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <button onClick={() => setStep(1)}
+                style={{ fontSize: 14, fontWeight: 500, color: P.fg2, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                Back
+              </button>
+              <button onClick={next} disabled={busy}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, height: 44, padding: "0 24px",
+                  borderRadius: 10, background: P.primary, color: "#fff", border: "none",
+                  fontSize: 14, fontWeight: 600, cursor: "pointer",
+                }}>
+                {busy ? <><IoSyncOutline size={16} style={{ animation: "spin 1s linear infinite" }} /> Connecting...</> : "Connect Store"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── Step 3: Success ── */}
+        {step === 3 && (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <div style={{ width: 72, height: 72, borderRadius: 36, background: P.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <IoCheckmarkCircle size={40} color={P.green} />
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: P.fg, margin: "0 0 8px" }}>Store Connected!</h2>
+            <p style={{ fontSize: 14, color: P.muted, margin: "0 0 24px" }}>Your products are syncing. This may take a few minutes.</p>
+            <button onClick={onDone}
+              style={{ height: 44, padding: "0 28px", borderRadius: 10, background: P.primary, color: "#fff", border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              View Store
+            </button>
+          </div>
+        )}
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+    </div>
   );
 }
 
-// ─── Platform Logos ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 5: Store Detail & Management
+// ═══════════════════════════════════════════════════════════════════════════
 
-function ShopifyLogo({ s = 24 }: { s?: number }) {
+function StoreDetailView({ store, onBack }: { store: Store; onBack: () => void }) {
+  const [tab, setTab] = useState<"overview" | "settings" | "products" | "activity">("overview");
+  const products = PRODUCTS[store.id] || [];
+  const meta = PLAT_META[store.platform];
+
+  const tabs: { id: typeof tab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "settings", label: "Settings" },
+    { id: "products", label: "Products" },
+    { id: "activity", label: "Activity" },
+  ];
+
   return (
-    <svg width={s} height={s} viewBox="0 0 109.5 124.5" fill="none">
+    <div style={{ minHeight: "100vh", background: P.bg, fontFamily: "'Poppins', system-ui, sans-serif" }}>
+      {/* Back link */}
+      <div style={{ padding: "16px 32px", borderBottom: `1px solid ${P.border}` }}>
+        <button onClick={onBack}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: P.muted, cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 500 }}>
+          <IoArrowBack size={16} /> Back to Connected Stores
+        </button>
+      </div>
+
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 32px" }}>
+        {/* Store header — matches wireframe screen 5 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 14, overflow: "hidden", border: `1px solid ${P.border}`, flexShrink: 0 }}>
+            <img src={store.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color: P.fg }}>{store.name}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#fff", background: P.green, padding: "3px 12px", borderRadius: 20 }}>Active</span>
+            </div>
+            <div style={{ fontSize: 13, color: P.muted, marginTop: 2 }}>{store.url}</div>
+          </div>
+          <button style={{ background: "none", border: "none", cursor: "pointer", color: P.muted, padding: 4 }}>
+            <IoEllipsisVertical size={20} />
+          </button>
+        </div>
+
+        {/* Tabs — matches wireframe */}
+        <div style={{ display: "flex", gap: 0, borderBottom: `2px solid ${P.border}`, marginBottom: 24 }}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              style={{
+                padding: "10px 20px", fontSize: 14, fontWeight: tab === t.id ? 600 : 400,
+                color: tab === t.id ? P.primary : P.muted,
+                background: "none", border: "none", cursor: "pointer",
+                borderBottom: tab === t.id ? `2px solid ${P.primary}` : "2px solid transparent",
+                marginBottom: -2, transition: "all 0.15s",
+              }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Overview tab (Screen 5 wireframe) ── */}
+        {tab === "overview" && (
+          <div>
+            {/* Two cards side by side */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+              {/* Connection Status */}
+              <div style={{ padding: "20px", borderRadius: 14, border: `1px solid ${P.border}` }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: P.fg, marginBottom: 12 }}>Connection Status</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 5, background: P.green }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>Active</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 5, background: P.green }} />
+                  <span style={{ fontSize: 12, color: P.muted }}>Last synced: {ago(store.lastSync)}</span>
+                </div>
+                <button style={{
+                  display: "flex", alignItems: "center", gap: 6, height: 34, padding: "0 16px",
+                  borderRadius: 8, border: `1px solid ${P.primary}`, background: P.bg,
+                  color: P.primary, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                }}>
+                  <IoSyncOutline size={14} /> Sync Now
+                </button>
+              </div>
+
+              {/* Products Available */}
+              <div style={{ padding: "20px", borderRadius: 14, border: `1px solid ${P.border}` }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: P.fg, marginBottom: 12 }}>Products Available</div>
+                <div style={{ fontSize: 36, fontWeight: 800, color: P.fg, letterSpacing: "-0.02em", lineHeight: 1 }}>{store.products}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
+                  <IoFlashOutline size={14} color={P.primary} />
+                  <span style={{ fontSize: 12, color: P.muted }}>Distributed in feed</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Configuration */}
+            <div style={{ padding: "20px", borderRadius: 14, border: `1px solid ${P.border}`, marginBottom: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: P.fg }}>Configuration</span>
+                <button style={{
+                  height: 32, padding: "0 16px", borderRadius: 8, border: `1px solid ${P.border}`,
+                  background: P.bg, fontSize: 12, fontWeight: 600, color: P.fg, cursor: "pointer",
+                }}>
+                  Edit
+                </button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontSize: 13, color: P.fg2 }}>
+                  <span style={{ color: P.muted }}>Checkout Options:</span> {store.checkout.mode === "both" ? "Both Twedot & External" : "Twedot Only"}
+                </div>
+                <div style={{ fontSize: 13, color: P.fg2 }}>
+                  <span style={{ color: P.muted }}>Sync Frequency:</span> {store.checkout.syncFreq}
+                </div>
+              </div>
+            </div>
+
+            {/* Disconnect */}
+            <button style={{
+              width: "100%", height: 44, borderRadius: 10,
+              border: `1px solid ${P.red}30`, background: P.redSoft,
+              color: P.red, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            }}>
+              <IoTrashOutline size={16} /> Disconnect Store
+            </button>
+          </div>
+        )}
+
+        {/* ── Settings tab ── */}
+        {tab === "settings" && (
+          <div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                { label: "Platform", value: meta.label },
+                { label: "Checkout Mode", value: store.checkout.mode === "both" ? "Both Twedot & External" : "Twedot Only" },
+                { label: "Sync Frequency", value: store.checkout.syncFreq },
+                { label: "Connected On", value: new Date(store.connectedAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) },
+                { label: "Store URL", value: store.url },
+              ].map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderRadius: 12, border: `1px solid ${P.border}` }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: P.muted }}>{s.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: P.fg }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
+              <button style={{ flex: 1, height: 42, borderRadius: 10, background: P.primary, color: "#fff", border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                Edit Configuration
+              </button>
+              <button style={{ height: 42, padding: "0 20px", borderRadius: 10, background: P.redSoft, color: P.red, border: `1px solid ${P.red}20`, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <IoTrashOutline size={15} /> Disconnect
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Products tab ── */}
+        {tab === "products" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>{products.length} products</span>
+              <button style={{ display: "flex", alignItems: "center", gap: 6, height: 34, padding: "0 14px", borderRadius: 8, border: `1px solid ${P.primary}`, background: P.bg, color: P.primary, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                <IoSyncOutline size={14} /> Sync Now
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {products.map(p => (
+                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 12, border: `1px solid ${P.border}`, background: P.bg }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", flexShrink: 0, border: `1px solid ${P.border}` }}>
+                    <img src={p.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: P.fg, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+                    <div style={{ fontSize: 12, color: P.muted }}>{p.category} · Qty: {p.qty}</div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: P.fg }}>{fmt(p.price)}</div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: p.available ? P.green : P.red }}>
+                      {p.available ? "In Stock" : "Out of Stock"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Activity tab ── */}
+        {tab === "activity" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {ACTIVITY.filter(a => a.store === store.name).map(a => (
+              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 12, border: `1px solid ${P.border}` }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: P.primaryLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <IoFlashOutline size={16} color={P.primary} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>{a.action}</div>
+                  <div style={{ fontSize: 12, color: P.muted }}>{a.detail}</div>
+                </div>
+                <span style={{ fontSize: 12, color: P.muted, flexShrink: 0 }}>{a.time}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 1: Connected Stores Overview (Settings Layout)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ConnectedStoresView({ onAdd, onViewStore }: { onAdd: () => void; onViewStore: (s: Store) => void }) {
+  return (
+    <div style={{ minHeight: "100vh", background: P.bg, fontFamily: "'Poppins', system-ui, sans-serif", display: "flex" }}>
+      {/* Settings sidebar — matches wireframe screen 1 */}
+      <aside style={{ width: 240, borderRight: `1px solid ${P.border}`, padding: "28px 0", flexShrink: 0 }}>
+        <div style={{ padding: "0 20px", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: P.fg, margin: "0 0 4px" }}>Settings</h2>
+          <p style={{ fontSize: 12, color: P.muted, margin: 0 }}>Manage your account and integrations</p>
+        </div>
+        <nav style={{ display: "flex", flexDirection: "column" }}>
+          {SETTINGS_ITEMS.map(item => {
+            const active = item.id === "stores";
+            return (
+              <button key={item.id}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "10px 20px",
+                  background: active ? P.primaryLight : "transparent",
+                  color: active ? P.primary : P.fg2,
+                  border: "none", cursor: "pointer", fontSize: 13,
+                  fontWeight: active ? 600 : 400, textAlign: "left",
+                  borderLeft: active ? `3px solid ${P.primary}` : "3px solid transparent",
+                  transition: "all 0.1s",
+                }}>
+                {item.icon} {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Main content — matches wireframe screen 1 */}
+      <main style={{ flex: 1, padding: "28px 36px" }}>
+        {/* Header row */}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: P.fg, margin: "0 0 6px" }}>Connected Stores</h1>
+            <p style={{ fontSize: 14, color: P.muted, margin: 0, fontWeight: 400 }}>
+              Link your existing store or website to Twedot and showcase your products to more people.
+            </p>
+          </div>
+          <button onClick={onAdd}
+            style={{
+              display: "flex", alignItems: "center", gap: 6, height: 40, padding: "0 18px",
+              borderRadius: 10, background: P.primary, color: "#fff", border: "none",
+              fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+            }}>
+            <IoAddOutline size={16} /> Connect a Store
+          </button>
+        </div>
+
+        {/* Store list — matches wireframe: list items, not fancy cards */}
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
+          {STORES.map(s => {
+            const meta = PLAT_META[s.platform];
+            return (
+              <div key={s.id}
+                onClick={() => onViewStore(s)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
+                  borderRadius: 14, border: `1px solid ${P.border}`, background: P.bg,
+                  cursor: "pointer", transition: "box-shadow 0.15s, border-color 0.15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = P.primary + "60"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(107,78,255,0.08)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = P.border; e.currentTarget.style.boxShadow = "none"; }}>
+                {/* Store icon */}
+                <div style={{ width: 44, height: 44, borderRadius: 12, overflow: "hidden", border: `1px solid ${P.border}`, flexShrink: 0 }}>
+                  <img src={s.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                {/* Store info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: P.fg }}>{s.name}</div>
+                  <div style={{ fontSize: 12, color: P.muted, marginTop: 2 }}>
+                    {s.url}
+                  </div>
+                  <div style={{ fontSize: 11, color: P.muted, marginTop: 2 }}>
+                    Last synced: {ago(s.lastSync)} · {s.products} products
+                  </div>
+                </div>
+                {/* Status badge */}
+                <span style={{
+                  fontSize: 11, fontWeight: 600, color: "#fff", padding: "4px 14px", borderRadius: 20,
+                  background: s.status === "active" ? P.green : P.red,
+                }}>
+                  Active
+                </span>
+                {/* 3-dot menu */}
+                <button onClick={e => e.stopPropagation()}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: P.muted, padding: 4 }}>
+                  <IoEllipsisVertical size={18} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Platform logos
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ShopifyLogo() {
+  return (
+    <svg width={28} height={32} viewBox="0 0 109.5 124.5" fill="none">
       <path d="M95.6 28.2c-.1-.6-.6-1-1.1-1-.5 0-10.2-.8-10.2-.8s-6.7-6.7-7.5-7.5c-.8-.8-2.3-.5-2.9-.4-.1 0-1.5.5-4 1.2-2.4-6.8-6.5-13.1-13.9-13.1h-.6C53.3 3.8 50.6 2 48.4 2c-17.2 0-25.4 21.5-28 32.4-6.7 2.1-11.5 3.5-12 3.7-3.7 1.2-3.8 1.3-4.3 4.8C3.7 45.6 0 76.8 0 76.8l71.5 13.4L95.6 28.2z" fill="#95BF47"/>
       <path d="M94.5 27.2c-.5 0-10.2-.8-10.2-.8s-6.7-6.7-7.5-7.5c-.3-.3-.6-.4-1-.4l-4.3 86.7 23.9-5.9S95.6 28.2 95.6 28.2c-.1-.6-.6-1-1.1-1z" fill="#5E8E3E"/>
       <path d="M54.8 43.1l-4.8 14.3s-4.2-2.2-9.3-2.2c-7.5 0-7.9 4.7-7.9 5.9 0 6.5 16.9 9 16.9 24.2 0 12-7.6 19.7-17.8 19.7-12.3 0-18.6-7.6-18.6-7.6l3.3-10.9s6.5 5.6 12 5.6c3.6 0 5.1-2.8 5.1-4.9 0-8.5-13.9-8.9-13.9-22.8C20.4 51.2 30.1 38 44.4 38c5.5 0 10.4 2.1 10.4 5.1z" fill="#fff"/>
@@ -163,560 +727,44 @@ function ShopifyLogo({ s = 24 }: { s?: number }) {
   );
 }
 
-// ─── Connect Wizard ──────────────────────────────────────────────────────────
-
-function Wizard({ onClose, onDone }: { onClose: () => void; onDone: (url: string, plat: string) => void }) {
-  const [si, setSi] = useState(0);
-  const [plat, setPlat] = useState("");
-  const [url, setUrl] = useState("");
-  const [co, setCo] = useState<"both" | "twedot">("both");
-  const [sync, setSync] = useState("15");
-  const [busy, setBusy] = useState(false);
-
-  function next() {
-    if (si === 2) { setBusy(true); setTimeout(() => { setBusy(false); setSi(3); }, 2000); return; }
-    setSi(si + 1);
-  }
-
-  const ok = si === 0 ? !!plat : si === 1 ? !!url.trim() : true;
-
+function WooLogo() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="w-full max-w-md rounded-xl border border-border bg-background shadow-xl" onClick={e => e.stopPropagation()}>
-        {/* Top bar */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <div className="flex items-center gap-2">
-            {si > 0 && si < 3 && <button onClick={() => setSi(si - 1)} className="text-light-text hover:text-text"><IoChevronBack size={16} /></button>}
-            <span className="text-[14px] font-semibold text-text">{si < 3 ? "New connection" : ""}</span>
-          </div>
-          <button onClick={onClose} className="text-light-text hover:text-text"><IoCloseOutline size={18} /></button>
-        </div>
-
-        {/* Steps indicator */}
-        {si < 3 && (
-          <div className="flex gap-1 px-5 pt-4">
-            {[0, 1, 2].map(i => (
-              <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= si ? "bg-primary" : "bg-border"}`} />
-            ))}
-          </div>
-        )}
-
-        <div className="p-5">
-          {si === 0 && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-[13px] font-semibold text-text">Platform</p>
-                <p className="text-[12px] text-light-text">Where does your store live?</p>
-              </div>
-              {([
-                { id: "custom_api", name: "Custom Website", sub: "Any site with API", icon: <IoCodeSlashOutline size={18} className="text-violet-500" /> },
-                { id: "shopify", name: "Shopify", sub: "Shopify store", icon: <ShopifyLogo s={20} /> },
-                { id: "woocommerce", name: "WooCommerce", sub: "WordPress plugin", icon: <span className="flex h-5 w-5 items-center justify-center rounded bg-[#96588A] text-[8px] font-black text-white">W</span> },
-              ]).map(p => (
-                <button key={p.id} onClick={() => setPlat(p.id)}
-                  className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all ${
-                    plat === p.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
-                  }`}>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-feed-bg">{p.icon}</div>
-                  <div className="flex-1">
-                    <p className="text-[13px] font-semibold text-text">{p.name}</p>
-                    <p className="text-[11px] text-light-text">{p.sub}</p>
-                  </div>
-                  {plat === p.id && <IoCheckmarkCircle size={18} className="text-primary" />}
-                </button>
-              ))}
-              <button onClick={next} disabled={!ok}
-                className="w-full rounded-lg bg-primary py-2.5 text-[13px] font-semibold text-white disabled:opacity-30">Continue</button>
-            </div>
-          )}
-
-          {si === 1 && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-[13px] font-semibold text-text">Store URL</p>
-                <p className="text-[12px] text-light-text">We'll validate and connect to your store</p>
-              </div>
-              <input type="url" value={url} onChange={e => setUrl(e.target.value)} autoFocus placeholder="https://mystore.com"
-                className="w-full rounded-lg border border-border bg-feed-bg px-3 py-2.5 text-[13px] text-text outline-none placeholder:text-light-text focus:border-primary focus:ring-1 focus:ring-primary/20" />
-              <div className="flex items-start gap-2 rounded-lg bg-blue-50 px-3 py-2">
-                <IoInformationCircleOutline size={14} className="mt-0.5 text-blue-500 flex-shrink-0" />
-                <p className="text-[11px] text-blue-600">Use HTTPS for a secure connection. An API key will be generated after setup.</p>
-              </div>
-              <button onClick={next} disabled={!ok}
-                className="w-full rounded-lg bg-primary py-2.5 text-[13px] font-semibold text-white disabled:opacity-30">Continue</button>
-            </div>
-          )}
-
-          {si === 2 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2">
-                <IoCheckmarkCircle size={16} className="text-green-500" />
-                <span className="text-[12px] font-medium text-green-700">{url.replace(/^https?:\/\//, "")} verified</span>
-              </div>
-              <div>
-                <p className="mb-2 text-[13px] font-semibold text-text">Checkout</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {(["both", "twedot"] as const).map(v => (
-                    <button key={v} onClick={() => setCo(v)}
-                      className={`rounded-lg border p-3 text-left transition-all ${co === v ? "border-primary bg-primary/5" : "border-border"}`}>
-                      <p className="text-[12px] font-semibold text-text">{v === "both" ? "Both" : "Twedot only"}</p>
-                      <p className="text-[10px] text-light-text">{v === "both" ? "Buyer picks" : "Secure via Twedot"}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="mb-2 text-[13px] font-semibold text-text">Sync</p>
-                <div className="flex gap-1 rounded-lg bg-feed-bg p-1">
-                  {["5", "15", "30", "60"].map(v => (
-                    <button key={v} onClick={() => setSync(v)}
-                      className={`flex-1 rounded-md py-1.5 text-[11px] font-semibold transition-all ${sync === v ? "bg-background text-text shadow-sm" : "text-light-text"}`}>
-                      {v === "60" ? "1h" : `${v}m`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={next} disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-[13px] font-semibold text-white disabled:opacity-70">
-                {busy ? <><div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Connecting...</> : "Connect store"}
-              </button>
-            </div>
-          )}
-
-          {si === 3 && (
-            <div className="flex flex-col items-center gap-4 py-6">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-                <IoCheckmark size={28} className="text-green-600" />
-              </div>
-              <p className="text-[16px] font-bold text-text">Connected</p>
-              <p className="text-center text-[13px] text-light-text">Products from {url.replace(/^https?:\/\//, "")} are syncing to the feed.</p>
-              <button onClick={() => { onDone(url, plat); onClose(); }}
-                className="rounded-lg bg-primary px-6 py-2.5 text-[13px] font-semibold text-white">Done</button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    <svg width={36} height={22} viewBox="0 0 120 28" fill="none">
+      <text x="0" y="22" fontFamily="Arial Black, Arial" fontWeight="900" fontSize="24" fill="#7B5EA7">Woo</text>
+    </svg>
   );
 }
 
-// ─── Store Detail ────────────────────────────────────────────────────────────
-
-function Detail({ store, onBack }: { store: Store; onBack: () => void }) {
-  const [tab, setTab] = useState<"overview" | "products" | "settings" | "activity">("overview");
-  const [view, setView] = useState<"grid" | "list">("grid");
-  const products = PRODUCTS[store.id] ?? [];
-  const pi = PLAT[store.platform];
-
-  return (
-    <div className="min-h-screen bg-feed-bg">
-      <header className="sticky top-0 z-30 border-b border-border bg-background">
-        <div className="mx-auto flex h-[52px] max-w-6xl items-center gap-4 px-5">
-          <button onClick={onBack} className="text-light-text hover:text-text"><IoChevronBack size={16} /></button>
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="h-8 w-8 overflow-hidden rounded-lg border border-border">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={store.image} alt="" className="h-full w-full object-cover" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold text-text">{store.name}</p>
-              <p className="truncate text-[10px] text-light-text">{store.url}</p>
-            </div>
-            <span className={`flex-shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${pi.tag}`}>{pi.label}</span>
-            <span className={`flex-shrink-0 h-2 w-2 rounded-full ${store.status === "active" ? "bg-green-500" : "bg-red-500"}`} />
-          </div>
-          <div className="flex gap-1">
-            <button className="flex h-7 items-center gap-1 rounded-md border border-border px-2 text-[11px] font-medium text-text hover:bg-feed-bg">
-              <IoRefreshOutline size={12} /> Sync
-            </button>
-            <button className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-light-text hover:bg-feed-bg">
-              <IoEllipsisVertical size={14} />
-            </button>
-          </div>
-        </div>
-        <div className="mx-auto max-w-6xl px-5">
-          <div className="flex gap-0.5 -mb-px">
-            {(["overview", "products", "settings", "activity"] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`border-b-2 px-3 py-2 text-[12px] font-semibold capitalize transition-colors ${
-                  tab === t ? "border-primary text-primary" : "border-transparent text-light-text hover:text-text"
-                }`}>{t}</button>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-6xl px-5 py-5">
-        {tab === "overview" && (
-          <div className="space-y-5">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { label: "Products", value: store.products.toLocaleString(), change: "+24", icon: IoCubeOutline, accent: "text-violet-500" },
-                { label: "Feed Views", value: short(store.views), change: "+12%", icon: IoEyeOutline, accent: "text-blue-500" },
-                { label: "Orders", value: `${store.orders}`, change: "+8", icon: IoBagHandleOutline, accent: "text-green-500" },
-                { label: "Last Sync", value: ago(store.lastSync), change: store.checkout.syncFreq, icon: IoSyncOutline, accent: "text-orange-500" },
-              ].map(s => (
-                <div key={s.label} className="rounded-xl border border-border bg-background p-4">
-                  <div className="flex items-center justify-between">
-                    <s.icon size={16} className={s.accent} />
-                    <span className="text-[10px] font-medium text-green-600">{s.change}</span>
-                  </div>
-                  <p className="mt-3 text-[22px] font-bold text-text leading-none">{s.value}</p>
-                  <p className="mt-1 text-[11px] text-light-text">{s.label}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid gap-3 lg:grid-cols-5">
-              <div className="lg:col-span-3 rounded-xl border border-border bg-background">
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                  <span className="text-[13px] font-semibold text-text">Configuration</span>
-                  <button onClick={() => setTab("settings")} className="text-[11px] font-medium text-primary hover:underline">Edit</button>
-                </div>
-                {[
-                  { k: "Checkout", v: store.checkout.mode === "both" ? "Twedot & External" : "Twedot Only" },
-                  { k: "Sync Frequency", v: store.checkout.syncFreq },
-                  { k: "Platform", v: pi.label },
-                  { k: "Connected", v: new Date(store.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) },
-                ].map(r => (
-                  <div key={r.k} className="flex items-center justify-between border-b border-border px-4 py-2.5 last:border-b-0">
-                    <span className="text-[12px] text-light-text">{r.k}</span>
-                    <span className="text-[12px] font-medium text-text">{r.v}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="lg:col-span-2 rounded-xl border border-border bg-background">
-                <div className="border-b border-border px-4 py-3">
-                  <span className="text-[13px] font-semibold text-text">Activity</span>
-                </div>
-                {[
-                  { text: "Products synced", time: ago(store.lastSync), dot: "bg-green-500" },
-                  { text: "Health check OK", time: "1h ago", dot: "bg-blue-500" },
-                  { text: "12 new products", time: "3h ago", dot: "bg-violet-500" },
-                  { text: "Store connected", time: ago(store.connectedAt), dot: "bg-primary" },
-                ].map((a, i) => (
-                  <div key={i} className="flex items-center gap-2.5 border-b border-border px-4 py-2.5 last:border-b-0">
-                    <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${a.dot}`} />
-                    <span className="flex-1 text-[12px] text-text">{a.text}</span>
-                    <span className="text-[10px] text-light-text">{a.time}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <button className="text-[12px] font-medium text-red-500 hover:underline">Disconnect store</button>
-            </div>
-          </div>
-        )}
-
-        {tab === "products" && (
-          <>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-[13px] font-semibold text-text">{products.length} products</p>
-              <div className="flex gap-0.5 rounded-lg border border-border p-0.5">
-                {(["grid", "list"] as const).map(v => (
-                  <button key={v} onClick={() => setView(v)}
-                    className={`rounded-md p-1.5 transition-colors ${view === v ? "bg-primary text-white" : "text-light-text"}`}>
-                    {v === "grid" ? <IoGridOutline size={13} /> : <IoListOutline size={13} />}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {view === "grid" ? (
-              <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-                {products.map(p => (
-                  <div key={p.id} className="group overflow-hidden rounded-xl border border-border bg-background hover:shadow-md transition-all">
-                    <div className="relative aspect-square overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={p.image} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      {!p.available && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Sold Out</span></div>}
-                      <span className="absolute top-2 left-2 bg-black/40 backdrop-blur-sm text-white text-[9px] font-medium px-1.5 py-0.5 rounded-full">{p.category}</span>
-                    </div>
-                    <div className="p-3">
-                      <p className="truncate text-[12px] font-semibold text-text">{p.name}</p>
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[13px] font-bold text-primary">{fmt(p.price)}</span>
-                        <span className={`text-[10px] font-medium ${p.available ? "text-green-600" : "text-red-500"}`}>{p.available ? `${p.qty} left` : "Out"}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border bg-background overflow-hidden">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-border bg-feed-bg">
-                      <th className="px-4 py-2 text-[11px] font-semibold text-light-text">Product</th>
-                      <th className="px-4 py-2 text-[11px] font-semibold text-light-text">Category</th>
-                      <th className="px-4 py-2 text-[11px] font-semibold text-light-text text-right">Price</th>
-                      <th className="px-4 py-2 text-[11px] font-semibold text-light-text text-right">Stock</th>
-                      <th className="px-4 py-2 text-[11px] font-semibold text-light-text text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map(p => (
-                      <tr key={p.id} className="border-b border-border last:border-b-0 hover:bg-feed-bg/50 transition-colors">
-                        <td className="px-4 py-2.5">
-                          <div className="flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-lg overflow-hidden flex-shrink-0">{/* eslint-disable-next-line @next/next/no-img-element */}<img src={p.image} alt="" className="h-full w-full object-cover" /></div>
-                            <span className="text-[12px] font-medium text-text truncate">{p.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-2.5 text-[11px] text-light-text">{p.category}</td>
-                        <td className="px-4 py-2.5 text-[12px] font-semibold text-text text-right">{fmt(p.price)}</td>
-                        <td className="px-4 py-2.5 text-[11px] text-light-text text-right">{p.qty}</td>
-                        <td className="px-4 py-2.5 text-center">
-                          <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${p.available ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>
-                            {p.available ? "Active" : "Sold Out"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        )}
-
-        {tab === "settings" && (
-          <div className="mx-auto max-w-xl space-y-4">
-            <div className="rounded-xl border border-border bg-background">
-              <div className="border-b border-border px-4 py-3">
-                <span className="text-[13px] font-semibold text-text">Checkout</span>
-              </div>
-              <div className="p-4 space-y-2">
-                {(["both", "twedot"] as const).map(v => (
-                  <label key={v} className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-all ${
-                    store.checkout.mode === v ? "border-primary bg-primary/5" : "border-border"
-                  }`}>
-                    <input type="radio" name="co" defaultChecked={store.checkout.mode === v} className="h-3.5 w-3.5 accent-[var(--color-primary)]" />
-                    <div>
-                      <p className="text-[12px] font-semibold text-text">{v === "both" ? "Twedot & External" : "Twedot Only"}</p>
-                      <p className="text-[10px] text-light-text">{v === "both" ? "Buyer chooses checkout" : "Secure Twedot checkout"}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-xl border border-border bg-background">
-              <div className="border-b border-border px-4 py-3">
-                <span className="text-[13px] font-semibold text-text">Sync Frequency</span>
-              </div>
-              <div className="p-4">
-                <div className="flex gap-1 rounded-lg bg-feed-bg p-1">
-                  {[{ v: "Every 5 minutes", l: "5m" }, { v: "Every 15 minutes", l: "15m" }, { v: "Every 30 minutes", l: "30m" }, { v: "Every hour", l: "1h" }].map(o => (
-                    <button key={o.v} className={`flex-1 rounded-md py-2 text-[11px] font-semibold transition-all ${
-                      store.checkout.syncFreq === o.v ? "bg-background text-text shadow-sm" : "text-light-text"
-                    }`}>{o.l}</button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="rounded-xl border border-border bg-background">
-              <div className="border-b border-border px-4 py-3">
-                <span className="text-[13px] font-semibold text-text">Connection</span>
-              </div>
-              {[
-                { k: "URL", v: store.url },
-                { k: "Platform", v: pi.label },
-                { k: "API", v: "Healthy", c: "text-green-600" },
-                { k: "Connected", v: new Date(store.connectedAt).toLocaleDateString() },
-              ].map(r => (
-                <div key={r.k} className="flex items-center justify-between border-b border-border px-4 py-2.5 last:border-b-0">
-                  <span className="text-[12px] text-light-text">{r.k}</span>
-                  <span className={`text-[12px] font-medium ${(r as any).c || "text-text"}`}>{r.v}</span>
-                </div>
-              ))}
-            </div>
-            <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-2.5 text-[12px] font-semibold text-red-500 hover:bg-red-50 transition-colors">
-              <IoTrashOutline size={14} /> Disconnect Store
-            </button>
-          </div>
-        )}
-
-        {tab === "activity" && (
-          <div className="mx-auto max-w-xl rounded-xl border border-border bg-background overflow-hidden">
-            {[
-              { icon: IoSyncOutline, text: "Products synced", sub: `${store.products} updated`, time: ago(store.lastSync), color: "bg-green-100 text-green-600" },
-              { icon: IoShieldCheckmarkOutline, text: "Health check passed", sub: "All endpoints OK", time: "1h ago", color: "bg-blue-100 text-blue-600" },
-              { icon: IoLayersOutline, text: "12 products imported", sub: "New items from sync", time: "3h ago", color: "bg-violet-100 text-violet-600" },
-              { icon: IoSettingsOutline, text: "Config updated", sub: "Checkout set to both", time: "1d ago", color: "bg-orange-100 text-orange-600" },
-              { icon: IoFlashOutline, text: "Store connected", sub: store.url, time: ago(store.connectedAt), color: "bg-primary/10 text-primary" },
-            ].map((a, i) => (
-              <div key={i} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? "border-t border-border" : ""}`}>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 ${a.color}`}>
-                  <a.icon size={14} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-text">{a.text}</p>
-                  <p className="text-[10px] text-light-text truncate">{a.sub}</p>
-                </div>
-                <span className="text-[10px] text-light-text whitespace-nowrap">{a.time}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Page ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN ENTRY
+// ═══════════════════════════════════════════════════════════════════════════
 
 export default function ConnectPage() {
-  const [stores, setStores] = useState(STORES);
-  const [selected, setSelected] = useState<Store | null>(null);
-  const [wizard, setWizard] = useState(false);
-  const [mainTab, setMainTab] = useState("stores");
+  const [view, setView] = useState<"list" | "wizard" | "detail">("list");
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
 
-  function handleDone(url: string, plat: string) {
-    setStores(prev => [{
-      id: `s${Date.now()}`, name: url.replace(/^https?:\/\//, "").split(".")[0], url: url.startsWith("http") ? url : `https://${url}`,
-      platform: plat as Store["platform"], status: "active", products: 0, views: 0, orders: 0,
-      connectedAt: new Date().toISOString(), lastSync: new Date().toISOString(),
-      image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=500&fit=crop",
-      checkout: { mode: "both", syncFreq: "Every 15 minutes" },
-    }, ...prev]);
+  if (view === "wizard") {
+    return (
+      <ConnectWizard
+        onClose={() => setView("list")}
+        onDone={() => { setView("list"); }}
+      />
+    );
   }
 
-  if (selected) return <Detail store={selected} onBack={() => setSelected(null)} />;
+  if (view === "detail" && selectedStore) {
+    return (
+      <StoreDetailView
+        store={selectedStore}
+        onBack={() => { setView("list"); setSelectedStore(null); }}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-feed-bg">
-      <Nav tab={mainTab} onTab={setMainTab} onAdd={() => setWizard(true)} />
-
-      <div className="mx-auto max-w-6xl px-5 py-5">
-        {mainTab === "stores" && (
-          <>
-            {/* Summary row */}
-            <div className="mb-5 grid gap-3 sm:grid-cols-3">
-              {[
-                { label: "Total Stores", value: `${stores.length}`, icon: IoStorefrontOutline, accent: "text-violet-500" },
-                { label: "Total Products", value: short(stores.reduce((a, s) => a + s.products, 0)), icon: IoCubeOutline, accent: "text-blue-500" },
-                { label: "Total Orders", value: `${stores.reduce((a, s) => a + s.orders, 0)}`, icon: IoBagHandleOutline, accent: "text-green-500" },
-              ].map(s => (
-                <div key={s.label} className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3">
-                  <s.icon size={18} className={s.accent} />
-                  <div>
-                    <p className="text-[18px] font-bold text-text leading-none">{s.value}</p>
-                    <p className="text-[11px] text-light-text">{s.label}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Store table */}
-            <div className="rounded-xl border border-border bg-background overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <span className="text-[13px] font-semibold text-text">Connected Stores</span>
-                <button onClick={() => setWizard(true)} className="flex items-center gap-1 text-[11px] font-medium text-primary hover:underline">
-                  <IoAddOutline size={13} /> Add store
-                </button>
-              </div>
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-border bg-feed-bg/50">
-                    <th className="px-4 py-2 text-[11px] font-semibold text-light-text">Store</th>
-                    <th className="px-4 py-2 text-[11px] font-semibold text-light-text">Platform</th>
-                    <th className="px-4 py-2 text-[11px] font-semibold text-light-text text-right">Products</th>
-                    <th className="px-4 py-2 text-[11px] font-semibold text-light-text text-right">Views</th>
-                    <th className="px-4 py-2 text-[11px] font-semibold text-light-text text-right">Orders</th>
-                    <th className="px-4 py-2 text-[11px] font-semibold text-light-text">Status</th>
-                    <th className="px-4 py-2 text-[11px] font-semibold text-light-text">Last Sync</th>
-                    <th className="px-4 py-2" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {stores.map(s => {
-                    const pi = PLAT[s.platform];
-                    return (
-                      <tr key={s.id} onClick={() => setSelected(s)}
-                        className="border-b border-border last:border-b-0 cursor-pointer hover:bg-feed-bg/50 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="h-8 w-8 rounded-lg overflow-hidden border border-border flex-shrink-0">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={s.image} alt="" className="h-full w-full object-cover" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-[12px] font-semibold text-text">{s.name}</p>
-                              <p className="truncate text-[10px] text-light-text">{s.url}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3"><span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${pi.tag}`}>{pi.label}</span></td>
-                        <td className="px-4 py-3 text-[12px] font-medium text-text text-right">{s.products.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-[12px] font-medium text-text text-right">{short(s.views)}</td>
-                        <td className="px-4 py-3 text-[12px] font-medium text-text text-right">{s.orders}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${s.status === "active" ? "text-green-600" : "text-red-500"}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${s.status === "active" ? "bg-green-500" : "bg-red-500"}`} />
-                            {s.status === "active" ? "Active" : "Error"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-[11px] text-light-text">{ago(s.lastSync)}</td>
-                        <td className="px-4 py-3"><IoChevronForward size={14} className="text-light-text" /></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {stores.length === 0 && (
-                <div className="flex flex-col items-center gap-3 py-16 text-center">
-                  <IoStorefrontOutline size={32} className="text-light-text" />
-                  <p className="text-[14px] font-semibold text-text">No stores yet</p>
-                  <p className="text-[12px] text-light-text">Connect your first store to start selling on Twedot</p>
-                  <button onClick={() => setWizard(true)} className="mt-2 rounded-lg bg-primary px-4 py-2 text-[12px] font-semibold text-white">Connect a Store</button>
-                </div>
-              )}
-            </div>
-
-            {/* Quick start guide */}
-            <div className="mt-5 rounded-xl border border-border bg-background p-5">
-              <p className="mb-3 text-[13px] font-semibold text-text">Getting started</p>
-              <div className="grid gap-3 sm:grid-cols-4">
-                {[
-                  { n: "1", icon: IoLinkOutline, title: "Connect", desc: "Link your store URL" },
-                  { n: "2", icon: IoSyncOutline, title: "Sync", desc: "Products import auto" },
-                  { n: "3", icon: IoTrendingUpOutline, title: "Discover", desc: "Appear in the feed" },
-                  { n: "4", icon: IoCartOutline, title: "Sell", desc: "Chat and sell" },
-                ].map(s => (
-                  <div key={s.n} className="flex items-start gap-2.5">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-[10px] font-bold text-primary flex-shrink-0">{s.n}</div>
-                    <div>
-                      <p className="text-[12px] font-semibold text-text">{s.title}</p>
-                      <p className="text-[10px] text-light-text">{s.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {mainTab === "activity" && (
-          <div className="mx-auto max-w-2xl rounded-xl border border-border bg-background overflow-hidden">
-            {stores.flatMap(s => [
-              { icon: IoSyncOutline, text: `${s.name}: Products synced`, time: ago(s.lastSync), color: "bg-green-100 text-green-600" },
-              { icon: IoFlashOutline, text: `${s.name}: Connected`, time: ago(s.connectedAt), color: "bg-primary/10 text-primary" },
-            ]).map((a, i) => (
-              <div key={i} className={`flex items-center gap-3 px-4 py-3 ${i > 0 ? "border-t border-border" : ""}`}>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 ${a.color}`}>
-                  <a.icon size={14} />
-                </div>
-                <span className="flex-1 text-[12px] text-text">{a.text}</span>
-                <span className="text-[10px] text-light-text">{a.time}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {wizard && <Wizard onClose={() => setWizard(false)} onDone={handleDone} />}
-    </div>
+    <ConnectedStoresView
+      onAdd={() => setView("wizard")}
+      onViewStore={(s) => { setSelectedStore(s); setView("detail"); }}
+    />
   );
 }
