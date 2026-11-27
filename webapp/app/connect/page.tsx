@@ -350,17 +350,7 @@ export default function ConnectPage() {
             </button>
           </div>
 
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* API Connect */}
-            <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-5 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
-              <CustomWebsiteIcon />
-              <div className="min-w-0 flex-1">
-                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>API Connect</p>
-                <p style={{ marginTop: 3, fontSize: 11, color: "var(--light-text)" }}>Connect any website with our API</p>
-              </div>
-              <IoChevronForward size={16} className="flex-shrink-0 text-light-text transition-colors group-hover:text-primary" />
-            </button>
-
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* Shopify */}
             <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-5 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
               <ShopifyBagLogo size={48} />
@@ -385,7 +375,7 @@ export default function ConnectPage() {
             <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-5 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
               <OtherPlatformsIcon />
               <div className="min-w-0 flex-1">
-                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Other Platforms</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Custom Connect</p>
                 <p style={{ marginTop: 3, fontSize: 11, color: "var(--light-text)" }}>Use our API for custom integrations</p>
               </div>
               <IoChevronForward size={16} className="flex-shrink-0 text-light-text transition-colors group-hover:text-primary" />
