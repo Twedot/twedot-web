@@ -28,6 +28,14 @@ export const feedStateStore = {
   get: (): FeedState => ({ ..._state }),
   saveTopPost: (id: string) => { _state.topPostId = id; },
   hasCache: (query: string) => _state.posts.length > 0 && _state.query === query,
+  reset: () => {
+    _state.posts = [];
+    _state.page = 1;
+    _state.hasMore = true;
+    _state.topPostId = null;
+    try { sessionStorage.removeItem("stories_idx"); } catch {}
+    _listeners.forEach((fn) => fn());
+  },
   removePost: (id: string) => {
     _state.posts = _state.posts.filter((p) => p.id !== id && p.groupId !== id);
     _listeners.forEach((fn) => fn());

@@ -41,6 +41,7 @@ import { useUi } from "@/lib/UiContext";
 import { useHasUnseenStories } from "@/lib/unseenStories";
 import { useJobSocket } from "@/lib/jobSocket";
 import { channelUrl } from "@/lib/url";
+import { feedStateStore } from "@/lib/feedStateStore";
 
 interface NavItem {
   href: string;
@@ -152,7 +153,13 @@ export default function SideNav() {
             );
           }
           return item.href ? (
-            <Link key={item.label} href={item.href} title={item.label} className={cls}>
+            <Link
+              key={item.label}
+              href={item.href}
+              title={item.label}
+              className={cls}
+              onClick={() => { if (item.href === "/stories" && pathname === "/stories") feedStateStore.reset(); }}
+            >
               {inner}
             </Link>
           ) : (

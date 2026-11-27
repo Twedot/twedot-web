@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useUi } from "@/lib/UiContext";
 import { useJobSocket } from "@/lib/jobSocket";
 import { apiGet } from "@/lib/api";
+import { feedStateStore } from "@/lib/feedStateStore";
 import type { StatusPost } from "@/lib/types";
 import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5";
 import { useChatStore } from "@/lib/chatStore";
@@ -310,7 +311,7 @@ export default function TopBar() {
 
         {/* Logo */}
         <button
-          onClick={() => router.push("/stories")}
+          onClick={() => { if (pathname === "/stories") feedStateStore.reset(); router.push("/stories"); }}
           className="flex-shrink-0 text-xl font-extrabold tracking-tight text-primary"
         >
           Twedot

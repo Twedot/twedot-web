@@ -12,6 +12,7 @@ import {
 } from "react-icons/io5";
 import { useHasUnseenStories } from "@/lib/unseenStories";
 import { useJobSocket } from "@/lib/jobSocket";
+import { feedStateStore } from "@/lib/feedStateStore";
 
 const NAV_ITEMS = [
   { href: "/stories",                 label: "Stories",  icon: IoPlayOutline,          activeIcon: IoPlay,          external: false, liveDot: false },
@@ -94,7 +95,12 @@ export default function MobileBottomNav() {
             {inner}
           </a>
         ) : (
-          <Link key={item.href} href={item.href} className={cls}>
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cls}
+            onClick={() => { if (item.href === "/stories" && pathname === "/stories") feedStateStore.reset(); }}
+          >
             {inner}
           </Link>
         );

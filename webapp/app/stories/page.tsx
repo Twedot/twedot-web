@@ -812,6 +812,64 @@ function LiveFeedCard({
   );
 }
 
+/* ── Skeleton loader ── */
+function FeedSkeleton() {
+  return (
+    <div className="flex h-[calc(100vh-56px)] w-full items-center justify-center gap-5 pb-5 pt-5 max-sm:hidden">
+      {/* Left column skeleton */}
+      <div className="flex-shrink-0 w-[300px] flex flex-col gap-3 self-end pb-2">
+        <div className="h-4 w-40 rounded-full bg-foreground/10 animate-pulse" />
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-9 rounded-full bg-foreground/10 animate-pulse" />
+          <div className="h-4 w-24 rounded bg-foreground/10 animate-pulse" />
+          <div className="h-7 w-20 rounded-full bg-foreground/10 animate-pulse" />
+        </div>
+        <div className="h-4 w-full rounded bg-foreground/10 animate-pulse" />
+        <div className="h-4 w-3/4 rounded bg-foreground/10 animate-pulse" />
+      </div>
+      {/* Media skeleton */}
+      <div className="flex-shrink-0 w-[360px] rounded-2xl bg-foreground/10 animate-pulse" style={{ height: "calc(100vh - 56px - 80px)", maxWidth: 480 }} />
+      {/* Action rail skeleton */}
+      <div className="flex flex-col items-center gap-4 flex-shrink-0 self-end pb-2">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex flex-col items-center gap-1">
+            <div className="h-11 w-11 rounded-full bg-foreground/10 animate-pulse" />
+            <div className="h-3 w-6 rounded bg-foreground/10 animate-pulse" />
+          </div>
+        ))}
+        <div className="flex flex-col items-center gap-1 mt-2">
+          <div className="h-10 w-10 rounded-full bg-foreground/10 animate-pulse" />
+          <div className="h-10 w-10 rounded-full bg-foreground/10 animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileFeedSkeleton() {
+  return (
+    <div className="hidden max-sm:block relative h-[calc(100dvh-152px)]">
+      <div className="absolute inset-2 rounded-2xl bg-foreground/10 animate-pulse" />
+      {/* Bottom author skeleton */}
+      <div className="absolute left-4 right-16 bottom-4 z-10">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-9 w-9 rounded-full bg-foreground/15 animate-pulse" />
+          <div className="h-4 w-24 rounded bg-foreground/15 animate-pulse" />
+          <div className="h-7 w-20 rounded-full bg-foreground/15 animate-pulse" />
+        </div>
+        <div className="h-4 w-3/4 rounded bg-foreground/15 animate-pulse mb-2" />
+        <div className="h-4 w-1/2 rounded bg-foreground/15 animate-pulse" />
+      </div>
+      {/* Right action rail skeleton */}
+      <div className="absolute right-3 bottom-20 z-10 flex flex-col items-center gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-10 w-10 rounded-full bg-foreground/15 animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── Feed ── */
 function FeedContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -880,9 +938,22 @@ function FeedContent() {
     if (isAuthenticated) markFeedSeen();
   }, [isAuthenticated]);
 
+  const resetTriggeredRef = useRef(false);
   useEffect(() => {
-    return feedStateStore.subscribe(() => setPosts(feedStateStore.get().posts));
-  }, []);
+    return feedStateStore.subscribe(() => {
+      const s = feedStateStore.get();
+      setPosts(s.posts);
+      if (s.posts.length === 0 && !isFetchingRef.current) {
+        resetTriggeredRef.current = true;
+        setCurrentIdx(0);
+        setHasNewPosts(false);
+        latestPostIdRef.current = null;
+        didRestore.current = false;
+        scrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+        loadPage(1);
+      }
+    });
+  }, [loadPage]);
 
   useEffect(() => {
     if (posts.length > 0 && !latestPostIdRef.current) {
@@ -1043,11 +1114,7 @@ function FeedContent() {
           </div>
         )}
 
-        {isFetching && posts.length === 0 && (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
-          </div>
-        )}
+        {isFetching && posts.length === 0 && <FeedSkeleton />}
         {!isFetching && posts.length === 0 && error && (
           <div className="flex h-full items-center justify-center px-4">
             <ErrorState
@@ -1136,11 +1203,7 @@ function FeedContent() {
       >
         {!isAuthenticated && <LoginBanner />}
 
-        {isFetching && posts.length === 0 && (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/30 border-t-primary" />
-          </div>
-        )}
+        {isFetching && posts.length === 0 && <MobileFeedSkeleton />}
         {!isFetching && posts.length === 0 && error && (
           <div className="flex h-full items-center justify-center px-4">
             <ErrorState
