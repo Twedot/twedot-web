@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* ── TikTok Sans ── */
+@font-face { font-family: "TikTok Sans"; src: url("/fonts/TikTokSans16pt-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "TikTok Sans"; src: url("/fonts/TikTokSans16pt-Medium.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "TikTok Sans"; src: url("/fonts/TikTokSans16pt-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "TikTok Sans"; src: url("/fonts/TikTokSans16pt-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "TikTok Sans"; src: url("/fonts/TikTokSans16pt-ExtraBold.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -55,7 +62,7 @@
   --color-light-text: var(--light-text);
   --color-border: var(--border);
   --color-feed-bg: var(--feed-bg);
-  --font-sans: var(--font-poppins);
+  --font-sans: "TikTok Sans", var(--font-poppins);
 }
 
 body {
