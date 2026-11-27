@@ -36,6 +36,37 @@ interface ConnectedStore {
   created_at: string;
 }
 
+// ─── Mock store data ─────────────────────────────────────────────────────────
+
+const MOCK_STORES: ConnectedStore[] = [
+  {
+    id: "mock-1",
+    platform: "custom_api",
+    store_name: "Nike Store",
+    store_url: "https://nikestore.com",
+    connection_status: "active",
+    checkout_configuration: { twedotEnabled: true, externalEnabled: true, defaultCheckout: "twedot" },
+    product_count: 128,
+    last_synced_at: new Date(Date.now() - 2 * 60000).toISOString(),
+    store_image_url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=128&h=128&fit=crop&q=80",
+    verified: true,
+    created_at: "2026-10-15T10:00:00Z",
+  },
+  {
+    id: "mock-2",
+    platform: "custom_api",
+    store_name: "Bella Styles",
+    store_url: "https://bellastyles.com",
+    connection_status: "active",
+    checkout_configuration: { twedotEnabled: true, externalEnabled: true, defaultCheckout: "twedot" },
+    product_count: 64,
+    last_synced_at: new Date(Date.now() - 5 * 60000).toISOString(),
+    store_image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=128&h=128&fit=crop&q=80",
+    verified: true,
+    created_at: "2026-11-02T14:30:00Z",
+  },
+];
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function timeAgo(dateStr: string | null | undefined): string {
@@ -189,20 +220,6 @@ function HeroIllustration() {
         <p style={{ fontSize: 10, fontWeight: 600, color: "#4a4a68", textAlign: "center", marginTop: 3 }}>Other Platforms</p>
       </div>
 
-      {/* Sparkles / stars */}
-      <svg className="absolute z-0" style={{ right: 15, top: 10 }} width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="#7C5CFC" opacity="0.35"/>
-      </svg>
-      <svg className="absolute z-0" style={{ left: 60, top: 8 }} width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="#7C5CFC" opacity="0.25"/>
-      </svg>
-      <svg className="absolute z-0" style={{ left: 10, bottom: 40 }} width="14" height="14" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="#7C5CFC" opacity="0.2"/>
-      </svg>
-      <svg className="absolute z-0" style={{ right: 80, bottom: 20 }} width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" fill="#7C5CFC" opacity="0.2"/>
-      </svg>
-
       {/* Small decorative dots */}
       <div className="absolute rounded-full" style={{ width: 6, height: 6, background: "#B39DDB", left: 50, bottom: 60 }} />
       <div className="absolute rounded-full" style={{ width: 4, height: 4, background: "#7C5CFC", right: 60, top: 40, opacity: 0.4 }} />
@@ -252,9 +269,9 @@ export default function ConnectPage() {
     try {
       const res = await apiGet<{ stores: ConnectedStore[] } | ConnectedStore[]>("/integrations");
       const list = Array.isArray(res) ? res : Array.isArray((res as any)?.stores) ? (res as any).stores : [];
-      setStores(list);
+      setStores(list.length > 0 ? list : MOCK_STORES);
     } catch {
-      setStores([]);
+      setStores(MOCK_STORES);
     }
   }, []);
 
@@ -299,8 +316,8 @@ export default function ConnectPage() {
               </p>
 
               <button
-                className="mt-6 inline-flex items-center gap-2 rounded-full text-white"
-                style={{ background: "#6B4EFF", padding: "12px 28px", fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(107,78,255,0.3)" }}
+                className="mt-6 inline-flex items-center gap-2 rounded-full"
+                style={{ background: "#1a1a2e", color: "#ffffff", padding: "12px 28px", fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}
               >
                 Get Started
                 <IoChevronForward size={15} />
@@ -334,11 +351,11 @@ export default function ConnectPage() {
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Custom Website */}
+            {/* API Connect */}
             <button className="group flex items-center gap-4 rounded-2xl border border-border bg-background px-4 py-5 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
               <CustomWebsiteIcon />
               <div className="min-w-0 flex-1">
-                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Custom Website</p>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>API Connect</p>
                 <p style={{ marginTop: 3, fontSize: 11, color: "var(--light-text)" }}>Connect any website with our API</p>
               </div>
               <IoChevronForward size={16} className="flex-shrink-0 text-light-text transition-colors group-hover:text-primary" />
@@ -391,8 +408,8 @@ export default function ConnectPage() {
               </div>
             </div>
             <button
-              className="flex items-center gap-2 rounded-full text-white"
-              style={{ background: "#6B4EFF", padding: "10px 22px", fontSize: 13, fontWeight: 600 }}
+              className="flex items-center gap-2 rounded-full"
+              style={{ background: "#1a1a2e", color: "#ffffff", padding: "10px 22px", fontSize: 13, fontWeight: 600 }}
             >
               Connect a Store
               <IoAddOutline size={16} />
@@ -500,8 +517,8 @@ export default function ConnectPage() {
                       <div className="flex flex-shrink-0 items-center gap-2">
                         <button
                           onClick={() => router.push(`/connect/${store.id}`)}
-                          className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 transition-colors hover:border-primary hover:text-primary"
-                          style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}
+                          className="flex items-center gap-1.5 rounded-full border px-4 py-2 transition-colors hover:opacity-80"
+                          style={{ fontSize: 12, fontWeight: 600, color: "var(--text)", borderColor: "var(--border)" }}
                         >
                           Manage
                           <IoChevronForward size={13} />
@@ -545,8 +562,8 @@ export default function ConnectPage() {
             </div>
 
             <button
-              className="hidden flex-shrink-0 items-center gap-2 rounded-full text-white md:flex"
-              style={{ background: "#6B4EFF", padding: "12px 28px", fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(107,78,255,0.3)" }}
+              className="hidden flex-shrink-0 items-center gap-2 rounded-full md:flex"
+              style={{ background: "#1a1a2e", color: "#ffffff", padding: "12px 28px", fontSize: 14, fontWeight: 600, boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}
             >
               Learn More
               <IoChevronForward size={15} />
