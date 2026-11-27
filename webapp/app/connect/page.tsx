@@ -18,39 +18,42 @@ import {
   IoSettingsOutline,
   IoEllipsisVertical,
   IoInformationCircleOutline,
-  IoSearchOutline,
   IoTrashOutline,
   IoCubeOutline,
   IoEyeOutline,
-  IoBagHandleOutline,
-  IoNotificationsOutline,
-  IoCardOutline,
-  IoColorPaletteOutline,
-  IoShieldCheckmarkOutline,
-  IoOptionsOutline,
   IoFlashOutline,
   IoGridOutline,
+  IoRocketOutline,
+  IoGlobeOutline,
+  IoBagHandleOutline,
+  IoSearchOutline,
+  IoTrendingUpOutline,
 } from "react-icons/io5";
 
-// ─── Design tokens ──────────────────────────────────────────────────────────
+// ─── Design Tokens (AWS-inspired: light, clean, orange primary) ─────────────
 
-const P = {
-  primary: "#6B4EFF",
-  primaryLight: "#EDE9FF",
-  primaryDark: "#5438DB",
+const T = {
+  orange: "#FF9900",
+  orangeHover: "#EC7211",
+  orangeLight: "#FFF8EE",
+  dark: "#232F3E",
+  darkAlt: "#1A242F",
+  text: "#16191F",
+  textBody: "#545B64",
+  textMuted: "#879596",
   bg: "#FFFFFF",
-  bg2: "#F8F7FC",
-  fg: "#1A1A2E",
-  fg2: "#555",
-  muted: "#999",
-  green: "#22C55E",
-  greenSoft: "#ECFDF5",
-  red: "#EF4444",
-  redSoft: "#FEF2F2",
-  orange: "#F59E0B",
-  blue: "#3B82F6",
-  border: "#E5E5EE",
-  radius: 12,
+  bgAlt: "#F2F3F3",
+  bgCard: "#FAFAFA",
+  border: "#D5DBDB",
+  borderLight: "#EAEDED",
+  green: "#1A8D48",
+  greenLight: "#E6F6ED",
+  red: "#D13212",
+  redLight: "#FDF3F1",
+  blue: "#0073BB",
+  shadow: "0 1px 2px rgba(0,0,0,0.12)",
+  shadowHover: "0 2px 8px rgba(0,0,0,0.15)",
+  font: "'Poppins', Arial, Helvetica, sans-serif",
 };
 
 // ─── Types & Mock Data ──────────────────────────────────────────────────────
@@ -83,16 +86,16 @@ interface Product {
 const STORES: Store[] = [
   {
     id: "s1", name: "Creator's Fashion Store", url: "https://creatorsfashion.com",
-    platform: "custom_api", status: "active", products: 120, views: 24500, orders: 342,
+    platform: "custom_api", status: "active", products: 1200, views: 24500, orders: 342,
     connectedAt: "2026-11-20T10:30:00Z", lastSync: "2026-11-26T08:22:00Z",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=500&fit=crop",
     checkout: { mode: "both", syncFreq: "Every 15 minutes" },
   },
   {
     id: "s2", name: "BizMart Online", url: "https://bizmart.com",
-    platform: "shopify", status: "active", products: 85, views: 18200, orders: 198,
+    platform: "shopify", status: "active", products: 850, views: 18200, orders: 198,
     connectedAt: "2026-11-18T08:15:00Z", lastSync: "2026-11-26T07:50:00Z",
-    image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=400&fit=crop",
+    image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=500&fit=crop",
     checkout: { mode: "twedot", syncFreq: "Every 30 minutes" },
   },
 ];
@@ -121,6 +124,7 @@ const PLAT_META: Record<string, { label: string }> = {
 };
 
 const fmt = (n: number) => `₦${n.toLocaleString()}`;
+const short = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}K` : `${n}`;
 
 function ago(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -134,588 +138,53 @@ const ACTIVITY = [
   { id: "a1", action: "Product synced", detail: "Classic Leather Handbag updated", store: "Creator's Fashion Store", time: "2m ago" },
   { id: "a2", action: "New order", detail: "Order #1024 — ₦85,000", store: "Creator's Fashion Store", time: "15m ago" },
   { id: "a3", action: "Store connected", detail: "BizMart Online linked via Shopify", store: "BizMart Online", time: "1h ago" },
-  { id: "a4", action: "Sync completed", detail: "85 products synced", store: "BizMart Online", time: "3h ago" },
+  { id: "a4", action: "Sync completed", detail: "850 products synced", store: "BizMart Online", time: "3h ago" },
 ];
 
-// ─── Settings Sidebar Items (from wireframe screen 1) ──────────────────────
+// ─── Shared Styles ──────────────────────────────────────────────────────────
 
-const SETTINGS_ITEMS = [
-  { id: "account", label: "Account Settings", icon: <IoSettingsOutline size={16} /> },
-  { id: "privacy", label: "Privacy & Security", icon: <IoShieldCheckmarkOutline size={16} /> },
-  { id: "stores", label: "Connected Stores", icon: <IoStorefrontOutline size={16} /> },
-  { id: "notifs", label: "Notifications", icon: <IoNotificationsOutline size={16} /> },
-  { id: "payment", label: "Payment Methods", icon: <IoCardOutline size={16} /> },
-  { id: "appearance", label: "Appearance", icon: <IoColorPaletteOutline size={16} /> },
-  { id: "other", label: "Other Preferences", icon: <IoOptionsOutline size={16} /> },
-];
+const btnPrimary: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 20px",
+  borderRadius: 4, background: T.orange, color: T.text, border: "none",
+  fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "background 0.15s",
+  fontFamily: T.font, whiteSpace: "nowrap",
+};
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCREEN 2-4: Connect Wizard (Choose Platform → Enter Details → Config)
-// ═══════════════════════════════════════════════════════════════════════════
+const btnSecondary: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 20px",
+  borderRadius: 4, background: T.bg, color: T.text, border: `1px solid ${T.textBody}`,
+  fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: T.font, whiteSpace: "nowrap",
+};
 
-function ConnectWizard({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
-  const [step, setStep] = useState(0); // 0=choose platform, 1=enter details, 2=configuration, 3=done
-  const [plat, setPlat] = useState("");
-  const [url, setUrl] = useState("");
-  const [co, setCo] = useState<"both" | "twedot">("both");
-  const [sync, setSync] = useState("15");
-  const [busy, setBusy] = useState(false);
+const card: React.CSSProperties = {
+  background: T.bg, borderRadius: 8, border: `1px solid ${T.border}`, boxShadow: T.shadow,
+  overflow: "hidden", transition: "box-shadow 0.2s",
+};
 
-  const stepLabels = ["Choose Platform", "Enter Details", "Authorize", "Confirm"];
+// ─── Top Nav ────────────────────────────────────────────────────────────────
 
-  function next() {
-    if (step === 2) {
-      setBusy(true);
-      setTimeout(() => { setBusy(false); setStep(3); }, 1500);
-      return;
-    }
-    setStep(step + 1);
-  }
-
-  const canContinue = step === 0 ? !!plat : step === 1 ? !!url.trim() : true;
-
-  const platforms = [
-    { id: "custom_api", name: "Custom Website", desc: "Connect your custom-built store or business website", icon: <IoCodeSlashOutline size={28} /> },
-    { id: "shopify", name: "Shopify", desc: "Connect your Shopify store", icon: <ShopifyLogo /> },
-    { id: "woocommerce", name: "WooCommerce", desc: "Connect your WooCommerce store", icon: <WooLogo /> },
-  ];
-
+function TopNav({ onAdd }: { onAdd: () => void }) {
   return (
-    <div style={{ minHeight: "100vh", background: P.bg, fontFamily: "'Poppins', system-ui, sans-serif" }}>
-      {/* Top bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 32px", borderBottom: `1px solid ${P.border}` }}>
-        <button onClick={step > 0 && step < 3 ? () => setStep(step - 1) : onClose}
-          style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", color: P.fg, padding: 0 }}>
-          <IoArrowBack size={20} />
-        </button>
-        <span style={{ fontSize: 18, fontWeight: 700, color: P.fg }}>
-          {step < 3 ? "Connect a Store" : "Store Configuration"}
-        </span>
-      </div>
-
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px" }}>
-
-        {/* ── Step 0: Choose Platform (Screen 2) ── */}
-        {step === 0 && (
-          <>
-            <p style={{ fontSize: 15, color: P.fg2, margin: "0 0 28px", fontWeight: 400 }}>
-              Select the type of store you want to connect
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-              {platforms.map(p => (
-                <button key={p.id} onClick={() => setPlat(p.id)}
-                  style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
-                    padding: "24px 12px", borderRadius: 14,
-                    border: `2px solid ${plat === p.id ? P.primary : P.border}`,
-                    background: plat === p.id ? P.primaryLight : P.bg,
-                    cursor: "pointer", textAlign: "center", position: "relative", transition: "all 0.15s",
-                  }}>
-                  {plat === p.id && (
-                    <div style={{ position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 10, background: P.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <IoCheckmark size={12} color="#fff" />
-                    </div>
-                  )}
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: P.bg2, display: "flex", alignItems: "center", justifyContent: "center", color: P.primary }}>
-                    {p.icon}
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>{p.name}</div>
-                  <div style={{ fontSize: 11, color: P.muted, fontWeight: 400, lineHeight: 1.4 }}>{p.desc}</div>
-                </button>
-              ))}
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 32 }}>
-              <button onClick={next} disabled={!canContinue}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8, height: 44, padding: "0 24px",
-                  borderRadius: 10, background: canContinue ? P.primary : P.border,
-                  color: canContinue ? "#fff" : P.muted, border: "none",
-                  fontSize: 14, fontWeight: 600, cursor: canContinue ? "pointer" : "default",
-                }}>
-                Continue <IoArrowForward size={16} />
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* ── Step 1: Enter Details (Screen 3) ── */}
-        {step === 1 && (
-          <>
-            {/* Stepper */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, marginBottom: 32 }}>
-              {stepLabels.map((label, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center" }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center",
-                      background: i < 1 ? P.primary : i === 1 ? P.primary : P.bg2,
-                      color: i <= 1 ? "#fff" : P.muted, fontSize: 12, fontWeight: 700,
-                      border: i > 1 ? `2px solid ${P.border}` : "none",
-                    }}>
-                      {i < 1 ? <IoCheckmark size={14} /> : i + 1}
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: i <= 1 ? 600 : 400, color: i <= 1 ? P.primary : P.muted, whiteSpace: "nowrap" }}>{label}</span>
-                  </div>
-                  {i < 3 && <div style={{ width: 40, height: 2, background: i < 1 ? P.primary : P.border, margin: "0 4px", marginBottom: 20 }} />}
-                </div>
-              ))}
-            </div>
-
-            {/* Illustration area */}
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <div style={{ width: 80, height: 80, margin: "0 auto 16px", borderRadius: 20, background: P.primaryLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <IoCartOutline size={36} color={P.primary} />
-              </div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: P.fg, margin: "0 0 6px" }}>Enter Your Store URL</h2>
-              <p style={{ fontSize: 13, color: P.muted, margin: 0, fontWeight: 400 }}>Provide the URL of your store or website to connect it with Twedot.</p>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://creatorsstore.com"
-                style={{
-                  width: "100%", height: 48, borderRadius: 10, border: `1px solid ${P.border}`,
-                  padding: "0 16px", fontSize: 15, color: P.fg, outline: "none", boxSizing: "border-box",
-                  transition: "border 0.15s",
-                }}
-                onFocus={e => (e.currentTarget.style.borderColor = P.primary)}
-                onBlur={e => (e.currentTarget.style.borderColor = P.border)} />
-            </div>
-
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", borderRadius: 10, background: P.bg2 }}>
-              <IoInformationCircleOutline size={18} color={P.blue} style={{ flexShrink: 0, marginTop: 1 }} />
-              <span style={{ fontSize: 12, color: P.fg2, lineHeight: 1.5 }}>
-                Make sure your website supports Twedot integration (for best results, use a secure HTTPS URL).
-              </span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 32 }}>
-              <button onClick={onClose}
-                style={{ fontSize: 14, fontWeight: 500, color: P.fg2, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                Cancel
-              </button>
-              <button onClick={next} disabled={!canContinue}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8, height: 44, padding: "0 24px",
-                  borderRadius: 10, background: canContinue ? P.primary : P.border,
-                  color: canContinue ? "#fff" : P.muted, border: "none",
-                  fontSize: 14, fontWeight: 600, cursor: canContinue ? "pointer" : "default",
-                }}>
-                Continue <IoArrowForward size={16} />
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* ── Step 2: Store Configuration (Screen 4) ── */}
-        {step === 2 && (
-          <>
-            {/* Store card */}
-            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", borderRadius: 14, border: `1px solid ${P.border}`, marginBottom: 28 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: P.primaryLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <IoStorefrontOutline size={22} color={P.primary} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: P.fg }}>
-                  {url || "Your Store"}
-                </div>
-                <div style={{ fontSize: 12, color: P.muted }}>{url || "https://..."}</div>
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 600, color: P.green, background: P.greenSoft, padding: "4px 12px", borderRadius: 20 }}>Connected</span>
-            </div>
-
-            {/* Checkout Preferences */}
-            <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: P.fg, margin: "0 0 4px" }}>Checkout Preferences</h3>
-              <p style={{ fontSize: 13, color: P.muted, margin: "0 0 14px" }}>Choose how buyers can purchase products from this store.</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 16px", borderRadius: 12, border: `1px solid ${co === "both" ? P.primary : P.border}`, cursor: "pointer", background: co === "both" ? P.primaryLight : P.bg }}>
-                  <input type="radio" name="checkout" checked={co === "both"} onChange={() => setCo("both")}
-                    style={{ accentColor: P.primary, marginTop: 2, width: 18, height: 18, flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>Both Twedot & External Checkout</div>
-                    <div style={{ fontSize: 12, color: P.muted, marginTop: 2 }}>Let buyers choose between Twedot checkout or your website checkout.</div>
-                  </div>
-                </label>
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 16px", borderRadius: 12, border: `1px solid ${co === "twedot" ? P.primary : P.border}`, cursor: "pointer", background: co === "twedot" ? P.primaryLight : P.bg }}>
-                  <input type="radio" name="checkout" checked={co === "twedot"} onChange={() => setCo("twedot")}
-                    style={{ accentColor: P.primary, marginTop: 2, width: 18, height: 18, flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>Twedot Checkout Only</div>
-                    <div style={{ fontSize: 12, color: P.muted, marginTop: 2 }}>Buyers will use Twedot's secure checkout.</div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Sync Settings */}
-            <div style={{ marginBottom: 28 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: P.fg, margin: "0 0 4px" }}>Sync Settings</h3>
-              <p style={{ fontSize: 13, color: P.muted, margin: "0 0 14px" }}>Control how often we fetch your products.</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <IoSyncOutline size={18} color={P.primary} />
-                <select value={sync} onChange={e => setSync(e.target.value)}
-                  style={{ flex: 1, height: 44, borderRadius: 10, border: `1px solid ${P.border}`, padding: "0 14px", fontSize: 14, color: P.fg, background: P.bg, cursor: "pointer", outline: "none" }}>
-                  <option value="5">Every 5 minutes</option>
-                  <option value="15">Every 15 minutes</option>
-                  <option value="30">Every 30 minutes</option>
-                  <option value="60">Every hour</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <button onClick={() => setStep(1)}
-                style={{ fontSize: 14, fontWeight: 500, color: P.fg2, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                Back
-              </button>
-              <button onClick={next} disabled={busy}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8, height: 44, padding: "0 24px",
-                  borderRadius: 10, background: P.primary, color: "#fff", border: "none",
-                  fontSize: 14, fontWeight: 600, cursor: "pointer",
-                }}>
-                {busy ? <><IoSyncOutline size={16} style={{ animation: "spin 1s linear infinite" }} /> Connecting...</> : "Connect Store"}
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* ── Step 3: Success ── */}
-        {step === 3 && (
-          <div style={{ textAlign: "center", padding: "40px 0" }}>
-            <div style={{ width: 72, height: 72, borderRadius: 36, background: P.greenSoft, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
-              <IoCheckmarkCircle size={40} color={P.green} />
-            </div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: P.fg, margin: "0 0 8px" }}>Store Connected!</h2>
-            <p style={{ fontSize: 14, color: P.muted, margin: "0 0 24px" }}>Your products are syncing. This may take a few minutes.</p>
-            <button onClick={onDone}
-              style={{ height: 44, padding: "0 28px", borderRadius: 10, background: P.primary, color: "#fff", border: "none", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-              View Store
-            </button>
+    <header style={{ background: T.dark, color: "#fff" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52, padding: "0 28px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <IoStorefrontOutline size={20} color={T.orange} />
+            <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em" }}>Twedot Connect</span>
           </div>
-        )}
-      </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SCREEN 5: Store Detail & Management
-// ═══════════════════════════════════════════════════════════════════════════
-
-function StoreDetailView({ store, onBack }: { store: Store; onBack: () => void }) {
-  const [tab, setTab] = useState<"overview" | "settings" | "products" | "activity">("overview");
-  const products = PRODUCTS[store.id] || [];
-  const meta = PLAT_META[store.platform];
-
-  const tabs: { id: typeof tab; label: string }[] = [
-    { id: "overview", label: "Overview" },
-    { id: "settings", label: "Settings" },
-    { id: "products", label: "Products" },
-    { id: "activity", label: "Activity" },
-  ];
-
-  return (
-    <div style={{ minHeight: "100vh", background: P.bg, fontFamily: "'Poppins', system-ui, sans-serif" }}>
-      {/* Back link */}
-      <div style={{ padding: "16px 32px", borderBottom: `1px solid ${P.border}` }}>
-        <button onClick={onBack}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: P.muted, cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 500 }}>
-          <IoArrowBack size={16} /> Back to Connected Stores
+        </div>
+        <button onClick={onAdd}
+          style={{ ...btnPrimary, height: 34, fontSize: 13, padding: "0 16px" }}
+          onMouseEnter={e => (e.currentTarget.style.background = T.orangeHover)}
+          onMouseLeave={e => (e.currentTarget.style.background = T.orange)}>
+          <IoAddOutline size={15} /> Connect a Store
         </button>
       </div>
-
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 32px" }}>
-        {/* Store header — matches wireframe screen 5 */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 14, overflow: "hidden", border: `1px solid ${P.border}`, flexShrink: 0 }}>
-            <img src={store.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 20, fontWeight: 700, color: P.fg }}>{store.name}</span>
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#fff", background: P.green, padding: "3px 12px", borderRadius: 20 }}>Active</span>
-            </div>
-            <div style={{ fontSize: 13, color: P.muted, marginTop: 2 }}>{store.url}</div>
-          </div>
-          <button style={{ background: "none", border: "none", cursor: "pointer", color: P.muted, padding: 4 }}>
-            <IoEllipsisVertical size={20} />
-          </button>
-        </div>
-
-        {/* Tabs — matches wireframe */}
-        <div style={{ display: "flex", gap: 0, borderBottom: `2px solid ${P.border}`, marginBottom: 24 }}>
-          {tabs.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              style={{
-                padding: "10px 20px", fontSize: 14, fontWeight: tab === t.id ? 600 : 400,
-                color: tab === t.id ? P.primary : P.muted,
-                background: "none", border: "none", cursor: "pointer",
-                borderBottom: tab === t.id ? `2px solid ${P.primary}` : "2px solid transparent",
-                marginBottom: -2, transition: "all 0.15s",
-              }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* ── Overview tab (Screen 5 wireframe) ── */}
-        {tab === "overview" && (
-          <div>
-            {/* Two cards side by side */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
-              {/* Connection Status */}
-              <div style={{ padding: "20px", borderRadius: 14, border: `1px solid ${P.border}` }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: P.fg, marginBottom: 12 }}>Connection Status</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 5, background: P.green }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>Active</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 5, background: P.green }} />
-                  <span style={{ fontSize: 12, color: P.muted }}>Last synced: {ago(store.lastSync)}</span>
-                </div>
-                <button style={{
-                  display: "flex", alignItems: "center", gap: 6, height: 34, padding: "0 16px",
-                  borderRadius: 8, border: `1px solid ${P.primary}`, background: P.bg,
-                  color: P.primary, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                }}>
-                  <IoSyncOutline size={14} /> Sync Now
-                </button>
-              </div>
-
-              {/* Products Available */}
-              <div style={{ padding: "20px", borderRadius: 14, border: `1px solid ${P.border}` }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: P.fg, marginBottom: 12 }}>Products Available</div>
-                <div style={{ fontSize: 36, fontWeight: 800, color: P.fg, letterSpacing: "-0.02em", lineHeight: 1 }}>{store.products}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
-                  <IoFlashOutline size={14} color={P.primary} />
-                  <span style={{ fontSize: 12, color: P.muted }}>Distributed in feed</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Configuration */}
-            <div style={{ padding: "20px", borderRadius: 14, border: `1px solid ${P.border}`, marginBottom: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                <span style={{ fontSize: 15, fontWeight: 600, color: P.fg }}>Configuration</span>
-                <button style={{
-                  height: 32, padding: "0 16px", borderRadius: 8, border: `1px solid ${P.border}`,
-                  background: P.bg, fontSize: 12, fontWeight: 600, color: P.fg, cursor: "pointer",
-                }}>
-                  Edit
-                </button>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ fontSize: 13, color: P.fg2 }}>
-                  <span style={{ color: P.muted }}>Checkout Options:</span> {store.checkout.mode === "both" ? "Both Twedot & External" : "Twedot Only"}
-                </div>
-                <div style={{ fontSize: 13, color: P.fg2 }}>
-                  <span style={{ color: P.muted }}>Sync Frequency:</span> {store.checkout.syncFreq}
-                </div>
-              </div>
-            </div>
-
-            {/* Disconnect */}
-            <button style={{
-              width: "100%", height: 44, borderRadius: 10,
-              border: `1px solid ${P.red}30`, background: P.redSoft,
-              color: P.red, fontSize: 14, fontWeight: 600, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            }}>
-              <IoTrashOutline size={16} /> Disconnect Store
-            </button>
-          </div>
-        )}
-
-        {/* ── Settings tab ── */}
-        {tab === "settings" && (
-          <div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {[
-                { label: "Platform", value: meta.label },
-                { label: "Checkout Mode", value: store.checkout.mode === "both" ? "Both Twedot & External" : "Twedot Only" },
-                { label: "Sync Frequency", value: store.checkout.syncFreq },
-                { label: "Connected On", value: new Date(store.connectedAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) },
-                { label: "Store URL", value: store.url },
-              ].map((s, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderRadius: 12, border: `1px solid ${P.border}` }}>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: P.muted }}>{s.label}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: P.fg }}>{s.value}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
-              <button style={{ flex: 1, height: 42, borderRadius: 10, background: P.primary, color: "#fff", border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                Edit Configuration
-              </button>
-              <button style={{ height: 42, padding: "0 20px", borderRadius: 10, background: P.redSoft, color: P.red, border: `1px solid ${P.red}20`, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                <IoTrashOutline size={15} /> Disconnect
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Products tab ── */}
-        {tab === "products" && (
-          <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>{products.length} products</span>
-              <button style={{ display: "flex", alignItems: "center", gap: 6, height: 34, padding: "0 14px", borderRadius: 8, border: `1px solid ${P.primary}`, background: P.bg, color: P.primary, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-                <IoSyncOutline size={14} /> Sync Now
-              </button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {products.map(p => (
-                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderRadius: 12, border: `1px solid ${P.border}`, background: P.bg }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", flexShrink: 0, border: `1px solid ${P.border}` }}>
-                    <img src={p.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: P.fg, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
-                    <div style={{ fontSize: 12, color: P.muted }}>{p.category} · Qty: {p.qty}</div>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: P.fg }}>{fmt(p.price)}</div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: p.available ? P.green : P.red }}>
-                      {p.available ? "In Stock" : "Out of Stock"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Activity tab ── */}
-        {tab === "activity" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {ACTIVITY.filter(a => a.store === store.name).map(a => (
-              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 12, border: `1px solid ${P.border}` }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: P.primaryLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <IoFlashOutline size={16} color={P.primary} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: P.fg }}>{a.action}</div>
-                  <div style={{ fontSize: 12, color: P.muted }}>{a.detail}</div>
-                </div>
-                <span style={{ fontSize: 12, color: P.muted, flexShrink: 0 }}>{a.time}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    </header>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCREEN 1: Connected Stores Overview (Settings Layout)
-// ═══════════════════════════════════════════════════════════════════════════
-
-function ConnectedStoresView({ onAdd, onViewStore }: { onAdd: () => void; onViewStore: (s: Store) => void }) {
-  return (
-    <div style={{ minHeight: "100vh", background: P.bg, fontFamily: "'Poppins', system-ui, sans-serif", display: "flex" }}>
-      {/* Settings sidebar — matches wireframe screen 1 */}
-      <aside style={{ width: 240, borderRight: `1px solid ${P.border}`, padding: "28px 0", flexShrink: 0 }}>
-        <div style={{ padding: "0 20px", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: P.fg, margin: "0 0 4px" }}>Settings</h2>
-          <p style={{ fontSize: 12, color: P.muted, margin: 0 }}>Manage your account and integrations</p>
-        </div>
-        <nav style={{ display: "flex", flexDirection: "column" }}>
-          {SETTINGS_ITEMS.map(item => {
-            const active = item.id === "stores";
-            return (
-              <button key={item.id}
-                style={{
-                  display: "flex", alignItems: "center", gap: 10, padding: "10px 20px",
-                  background: active ? P.primaryLight : "transparent",
-                  color: active ? P.primary : P.fg2,
-                  border: "none", cursor: "pointer", fontSize: 13,
-                  fontWeight: active ? 600 : 400, textAlign: "left",
-                  borderLeft: active ? `3px solid ${P.primary}` : "3px solid transparent",
-                  transition: "all 0.1s",
-                }}>
-                {item.icon} {item.label}
-              </button>
-            );
-          })}
-        </nav>
-      </aside>
-
-      {/* Main content — matches wireframe screen 1 */}
-      <main style={{ flex: 1, padding: "28px 36px" }}>
-        {/* Header row */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
-          <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: P.fg, margin: "0 0 6px" }}>Connected Stores</h1>
-            <p style={{ fontSize: 14, color: P.muted, margin: 0, fontWeight: 400 }}>
-              Link your existing store or website to Twedot and showcase your products to more people.
-            </p>
-          </div>
-          <button onClick={onAdd}
-            style={{
-              display: "flex", alignItems: "center", gap: 6, height: 40, padding: "0 18px",
-              borderRadius: 10, background: P.primary, color: "#fff", border: "none",
-              fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-            }}>
-            <IoAddOutline size={16} /> Connect a Store
-          </button>
-        </div>
-
-        {/* Store list — matches wireframe: list items, not fancy cards */}
-        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-          {STORES.map(s => {
-            const meta = PLAT_META[s.platform];
-            return (
-              <div key={s.id}
-                onClick={() => onViewStore(s)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
-                  borderRadius: 14, border: `1px solid ${P.border}`, background: P.bg,
-                  cursor: "pointer", transition: "box-shadow 0.15s, border-color 0.15s",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = P.primary + "60"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(107,78,255,0.08)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = P.border; e.currentTarget.style.boxShadow = "none"; }}>
-                {/* Store icon */}
-                <div style={{ width: 44, height: 44, borderRadius: 12, overflow: "hidden", border: `1px solid ${P.border}`, flexShrink: 0 }}>
-                  <img src={s.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-                {/* Store info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: P.fg }}>{s.name}</div>
-                  <div style={{ fontSize: 12, color: P.muted, marginTop: 2 }}>
-                    {s.url}
-                  </div>
-                  <div style={{ fontSize: 11, color: P.muted, marginTop: 2 }}>
-                    Last synced: {ago(s.lastSync)} · {s.products} products
-                  </div>
-                </div>
-                {/* Status badge */}
-                <span style={{
-                  fontSize: 11, fontWeight: 600, color: "#fff", padding: "4px 14px", borderRadius: 20,
-                  background: s.status === "active" ? P.green : P.red,
-                }}>
-                  Active
-                </span>
-                {/* 3-dot menu */}
-                <button onClick={e => e.stopPropagation()}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: P.muted, padding: 4 }}>
-                  <IoEllipsisVertical size={18} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </main>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Platform logos
-// ═══════════════════════════════════════════════════════════════════════════
+// ─── Platform Logos ─────────────────────────────────────────────────────────
 
 function ShopifyLogo() {
   return (
@@ -735,36 +204,588 @@ function WooLogo() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN ENTRY
-// ═══════════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════
+// CONNECT WIZARD (Screens 2-4: Choose Platform → Enter Details → Config)
+// ═════════════════════════════════════════════════════════════════════════════
+
+function ConnectWizard({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+  const [step, setStep] = useState(0);
+  const [plat, setPlat] = useState("");
+  const [url, setUrl] = useState("");
+  const [co, setCo] = useState<"both" | "twedot">("both");
+  const [sync, setSync] = useState("15");
+  const [busy, setBusy] = useState(false);
+
+  const stepLabels = ["Choose Platform", "Enter Details", "Authorize", "Confirm"];
+
+  function next() {
+    if (step === 2) { setBusy(true); setTimeout(() => { setBusy(false); setStep(3); }, 1500); return; }
+    setStep(step + 1);
+  }
+
+  const canNext = step === 0 ? !!plat : step === 1 ? !!url.trim() : true;
+
+  const platforms = [
+    { id: "custom_api", name: "Custom Website", desc: "Connect your custom-built store or business website", icon: <IoCodeSlashOutline size={32} /> },
+    { id: "shopify", name: "Shopify", desc: "Connect your Shopify store", icon: <ShopifyLogo /> },
+    { id: "woocommerce", name: "WooCommerce", desc: "Connect your WooCommerce store", icon: <WooLogo /> },
+  ];
+
+  return (
+    <div style={{ minHeight: "100vh", background: T.bgAlt, fontFamily: T.font }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+
+      {/* Header */}
+      <div style={{ background: T.bg, borderBottom: `1px solid ${T.borderLight}` }}>
+        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", alignItems: "center", gap: 12, padding: "16px 24px" }}>
+          <button onClick={step > 0 && step < 3 ? () => setStep(step - 1) : onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", display: "flex", color: T.textBody, padding: 0 }}>
+            <IoArrowBack size={20} />
+          </button>
+          <span style={{ fontSize: 18, fontWeight: 700, color: T.text }}>Connect a Store</span>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px" }}>
+        {/* ── Step 0: Choose Platform ── */}
+        {step === 0 && (
+          <>
+            <p style={{ fontSize: 15, color: T.textBody, margin: "0 0 24px" }}>Select the type of store you want to connect</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+              {platforms.map(p => (
+                <button key={p.id} onClick={() => setPlat(p.id)}
+                  style={{
+                    ...card, display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+                    padding: "24px 14px", cursor: "pointer", textAlign: "center", position: "relative",
+                    border: plat === p.id ? `2px solid ${T.orange}` : `1px solid ${T.border}`,
+                    background: plat === p.id ? T.orangeLight : T.bg,
+                  }}>
+                  {plat === p.id && (
+                    <div style={{ position: "absolute", top: 8, right: 8, width: 20, height: 20, borderRadius: 10, background: T.orange, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <IoCheckmark size={12} color="#fff" />
+                    </div>
+                  )}
+                  <div style={{ width: 48, height: 48, borderRadius: 8, background: T.bgAlt, display: "flex", alignItems: "center", justifyContent: "center", color: T.textBody }}>
+                    {p.icon}
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.text }}>{p.name}</div>
+                  <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.4 }}>{p.desc}</div>
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 28 }}>
+              <button onClick={next} disabled={!canNext}
+                style={{ ...btnPrimary, opacity: canNext ? 1 : 0.5, cursor: canNext ? "pointer" : "default" }}
+                onMouseEnter={e => canNext && (e.currentTarget.style.background = T.orangeHover)}
+                onMouseLeave={e => (e.currentTarget.style.background = T.orange)}>
+                Continue <IoArrowForward size={15} />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── Step 1: Enter Details ── */}
+        {step === 1 && (
+          <>
+            {/* Stepper */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 32 }}>
+              {stepLabels.map((label, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center",
+                      background: i < 1 ? T.green : i === 1 ? T.orange : T.bgAlt,
+                      color: i <= 1 ? "#fff" : T.textMuted, fontSize: 12, fontWeight: 700,
+                      border: i > 1 ? `1px solid ${T.border}` : "none",
+                    }}>
+                      {i < 1 ? <IoCheckmark size={14} /> : i + 1}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: i <= 1 ? 600 : 400, color: i <= 1 ? T.text : T.textMuted, whiteSpace: "nowrap" }}>{label}</span>
+                  </div>
+                  {i < 3 && <div style={{ width: 36, height: 2, background: i < 1 ? T.green : T.borderLight, margin: "0 6px", marginBottom: 20 }} />}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ width: 72, height: 72, margin: "0 auto 16px", borderRadius: 16, background: T.orangeLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IoCartOutline size={32} color={T.orange} />
+              </div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: T.text, margin: "0 0 6px" }}>Enter Your Store URL</h2>
+              <p style={{ fontSize: 13, color: T.textMuted, margin: 0 }}>Provide the URL of your store or website to connect it with Twedot.</p>
+            </div>
+
+            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://creatorsstore.com"
+              style={{
+                width: "100%", height: 48, borderRadius: 4, border: `1px solid ${T.border}`,
+                padding: "0 14px", fontSize: 15, color: T.text, outline: "none", boxSizing: "border-box",
+                fontFamily: T.font,
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = T.orange)}
+              onBlur={e => (e.currentTarget.style.borderColor = T.border)} />
+
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", borderRadius: 4, background: T.bgAlt, marginTop: 12 }}>
+              <IoInformationCircleOutline size={18} color={T.blue} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span style={{ fontSize: 12, color: T.textBody, lineHeight: 1.5 }}>
+                Make sure your website supports Twedot integration (for best results, use a secure HTTPS URL).
+              </span>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28 }}>
+              <button onClick={onClose} style={{ ...btnSecondary }}>Cancel</button>
+              <button onClick={next} disabled={!canNext}
+                style={{ ...btnPrimary, opacity: canNext ? 1 : 0.5 }}
+                onMouseEnter={e => canNext && (e.currentTarget.style.background = T.orangeHover)}
+                onMouseLeave={e => (e.currentTarget.style.background = T.orange)}>
+                Continue <IoArrowForward size={15} />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── Step 2: Store Configuration ── */}
+        {step === 2 && (
+          <>
+            {/* Store card */}
+            <div style={{ ...card, display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", marginBottom: 28 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 8, background: T.orangeLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IoStorefrontOutline size={22} color={T.orange} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: T.text }}>{url || "Your Store"}</div>
+                <div style={{ fontSize: 12, color: T.textMuted }}>{url}</div>
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: T.green, background: T.greenLight, padding: "4px 12px", borderRadius: 4 }}>Connected</span>
+            </div>
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: T.text, margin: "0 0 4px" }}>Checkout Preferences</h3>
+            <p style={{ fontSize: 13, color: T.textMuted, margin: "0 0 14px" }}>Choose how buyers can purchase products from this store.</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+              {[
+                { v: "both" as const, l: "Both Twedot & External Checkout", d: "Let buyers choose between Twedot checkout or your website checkout." },
+                { v: "twedot" as const, l: "Twedot Checkout Only", d: "Buyers will use Twedot's secure checkout." },
+              ].map(o => (
+                <label key={o.v} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 16px", borderRadius: 6, border: `1px solid ${co === o.v ? T.orange : T.border}`, cursor: "pointer", background: co === o.v ? T.orangeLight : T.bg }}>
+                  <input type="radio" name="checkout" checked={co === o.v} onChange={() => setCo(o.v)}
+                    style={{ accentColor: T.orange, marginTop: 2, width: 18, height: 18, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{o.l}</div>
+                    <div style={{ fontSize: 12, color: T.textMuted, marginTop: 2 }}>{o.d}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: T.text, margin: "0 0 4px" }}>Sync Settings</h3>
+            <p style={{ fontSize: 13, color: T.textMuted, margin: "0 0 14px" }}>Control how often we fetch your products.</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <IoSyncOutline size={18} color={T.orange} />
+              <select value={sync} onChange={e => setSync(e.target.value)}
+                style={{ flex: 1, height: 44, borderRadius: 4, border: `1px solid ${T.border}`, padding: "0 14px", fontSize: 14, color: T.text, background: T.bg, cursor: "pointer", outline: "none", fontFamily: T.font }}>
+                <option value="5">Every 5 minutes</option>
+                <option value="15">Every 15 minutes</option>
+                <option value="30">Every 30 minutes</option>
+                <option value="60">Every hour</option>
+              </select>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28 }}>
+              <button onClick={() => setStep(1)} style={{ ...btnSecondary }}>Back</button>
+              <button onClick={next} disabled={busy}
+                style={{ ...btnPrimary }}
+                onMouseEnter={e => (e.currentTarget.style.background = T.orangeHover)}
+                onMouseLeave={e => (e.currentTarget.style.background = T.orange)}>
+                {busy ? <><IoSyncOutline size={16} style={{ animation: "spin 1s linear infinite" }} /> Connecting...</> : "Connect Store"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── Step 3: Done ── */}
+        {step === 3 && (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <div style={{ width: 72, height: 72, borderRadius: 36, background: T.greenLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <IoCheckmarkCircle size={40} color={T.green} />
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: T.text, margin: "0 0 8px" }}>Store Connected!</h2>
+            <p style={{ fontSize: 14, color: T.textMuted, margin: "0 0 24px" }}>Your products are syncing. This may take a few minutes.</p>
+            <button onClick={onDone}
+              style={{ ...btnPrimary }}
+              onMouseEnter={e => (e.currentTarget.style.background = T.orangeHover)}
+              onMouseLeave={e => (e.currentTarget.style.background = T.orange)}>
+              View Store
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// STORE DETAIL VIEW (Screen 5: Tabs — Overview / Settings / Products / Activity)
+// ═════════════════════════════════════════════════════════════════════════════
+
+function StoreDetailView({ store, onBack }: { store: Store; onBack: () => void }) {
+  const [tab, setTab] = useState<"overview" | "settings" | "products" | "activity">("overview");
+  const products = PRODUCTS[store.id] || [];
+  const meta = PLAT_META[store.platform];
+
+  const tabs: { id: typeof tab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "settings", label: "Settings" },
+    { id: "products", label: "Products" },
+    { id: "activity", label: "Activity" },
+  ];
+
+  return (
+    <div style={{ minHeight: "100vh", background: T.bgAlt, fontFamily: T.font }}>
+      <TopNav onAdd={() => {}} />
+
+      {/* Store header */}
+      <div style={{ background: T.bg, borderBottom: `1px solid ${T.borderLight}` }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", padding: "20px 28px" }}>
+          <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: T.textMuted, cursor: "pointer", padding: 0, fontSize: 13, marginBottom: 16 }}>
+            <IoArrowBack size={15} /> Back to Connected Stores
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 8, overflow: "hidden", border: `1px solid ${T.border}`, flexShrink: 0 }}>
+              <img src={store.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: T.text }}>{store.name}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#fff", background: T.green, padding: "3px 12px", borderRadius: 4 }}>Active</span>
+              </div>
+              <div style={{ fontSize: 13, color: T.textMuted, marginTop: 2 }}>{store.url}</div>
+            </div>
+            <button style={{ background: "none", border: "none", cursor: "pointer", color: T.textMuted, padding: 4 }}>
+              <IoEllipsisVertical size={20} />
+            </button>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 0, marginTop: 20, borderBottom: `2px solid ${T.borderLight}` }}>
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                style={{
+                  padding: "10px 20px", fontSize: 14, fontWeight: tab === t.id ? 600 : 400,
+                  color: tab === t.id ? T.orange : T.textMuted,
+                  background: "none", border: "none", cursor: "pointer",
+                  borderBottom: tab === t.id ? `3px solid ${T.orange}` : "3px solid transparent",
+                  marginBottom: -2,
+                }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 28px" }}>
+        {/* Overview */}
+        {tab === "overview" && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+              <div style={{ ...card, padding: 20 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 12 }}>Connection Status</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 5, background: T.green }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: T.text }}>Active</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 5, background: T.green }} />
+                  <span style={{ fontSize: 12, color: T.textMuted }}>Last synced: {ago(store.lastSync)}</span>
+                </div>
+                <button style={{ display: "flex", alignItems: "center", gap: 6, height: 32, padding: "0 14px", borderRadius: 4, border: `1px solid ${T.orange}`, background: T.bg, color: T.orange, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: T.font }}>
+                  <IoSyncOutline size={14} /> Sync Now
+                </button>
+              </div>
+              <div style={{ ...card, padding: 20 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 12 }}>Products Available</div>
+                <div style={{ fontSize: 36, fontWeight: 800, color: T.text, letterSpacing: "-0.02em", lineHeight: 1 }}>{store.products}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
+                  <IoFlashOutline size={14} color={T.orange} />
+                  <span style={{ fontSize: 12, color: T.textMuted }}>Distributed in feed</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ ...card, padding: 20, marginBottom: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: T.text }}>Configuration</span>
+                <button style={{ height: 30, padding: "0 14px", borderRadius: 4, border: `1px solid ${T.border}`, background: T.bg, fontSize: 12, fontWeight: 600, color: T.text, cursor: "pointer", fontFamily: T.font }}>Edit</button>
+              </div>
+              <div style={{ fontSize: 13, color: T.textBody, marginBottom: 6 }}>
+                <span style={{ color: T.textMuted }}>Checkout Options:</span> {store.checkout.mode === "both" ? "Both Twedot & External" : "Twedot Only"}
+              </div>
+              <div style={{ fontSize: 13, color: T.textBody }}>
+                <span style={{ color: T.textMuted }}>Sync Frequency:</span> {store.checkout.syncFreq}
+              </div>
+            </div>
+
+            <button style={{
+              width: "100%", height: 44, borderRadius: 4,
+              border: `1px solid ${T.red}`, background: T.redLight,
+              color: T.red, fontSize: 14, fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: T.font,
+            }}>
+              <IoTrashOutline size={16} /> Disconnect Store
+            </button>
+          </div>
+        )}
+
+        {/* Settings */}
+        {tab === "settings" && (
+          <div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                { label: "Platform", value: meta.label },
+                { label: "Checkout Mode", value: store.checkout.mode === "both" ? "Both Twedot & External" : "Twedot Only" },
+                { label: "Sync Frequency", value: store.checkout.syncFreq },
+                { label: "Connected On", value: new Date(store.connectedAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) },
+                { label: "Store URL", value: store.url },
+              ].map((s, i) => (
+                <div key={i} style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px" }}>
+                  <span style={{ fontSize: 13, color: T.textMuted }}>{s.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Products */}
+        {tab === "products" && (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{products.length} products</span>
+              <button style={{ display: "flex", alignItems: "center", gap: 6, height: 34, padding: "0 14px", borderRadius: 4, border: `1px solid ${T.orange}`, background: T.bg, color: T.orange, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: T.font }}>
+                <IoSyncOutline size={14} /> Sync Now
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {products.map(p => (
+                <div key={p.id} style={{ ...card, display: "flex", alignItems: "center", gap: 14, padding: "12px 16px" }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 6, overflow: "hidden", flexShrink: 0, border: `1px solid ${T.borderLight}` }}>
+                    <img src={p.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+                    <div style={{ fontSize: 12, color: T.textMuted }}>{p.category} · Qty: {p.qty}</div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: T.text }}>{fmt(p.price)}</div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: p.available ? T.green : T.red }}>
+                      {p.available ? "In Stock" : "Out of Stock"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Activity */}
+        {tab === "activity" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {ACTIVITY.filter(a => a.store === store.name).map(a => (
+              <div key={a.id} style={{ ...card, display: "flex", alignItems: "center", gap: 14, padding: "14px 18px" }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: T.orangeLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <IoFlashOutline size={16} color={T.orange} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{a.action}</div>
+                  <div style={{ fontSize: 12, color: T.textMuted }}>{a.detail}</div>
+                </div>
+                <span style={{ fontSize: 12, color: T.textMuted }}>{a.time}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// MAIN PAGE (Screen 1: Connected Stores with hero + cards + How It Works)
+// ═════════════════════════════════════════════════════════════════════════════
 
 export default function ConnectPage() {
-  const [view, setView] = useState<"list" | "wizard" | "detail">("list");
+  const [view, setView] = useState<"home" | "wizard" | "detail">("home");
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
 
   if (view === "wizard") {
-    return (
-      <ConnectWizard
-        onClose={() => setView("list")}
-        onDone={() => { setView("list"); }}
-      />
-    );
+    return <ConnectWizard onClose={() => setView("home")} onDone={() => setView("home")} />;
   }
 
   if (view === "detail" && selectedStore) {
-    return (
-      <StoreDetailView
-        store={selectedStore}
-        onBack={() => { setView("list"); setSelectedStore(null); }}
-      />
-    );
+    return <StoreDetailView store={selectedStore} onBack={() => { setView("home"); setSelectedStore(null); }} />;
   }
 
   return (
-    <ConnectedStoresView
-      onAdd={() => setView("wizard")}
-      onViewStore={(s) => { setSelectedStore(s); setView("detail"); }}
-    />
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.font }}>
+      <TopNav onAdd={() => setView("wizard")} />
+
+      {/* ── Hero Banner (light, clean — no dark bg) ── */}
+      <section style={{ background: `linear-gradient(135deg, ${T.bgAlt} 0%, #fff 100%)`, borderBottom: `1px solid ${T.borderLight}` }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "48px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ maxWidth: 520 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 4, background: T.orangeLight, fontSize: 12, fontWeight: 700, color: T.orange, marginBottom: 16 }}>
+              <IoStorefrontOutline size={14} /> Twedot Connect
+            </div>
+            <h1 style={{ fontSize: 36, fontWeight: 800, color: T.text, margin: "0 0 12px", lineHeight: 1.15, letterSpacing: "-0.02em" }}>
+              Connect Your Store to Twedot
+            </h1>
+            <p style={{ fontSize: 16, color: T.textBody, margin: "0 0 24px", lineHeight: 1.6 }}>
+              Showcase your products, reach more people, and grow your business on the open network.
+            </p>
+            <button onClick={() => setView("wizard")}
+              style={{ ...btnPrimary, height: 44, fontSize: 15, padding: "0 24px" }}
+              onMouseEnter={e => (e.currentTarget.style.background = T.orangeHover)}
+              onMouseLeave={e => (e.currentTarget.style.background = T.orange)}>
+              <IoLinkOutline size={16} /> Connect a Store <IoArrowForward size={15} />
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 16, flexShrink: 0 }}>
+            {/* Decorative stat cards */}
+            <div style={{ ...card, padding: "16px 20px", textAlign: "center" }}>
+              <IoTrendingUpOutline size={24} color={T.orange} />
+              <div style={{ fontSize: 24, fontWeight: 800, color: T.text, marginTop: 6 }}>{short(STORES.reduce((a, s) => a + s.views, 0))}</div>
+              <div style={{ fontSize: 11, color: T.textMuted, fontWeight: 500 }}>Total Views</div>
+            </div>
+            <div style={{ ...card, padding: "16px 20px", textAlign: "center" }}>
+              <IoCubeOutline size={24} color={T.blue} />
+              <div style={{ fontSize: 24, fontWeight: 800, color: T.text, marginTop: 6 }}>{short(STORES.reduce((a, s) => a + s.products, 0))}</div>
+              <div style={{ fontSize: 11, color: T.textMuted, fontWeight: 500 }}>Products</div>
+            </div>
+            <div style={{ ...card, padding: "16px 20px", textAlign: "center" }}>
+              <IoBagHandleOutline size={24} color={T.green} />
+              <div style={{ fontSize: 24, fontWeight: 800, color: T.text, marginTop: 6 }}>{short(STORES.reduce((a, s) => a + s.orders, 0))}</div>
+              <div style={{ fontSize: 11, color: T.textMuted, fontWeight: 500 }}>Orders</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Your Connected Stores ── */}
+      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "36px 28px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: T.text, margin: "0 0 4px" }}>Your Connected Stores</h2>
+            <p style={{ fontSize: 14, color: T.textMuted, margin: 0 }}>Manage your linked websites and stores</p>
+          </div>
+          <button onClick={() => setView("wizard")}
+            style={{ ...btnSecondary, height: 36, fontSize: 13 }}
+            onMouseEnter={e => (e.currentTarget.style.background = T.bgAlt)}
+            onMouseLeave={e => (e.currentTarget.style.background = T.bg)}>
+            <IoAddOutline size={15} /> Connect a Store
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 18 }}>
+          {/* Store cards with image — matching the mockup */}
+          {STORES.map(s => (
+            <div key={s.id} style={{ ...card, cursor: "pointer" }}
+              onMouseEnter={e => (e.currentTarget.style.boxShadow = T.shadowHover)}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow = T.shadow)}>
+              {/* Image */}
+              <div style={{ position: "relative" }}>
+                <div style={{ width: "100%", height: 150, overflow: "hidden" }}>
+                  <img src={s.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <span style={{ position: "absolute", top: 10, left: 10, fontSize: 11, fontWeight: 700, color: "#fff", background: T.green, padding: "3px 10px", borderRadius: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: 3, background: "#fff" }} /> Active
+                </span>
+                <button onClick={e => e.stopPropagation()} style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.5)", border: "none", borderRadius: 4, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                  <IoEllipsisVertical size={16} color="#fff" />
+                </button>
+              </div>
+              {/* Info */}
+              <div style={{ padding: "16px 18px" }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: T.text, marginBottom: 2 }}>{s.name}</div>
+                <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 4 }}>{s.url}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: T.textBody }}>
+                  <IoCubeOutline size={13} /> {short(s.products)} products
+                </div>
+              </div>
+              {/* View Store button */}
+              <div style={{ borderTop: `1px solid ${T.borderLight}`, padding: "0 18px" }}>
+                <button onClick={() => { setSelectedStore(s); setView("detail"); }}
+                  style={{
+                    width: "100%", height: 42, background: "none", border: "none",
+                    fontSize: 13, fontWeight: 600, color: T.text, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: T.font,
+                  }}>
+                  <IoEyeOutline size={15} /> View Store <IoChevronForward size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* Connect Another Store card */}
+          <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 24px", cursor: "pointer", minHeight: 280 }}
+            onClick={() => setView("wizard")}
+            onMouseEnter={e => (e.currentTarget.style.boxShadow = T.shadowHover)}
+            onMouseLeave={e => (e.currentTarget.style.boxShadow = T.shadow)}>
+            <div style={{ width: 56, height: 56, borderRadius: 28, background: T.bgAlt, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16, border: `2px dashed ${T.border}` }}>
+              <IoAddOutline size={28} color={T.orange} />
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.text, marginBottom: 4 }}>Connect Another Store</div>
+            <p style={{ fontSize: 13, color: T.textMuted, textAlign: "center", margin: "0 0 16px" }}>
+              Link another website or platform to expand your reach.
+            </p>
+            <button style={{ ...btnPrimary, height: 36, fontSize: 13, padding: "0 18px" }}
+              onMouseEnter={e => (e.currentTarget.style.background = T.orangeHover)}
+              onMouseLeave={e => (e.currentTarget.style.background = T.orange)}>
+              Connect a Store <IoArrowForward size={14} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── How It Works ── */}
+      <section style={{ background: T.bgAlt, borderTop: `1px solid ${T.borderLight}`, borderBottom: `1px solid ${T.borderLight}` }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "40px 28px" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: T.text, margin: "0 0 24px" }}>How It Works</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+            {[
+              { step: 1, label: "Connect", desc: "Link your website securely", icon: <IoLinkOutline size={24} />, color: T.orange },
+              { step: 2, label: "Sync", desc: "We'll fetch your products", icon: <IoSyncOutline size={24} />, color: T.blue },
+              { step: 3, label: "Discover", desc: "Your products appear in the Twedot feed", icon: <IoSearchOutline size={24} />, color: T.green },
+              { step: 4, label: "Sell", desc: "Chat, sell and grow", icon: <IoRocketOutline size={24} />, color: T.orange },
+            ].map(s => (
+              <div key={s.step} style={{ ...card, padding: 20, textAlign: "center", position: "relative" }}>
+                <div style={{ position: "absolute", top: 10, left: 14, fontSize: 11, fontWeight: 800, color: T.textMuted, background: T.bgAlt, padding: "2px 8px", borderRadius: 4 }}>{s.step}</div>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: s.color + "14", display: "flex", alignItems: "center", justifyContent: "center", margin: "8px auto 12px", color: s.color }}>
+                  {s.icon}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 4 }}>{s.label}</div>
+                <div style={{ fontSize: 12, color: T.textMuted, lineHeight: 1.5 }}>{s.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA Footer ── */}
+      <section style={{ background: T.dark }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "40px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: "0 0 6px" }}>Turn Your Business Into a Community</h2>
+            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.65)", margin: 0 }}>
+              With Twedot Connect, your store gets discovered by people nearby.
+            </p>
+          </div>
+          <button onClick={() => setView("wizard")}
+            style={{ ...btnPrimary, height: 44, fontSize: 15, padding: "0 24px" }}
+            onMouseEnter={e => (e.currentTarget.style.background = T.orangeHover)}
+            onMouseLeave={e => (e.currentTarget.style.background = T.orange)}>
+            Get Started <IoArrowForward size={15} />
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
