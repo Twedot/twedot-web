@@ -53,40 +53,22 @@ function parseMeta<T>(msg: ChatMessage): T | null {
 }
 function formatPrice(n: number): string { return "₦" + Number(n).toLocaleString(); }
 
-function VideoBubble({ src, width, maxHeight, borderRadius }: { src: string; width: number; maxHeight: number; borderRadius: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(false);
-
-  const handlePlay = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.play().then(() => setPlaying(true)).catch(() => {});
-  };
-
+function VideoThumb({ src, width, maxHeight, borderRadius, onPlay }: { src: string; width: number; maxHeight: number; borderRadius: string; onPlay: () => void }) {
   return (
-    <div className="relative bg-black" style={{ width, borderRadius, overflow: "hidden" }}>
+    <div className="relative bg-black cursor-pointer" style={{ width, borderRadius, overflow: "hidden" }} onClick={onPlay}>
       <video
-        ref={videoRef}
         src={src}
         preload="metadata"
         playsInline
-        controls={playing}
-        onPause={() => setPlaying(false)}
-        onPlay={() => setPlaying(true)}
-        onEnded={() => setPlaying(false)}
-        className="block object-cover"
+        muted
+        className="block object-cover pointer-events-none"
         style={{ width, maxHeight }}
       />
-      {!playing && (
-        <button
-          onClick={handlePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black/30"
-        >
-          <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
-            <IoPlayOutline size={24} style={{ color: "#000", marginLeft: 2 }} />
-          </div>
-        </button>
-      )}
+      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+        <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
+          <IoPlayOutline size={24} style={{ color: "#000", marginLeft: 2 }} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -374,6 +356,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
   const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [reactingMsgId, setReactingMsgId] = useState<string | null>(null);
   const [viewingImages, setViewingImages] = useState<{ urls: string[]; index: number } | null>(null);
+  const [viewingVideo, setViewingVideo] = useState<string | null>(null);
   const reactPickerRef = useRef<HTMLDivElement>(null);
   const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
   const { socket: ioSocket } = useJobSocket();
@@ -803,7 +786,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                                   className="rounded-xl overflow-hidden p-[1px] relative"
                                   style={{ backgroundColor: isMine ? color : undefined, borderTopRightRadius: isMine ? 4 : 12, borderTopLeftRadius: !isMine ? 4 : 12 }}
                                 >
-                                  <VideoBubble src={videoUrl} width={220} maxHeight={270} borderRadius="11px" />
+                                  <VideoThumb src={videoUrl} width={220} maxHeight={270} borderRadius="11px" onPlay={() => setViewingVideo(videoUrl)} />
                                   <div className="absolute bottom-1.5 right-2 bg-black/50 rounded-full px-1.5 py-0.5 z-10 pointer-events-none">
                                     <span className="text-[10px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
                                   </div>
@@ -1126,6 +1109,22 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
           )}
         </div>
       )}
+      {viewingVideo && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingVideo(null)}>
+          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingVideo(null)}>
+            <IoCloseOutline size={32} />
+          </button>
+          <video
+            src={viewingVideo}
+            controls
+            autoPlay
+            playsInline
+            className="max-w-[90vw] max-h-[90vh] rounded-lg cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {viewingImages && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingImages(null)}>
           <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingImages(null)}>

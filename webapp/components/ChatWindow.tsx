@@ -159,40 +159,22 @@ function groupMessages(messages: ChatMessage[]): MessageGroup[] {
   return groups;
 }
 
-function VideoBubble({ src, width, maxHeight, isMine, color, borderRadius }: { src: string; width: number; maxHeight: number; isMine: boolean; color: string; borderRadius: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(false);
-
-  const handlePlay = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.play().then(() => setPlaying(true)).catch(() => {});
-  };
-
+function VideoThumb({ src, width, maxHeight, borderRadius, onPlay }: { src: string; width: number; maxHeight: number; borderRadius: string; onPlay: () => void }) {
   return (
-    <div className="relative bg-black" style={{ width, borderRadius, overflow: "hidden" }}>
+    <div className="relative bg-black cursor-pointer" style={{ width, borderRadius, overflow: "hidden" }} onClick={onPlay}>
       <video
-        ref={videoRef}
         src={src}
         preload="metadata"
         playsInline
-        controls={playing}
-        onPause={() => setPlaying(false)}
-        onPlay={() => setPlaying(true)}
-        onEnded={() => setPlaying(false)}
-        className="block object-cover"
+        muted
+        className="block object-cover pointer-events-none"
         style={{ width, maxHeight }}
       />
-      {!playing && (
-        <button
-          onClick={handlePlay}
-          className="absolute inset-0 flex items-center justify-center bg-black/30"
-        >
-          <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
-            <IoPlayOutline size={20} style={{ color: "#000", marginLeft: 2 }} />
-          </div>
-        </button>
-      )}
+      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+        <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
+          <IoPlayOutline size={20} style={{ color: "#000", marginLeft: 2 }} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -278,6 +260,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
   const [uploading, setUploading] = useState(false);
   const [buyModal, setBuyModal] = useState<{ productId: string; sellerId: string } | null>(null);
   const [viewingImages, setViewingImages] = useState<{ urls: string[]; index: number } | null>(null);
+  const [viewingVideo, setViewingVideo] = useState<string | null>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; msg: ChatMessage } | null>(null);
@@ -539,7 +522,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                       const isProductInquiry = msg.messageType === "product_inquiry" || !!parseMeta<ProductInquiryMeta>(msg)?.productId;
                       const isLastInCluster = mi === cluster.messages.length - 1;
                       return (
-                      <div key={msg.id ?? msg.clientMessageId} className={`group/msg relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-8" : ""}`} onClick={(e) => handleMsgContext(e, msg)} onContextMenu={(e) => handleMsgContext(e, msg)}>
+                      <div key={msg.id ?? msg.clientMessageId} className={`group/msg relative flex mb-[3px] ${isMine ? "justify-end" : "justify-start"} ${!isMine ? "pl-8" : ""}`} onContextMenu={(e) => handleMsgContext(e, msg)}>
                         {!isMine && (
                           <div className="absolute left-0 bottom-0 w-5 h-5" style={{ position: "relative", marginLeft: -24, alignSelf: "flex-end", marginRight: 3 }}>
                             {isLastInCluster && (
@@ -599,7 +582,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                   className="rounded-xl overflow-hidden p-[1px] relative"
                                   style={{ backgroundColor: isMine ? color : "var(--feed-bg)", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
                                 >
-                                  <VideoBubble src={videoUrl} width={170} maxHeight={210} isMine={isMine} color={color} borderRadius="11px" />
+                                  <VideoThumb src={videoUrl} width={170} maxHeight={210} borderRadius="11px" onPlay={() => setViewingVideo(videoUrl)} />
                                   <div className="absolute bottom-1 right-1.5 bg-black/50 rounded-full px-1 py-0.5 z-10 pointer-events-none">
                                     <span className="text-[8px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
                                   </div>
@@ -871,6 +854,22 @@ export default function ChatWindow({ userId }: { userId: string }) {
               <IoTrashOutline size={13} className="shrink-0" /> Delete Everywhere
             </button>
           )}
+        </div>
+      )}
+
+      {viewingVideo && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingVideo(null)}>
+          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingVideo(null)}>
+            <IoCloseOutline size={32} />
+          </button>
+          <video
+            src={viewingVideo}
+            controls
+            autoPlay
+            playsInline
+            className="max-w-[90vw] max-h-[90vh] rounded-lg cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
 
