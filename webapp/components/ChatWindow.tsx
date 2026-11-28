@@ -6,7 +6,7 @@ import { useChatStore } from "@/lib/chatStore";
 import { chatSocket, type ChatMessage, type ProductInquiryMeta } from "@/lib/chatSocket";
 import { AuthStorage } from "@/lib/authStorage";
 import { apiUploadFile, apiPost, apiGet } from "@/lib/api";
-import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle, IoShieldCheckmarkOutline, IoAlertCircleOutline, IoPlayOutline, IoPauseOutline, IoMicOutline, IoCloseOutline, IoCopyOutline, IoArrowUndoOutline, IoTrashOutline } from "react-icons/io5";
+import { IoClose, IoChevronDown, IoSend, IoHappyOutline, IoImageOutline, IoCloseCircle, IoCartOutline, IoCheckmarkCircle, IoShieldCheckmarkOutline, IoAlertCircleOutline, IoPlay, IoPause, IoPlayOutline, IoPauseOutline, IoVolumeMute, IoVolumeHigh, IoExpand, IoMicOutline, IoCloseOutline, IoCopyOutline, IoArrowUndoOutline, IoTrashOutline } from "react-icons/io5";
 import RankBadge from "@/components/RankBadge";
 import dynamic from "next/dynamic";
 import ProductBuyModal from "@/components/ProductBuyModal";
@@ -173,6 +173,156 @@ function VideoThumb({ src, width, maxHeight, borderRadius, onPlay }: { src: stri
       <div className="absolute inset-0 flex items-center justify-center bg-black/30">
         <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
           <IoPlayOutline size={20} style={{ color: "#000", marginLeft: 2 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VideoModal({ src, onClose }: { src: string; onClose: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [curTime, setCurTime] = useState(0);
+  const [dur, setDur] = useState(0);
+  const [showControls, setShowControls] = useState(true);
+  const [flash, setFlash] = useState<"play" | "pause" | null>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    videoRef.current?.play().then(() => setPlaying(true)).catch(() => {});
+  }, []);
+
+  function revealControls() {
+    setShowControls(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setShowControls(false), 3000);
+  }
+
+  function triggerFlash(icon: "play" | "pause") {
+    setFlash(icon);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 700);
+  }
+
+  function handleVideoClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) { el.play(); setPlaying(true); triggerFlash("play"); }
+    else { el.pause(); setPlaying(false); triggerFlash("pause"); }
+    revealControls();
+  }
+
+  function toggleMute(e: React.MouseEvent) {
+    e.stopPropagation();
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = !el.muted;
+    setMuted(el.muted);
+  }
+
+  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    const el = videoRef.current;
+    if (!el || !el.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    el.currentTime = ((e.clientX - rect.left) / rect.width) * el.duration;
+  }
+
+  function handleFullscreen(e: React.MouseEvent) {
+    e.stopPropagation();
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else el.requestFullscreen().catch(() => {});
+  }
+
+  const fmt = (s: number) => (!s || !isFinite(s)) ? "0:00" : `${Math.floor(s / 60)}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+  const controlsVisible = showControls || !playing;
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center" onClick={onClose}>
+      <button className="absolute top-4 right-4 text-white/80 hover:text-white z-20" onClick={onClose}>
+        <IoCloseOutline size={32} />
+      </button>
+      <div
+        ref={containerRef}
+        className="relative max-w-[90vw] max-h-[90vh] cursor-pointer"
+        onClick={handleVideoClick}
+        onMouseMove={revealControls}
+        onMouseEnter={revealControls}
+        onMouseLeave={() => { if (hideTimer.current) clearTimeout(hideTimer.current); setShowControls(false); }}
+      >
+        <video
+          ref={videoRef}
+          src={src}
+          playsInline
+          muted={muted}
+          className="block max-w-[90vw] max-h-[90vh] rounded-lg object-contain"
+          onTimeUpdate={() => {
+            const el = videoRef.current;
+            if (!el || !el.duration) return;
+            setCurTime(el.currentTime);
+            setProgress((el.currentTime / el.duration) * 100);
+          }}
+          onLoadedMetadata={() => { if (videoRef.current) setDur(videoRef.current.duration); }}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+        />
+
+        {/* Play overlay */}
+        {!playing && !flash && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50">
+              <IoPlay size={26} className="ml-0.5 text-white" />
+            </div>
+          </div>
+        )}
+
+        {/* Tap flash */}
+        {flash && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm animate-ping-once">
+              {flash === "play" ? <IoPlay size={28} className="ml-1 text-white" /> : <IoPause size={28} className="text-white" />}
+            </div>
+          </div>
+        )}
+
+        {/* Controls bar */}
+        <div
+          className={`absolute bottom-0 left-0 right-0 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-gradient-to-t from-black/80 via-black/50 to-transparent px-3 pt-10 pb-2.5 rounded-b-lg">
+            {/* Progress bar */}
+            <div
+              className="mb-2.5 h-[3px] cursor-pointer rounded-full bg-white/30 hover:h-1.5 transition-all duration-150"
+              onClick={handleSeek}
+            >
+              <div className="h-full rounded-full bg-white transition-[width]" style={{ width: `${progress}%` }} />
+            </div>
+            {/* Controls row */}
+            <div className="flex items-center gap-2.5">
+              <button onClick={handleVideoClick} className="text-white hover:opacity-70 transition-opacity">
+                {playing ? <IoPause size={16} /> : <IoPlay size={16} className="ml-0.5" />}
+              </button>
+              <span className="select-none text-[11px] font-medium tabular-nums text-white/80">
+                {fmt(curTime)} / {fmt(dur)}
+              </span>
+              <div className="flex-1" />
+              <button onClick={toggleMute} className="text-white hover:opacity-70 transition-opacity">
+                {muted ? <IoVolumeMute size={16} /> : <IoVolumeHigh size={16} />}
+              </button>
+              <button onClick={handleFullscreen} className="text-white hover:opacity-70 transition-opacity">
+                <IoExpand size={16} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -858,19 +1008,7 @@ export default function ChatWindow({ userId }: { userId: string }) {
       )}
 
       {viewingVideo && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer" onClick={() => setViewingVideo(null)}>
-          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-10" onClick={() => setViewingVideo(null)}>
-            <IoCloseOutline size={32} />
-          </button>
-          <video
-            src={viewingVideo}
-            controls
-            autoPlay
-            playsInline
-            className="max-w-[90vw] max-h-[90vh] rounded-lg cursor-default"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+        <VideoModal src={viewingVideo} onClose={() => setViewingVideo(null)} />
       )}
 
       {viewingImages && (

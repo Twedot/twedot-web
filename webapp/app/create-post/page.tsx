@@ -21,6 +21,7 @@ import {
   IoPause,
   IoVolumeHigh,
   IoVolumeMute,
+  IoExpand,
   IoPricetagOutline,
   IoLocationOutline,
   IoChevronDown,
@@ -68,128 +69,141 @@ function fmt(s: number) {
 }
 
 function VideoPreview({ src, poster }: { src: string; poster?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLVideoElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [progress, setProgress] = useState(0);
   const [cur, setCur] = useState(0);
   const [dur, setDur] = useState(0);
-  const [muted, setMuted] = useState(false);
-  const [vol, setVol] = useState(1);
+  const [showControls, setShowControls] = useState(true);
+  const [flash, setFlash] = useState<"play" | "pause" | null>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const v = ref.current;
-    if (!v) return;
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
-    const onTime = () => setCur(v.currentTime);
-    const onMeta = () => setDur(v.duration || 0);
-    v.addEventListener("play", onPlay);
-    v.addEventListener("pause", onPause);
-    v.addEventListener("timeupdate", onTime);
-    v.addEventListener("loadedmetadata", onMeta);
-    return () => {
-      v.removeEventListener("play", onPlay);
-      v.removeEventListener("pause", onPause);
-      v.removeEventListener("timeupdate", onTime);
-      v.removeEventListener("loadedmetadata", onMeta);
-    };
-  }, [src]);
-
-  function togglePlay() {
-    const v = ref.current;
-    if (!v) return;
-    v.paused ? v.play().catch(() => {}) : v.pause();
+  function revealControls() {
+    setShowControls(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setShowControls(false), 3000);
   }
 
-  function seek(e: React.MouseEvent<HTMLDivElement>) {
-    const v = ref.current;
-    const bar = barRef.current;
-    if (!v || !bar || !dur) return;
-    const rect = bar.getBoundingClientRect();
-    v.currentTime = ((e.clientX - rect.left) / rect.width) * dur;
+  function triggerFlash(icon: "play" | "pause") {
+    setFlash(icon);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 700);
   }
 
-  function changeVol(e: React.ChangeEvent<HTMLInputElement>) {
-    const v = ref.current;
-    const n = parseFloat(e.target.value);
-    setVol(n);
-    if (v) { v.volume = n; v.muted = n === 0; }
-    setMuted(n === 0);
+  function handleVideoClick() {
+    const el = ref.current;
+    if (!el) return;
+    if (el.paused) { el.play(); setPlaying(true); triggerFlash("play"); }
+    else { el.pause(); setPlaying(false); triggerFlash("pause"); }
+    revealControls();
   }
 
-  function toggleMute() {
-    const v = ref.current;
-    if (!v) return;
-    const next = !muted;
-    setMuted(next);
-    v.muted = next;
+  function toggleMute(e: React.MouseEvent) {
+    e.stopPropagation();
+    const el = ref.current;
+    if (!el) return;
+    el.muted = !el.muted;
+    setMuted(el.muted);
   }
 
-  const pct = dur ? (cur / dur) * 100 : 0;
+  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    const el = ref.current;
+    if (!el || !el.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    el.currentTime = ((e.clientX - rect.left) / rect.width) * el.duration;
+  }
+
+  function handleFullscreen(e: React.MouseEvent) {
+    e.stopPropagation();
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else el.requestFullscreen().catch(() => {});
+  }
+
+  const controlsVisible = showControls || !playing;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl bg-black group/video">
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-hidden rounded-2xl bg-black cursor-pointer"
+      onClick={handleVideoClick}
+      onMouseMove={revealControls}
+      onMouseEnter={revealControls}
+      onMouseLeave={() => { if (hideTimer.current) clearTimeout(hideTimer.current); setShowControls(false); }}
+    >
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         ref={ref}
         key={src}
         src={src}
         poster={poster}
+        muted={muted}
         playsInline
-        className="w-full max-h-[400px] rounded-2xl"
+        className="w-full max-h-[400px] rounded-2xl block"
+        onTimeUpdate={() => {
+          const el = ref.current;
+          if (!el || !el.duration) return;
+          setCur(el.currentTime);
+          setProgress((el.currentTime / el.duration) * 100);
+        }}
+        onLoadedMetadata={() => { if (ref.current) setDur(ref.current.duration); }}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
       />
 
-      {/* Centered play button — visible when paused */}
-      {!playing && (
-        <button
-          onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center z-10"
-        >
-          <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-            <IoPlay size={28} className="text-white ml-1" />
-          </div>
-        </button>
-      )}
-
-      {/* Controls overlay — only visible when playing or hovering */}
-      <div className={`absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2 pt-6 transition-opacity ${playing ? "opacity-0 group-hover/video:opacity-100" : "opacity-0"}`}>
-        {/* Play / Pause */}
-        <button onClick={togglePlay} className="text-white">
-          {playing ? <IoPause size={18} /> : <IoPlay size={18} />}
-        </button>
-
-        {/* Time */}
-        <span className="min-w-[70px] text-[11px] font-medium text-white/90">
-          {fmt(cur)} / {fmt(dur)}
-        </span>
-
-        {/* Progress bar */}
-        <div
-          ref={barRef}
-          onClick={seek}
-          className="relative flex-1 cursor-pointer py-1"
-        >
-          <div className="h-1 rounded-full bg-white/30">
-            <div
-              className="h-1 rounded-full bg-white"
-              style={{ width: `${pct}%` }}
-            />
+      {/* Play overlay */}
+      {!playing && !flash && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50">
+            <IoPlay size={26} className="ml-0.5 text-white" />
           </div>
         </div>
+      )}
 
-        {/* Volume */}
-        <button onClick={toggleMute} className="text-white hidden sm:block">
-          {muted || vol === 0 ? <IoVolumeMute size={16} /> : <IoVolumeHigh size={16} />}
-        </button>
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.05}
-          value={muted ? 0 : vol}
-          onChange={changeVol}
-          className="w-14 accent-white hidden sm:block"
-        />
+      {/* Tap flash */}
+      {flash && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+            {flash === "play" ? <IoPlay size={28} className="ml-1 text-white" /> : <IoPause size={28} className="text-white" />}
+          </div>
+        </div>
+      )}
+
+      {/* Controls bar */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "opacity-0"}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bg-gradient-to-t from-black/80 via-black/50 to-transparent px-3 pt-10 pb-2.5 rounded-b-2xl">
+          {/* Progress bar */}
+          <div
+            className="mb-2.5 h-[3px] cursor-pointer rounded-full bg-white/30 hover:h-1.5 transition-all duration-150"
+            onClick={handleSeek}
+          >
+            <div className="h-full rounded-full bg-white transition-[width]" style={{ width: `${progress}%` }} />
+          </div>
+          {/* Controls row */}
+          <div className="flex items-center gap-2.5">
+            <button onClick={(e) => { e.stopPropagation(); handleVideoClick(); }} className="text-white hover:opacity-70 transition-opacity">
+              {playing ? <IoPause size={16} /> : <IoPlay size={16} className="ml-0.5" />}
+            </button>
+            <span className="select-none text-[11px] font-medium tabular-nums text-white/80">
+              {fmt(cur)} / {fmt(dur)}
+            </span>
+            <div className="flex-1" />
+            <button onClick={toggleMute} className="text-white hover:opacity-70 transition-opacity">
+              {muted ? <IoVolumeMute size={16} /> : <IoVolumeHigh size={16} />}
+            </button>
+            <button onClick={handleFullscreen} className="text-white hover:opacity-70 transition-opacity hidden sm:block">
+              <IoExpand size={16} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
