@@ -128,7 +128,7 @@ function VideoPreview({ src, poster }: { src: string; poster?: string }) {
   const pct = dur ? (cur / dur) * 100 : 0;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl bg-black">
+    <div className="relative w-full overflow-hidden rounded-2xl bg-black group/video">
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         ref={ref}
@@ -139,8 +139,20 @@ function VideoPreview({ src, poster }: { src: string; poster?: string }) {
         className="w-full max-h-[400px] rounded-2xl"
       />
 
-      {/* Controls overlay */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2 pt-6">
+      {/* Centered play button — visible when paused */}
+      {!playing && (
+        <button
+          onClick={togglePlay}
+          className="absolute inset-0 flex items-center justify-center z-10"
+        >
+          <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+            <IoPlay size={28} className="text-white ml-1" />
+          </div>
+        </button>
+      )}
+
+      {/* Controls overlay — only visible when playing or hovering */}
+      <div className={`absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2 pt-6 transition-opacity ${playing ? "opacity-0 group-hover/video:opacity-100" : "opacity-0"}`}>
         {/* Play / Pause */}
         <button onClick={togglePlay} className="text-white">
           {playing ? <IoPause size={18} /> : <IoPlay size={18} />}
@@ -166,7 +178,7 @@ function VideoPreview({ src, poster }: { src: string; poster?: string }) {
         </div>
 
         {/* Volume */}
-        <button onClick={toggleMute} className="text-white">
+        <button onClick={toggleMute} className="text-white hidden sm:block">
           {muted || vol === 0 ? <IoVolumeMute size={16} /> : <IoVolumeHigh size={16} />}
         </button>
         <input
@@ -176,7 +188,7 @@ function VideoPreview({ src, poster }: { src: string; poster?: string }) {
           step={0.05}
           value={muted ? 0 : vol}
           onChange={changeVol}
-          className="w-14 accent-white"
+          className="w-14 accent-white hidden sm:block"
         />
       </div>
     </div>

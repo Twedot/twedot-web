@@ -53,6 +53,44 @@ function parseMeta<T>(msg: ChatMessage): T | null {
 }
 function formatPrice(n: number): string { return "₦" + Number(n).toLocaleString(); }
 
+function VideoBubble({ src, width, maxHeight, borderRadius }: { src: string; width: number; maxHeight: number; borderRadius: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const handlePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().then(() => setPlaying(true)).catch(() => {});
+  };
+
+  return (
+    <div className="relative bg-black" style={{ width, borderRadius, overflow: "hidden" }}>
+      <video
+        ref={videoRef}
+        src={src}
+        preload="metadata"
+        playsInline
+        controls={playing}
+        onPause={() => setPlaying(false)}
+        onPlay={() => setPlaying(true)}
+        onEnded={() => setPlaying(false)}
+        className="block object-cover"
+        style={{ width, maxHeight }}
+      />
+      {!playing && (
+        <button
+          onClick={handlePlay}
+          className="absolute inset-0 flex items-center justify-center bg-black/30"
+        >
+          <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
+            <IoPlayOutline size={24} style={{ color: "#000", marginLeft: 2 }} />
+          </div>
+        </button>
+      )}
+    </div>
+  );
+}
+
 const WAVEFORM_BARS = 25;
 const BAR_HEIGHTS = Array.from({ length: WAVEFORM_BARS }, () => 4 + Math.random() * 16);
 
@@ -516,39 +554,75 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
     e.target.value = "";
   };
 
+  const [voicePreview, setVoicePreview] = useState<{ blob: Blob; url: string; duration: number } | null>(null);
+  const voicePreviewRef = useRef<HTMLAudioElement | null>(null);
+  const [voicePlaying, setVoicePlaying] = useState(false);
+  const MAX_VOICE_SECONDS = 300;
+
   const handleStartRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
+      const mr = new MediaRecorder(stream, { mimeType });
       audioChunksRef.current = [];
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.start();
+      mr.start(1000);
       mediaRecorderRef.current = mr;
       setIsRecording(true);
       setRecordingSeconds(0);
-      recordTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+      recordTimerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => {
+          if (s + 1 >= MAX_VOICE_SECONDS) {
+            handleStopRecording();
+            return s;
+          }
+          return s + 1;
+        });
+      }, 1000);
     } catch {}
   };
 
   const handleStopRecording = useCallback(async () => {
     const mr = mediaRecorderRef.current;
-    if (!mr) return;
+    if (!mr || mr.state === "inactive") return;
     setIsRecording(false);
     if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
     await new Promise<void>((res) => { mr.onstop = () => res(); mr.stop(); });
     mr.stream.getTracks().forEach((t) => t.stop());
-    if (!audioChunksRef.current.length || !myUserId) return;
-    const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-    const duration = recordingSeconds;
+    mediaRecorderRef.current = null;
+    if (!audioChunksRef.current.length) return;
+    const blob = new Blob(audioChunksRef.current, { type: mr.mimeType || "audio/webm" });
+    const url = URL.createObjectURL(blob);
+    setVoicePreview({ blob, url, duration: recordingSeconds });
+  }, [recordingSeconds]);
+
+  const handleCancelVoice = useCallback(() => {
+    const mr = mediaRecorderRef.current;
+    if (mr && mr.state !== "inactive") {
+      mr.onstop = null;
+      mr.stop();
+      mr.stream.getTracks().forEach((t) => t.stop());
+      mediaRecorderRef.current = null;
+    }
+    setIsRecording(false);
+    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
+    if (voicePreview) URL.revokeObjectURL(voicePreview.url);
+    setVoicePreview(null);
+    setVoicePlaying(false);
+    setRecordingSeconds(0);
+  }, [voicePreview]);
+
+  const handleSendVoice = useCallback(async () => {
+    if (!voicePreview || !myUserId) return;
     setUploading(true);
     try {
       const form = new FormData();
-      form.append("file", blob, "voice.webm");
+      form.append("file", voicePreview.blob, "voice.webm");
       form.append("type", "chat");
       const result = await apiUploadFile<{ url: string }>("/upload/direct", form);
       const replyToId = replyTo?.id;
       const replySnapshot = replyTo ? JSON.stringify({ content: replyTo.content, messageType: replyTo.messageType, senderId: replyTo.senderId, senderName: replyTo.senderId === myUserId ? undefined : (replyTo.senderName ?? contact?.name) }) : undefined;
-      const clientMessageId = chatSocket.send(userId, result.url, "voice", { duration, replyToId, replySnapshot });
+      const clientMessageId = chatSocket.send(userId, result.url, "voice", { duration: voicePreview.duration, replyToId, replySnapshot });
       useChatStore.getState().addMessage(userId, {
         id: clientMessageId,
         clientMessageId,
@@ -556,7 +630,7 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
         recipientId: userId,
         content: result.url,
         messageType: "voice",
-        duration,
+        duration: voicePreview.duration,
         timestamp: Date.now(),
         status: "sending",
         replyToId,
@@ -564,8 +638,11 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
       }, true);
       setReplyTo(null);
     } catch {}
+    URL.revokeObjectURL(voicePreview.url);
+    setVoicePreview(null);
+    setVoicePlaying(false);
     setUploading(false);
-  }, [myUserId, userId, recordingSeconds, replyTo]);
+  }, [myUserId, userId, voicePreview, replyTo]);
 
   const handleTyping = (value: string) => {
     setText(value);
@@ -726,8 +803,8 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
                                   className="rounded-xl overflow-hidden p-[1px] relative"
                                   style={{ backgroundColor: isMine ? color : undefined, borderTopRightRadius: isMine ? 4 : 12, borderTopLeftRadius: !isMine ? 4 : 12 }}
                                 >
-                                  <video src={videoUrl} controls className="w-[220px] max-h-[270px] rounded-[11px] object-cover block" />
-                                  <div className="absolute bottom-1.5 right-2 bg-black/50 rounded-full px-1.5 py-0.5">
+                                  <VideoBubble src={videoUrl} width={220} maxHeight={270} borderRadius="11px" />
+                                  <div className="absolute bottom-1.5 right-2 bg-black/50 rounded-full px-1.5 py-0.5 z-10 pointer-events-none">
                                     <span className="text-[10px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
                                   </div>
                                 </div>
@@ -1015,15 +1092,38 @@ function MobileChatView({ userId, onBack }: { userId: string; onBack: () => void
               <IoSend size={18} />
             </button>
           ) : isRecording ? (
-            <button onClick={handleStopRecording} disabled={uploading} className="p-2 rounded-full shrink-0 text-red-500 animate-pulse">
-              <IoStopCircleOutline size={22} />
-            </button>
+            <>
+              <span className="text-[11px] text-red-500 shrink-0 tabular-nums">{Math.floor(recordingSeconds / 60)}:{(recordingSeconds % 60).toString().padStart(2, "0")}</span>
+              <button onClick={handleCancelVoice} className="p-1 rounded-full shrink-0 text-light-text hover:text-text transition-colors">
+                <IoCloseOutline size={18} />
+              </button>
+              <button onClick={handleStopRecording} disabled={uploading} className="p-2 rounded-full shrink-0 text-red-500 animate-pulse">
+                <IoStopCircleOutline size={22} />
+              </button>
+            </>
+          ) : voicePreview ? (
+            <>
+              <audio ref={voicePreviewRef} src={voicePreview.url} onEnded={() => setVoicePlaying(false)} />
+              <button onClick={() => {
+                const a = voicePreviewRef.current;
+                if (!a) return;
+                if (voicePlaying) { a.pause(); setVoicePlaying(false); } else { a.play().then(() => setVoicePlaying(true)).catch(() => {}); }
+              }} className="p-1 shrink-0 text-text">
+                {voicePlaying ? <IoPauseOutline size={18} /> : <IoPlayOutline size={18} />}
+              </button>
+              <span className="text-[11px] text-light-text shrink-0 tabular-nums">{Math.floor(voicePreview.duration / 60)}:{(voicePreview.duration % 60).toString().padStart(2, "0")}</span>
+              <button onClick={handleCancelVoice} className="p-1 rounded-full shrink-0 text-red-400 hover:text-red-500 transition-colors">
+                <IoCloseOutline size={18} />
+              </button>
+              <button onClick={handleSendVoice} disabled={uploading} className="p-2 rounded-full shrink-0 transition-colors" style={{ color }}>
+                <IoSend size={18} />
+              </button>
+            </>
           ) : (
             <button onClick={handleStartRecording} disabled={uploading} className="p-2 rounded-full shrink-0 text-light-text hover:text-text transition-colors">
               <IoMicOutline size={20} />
             </button>
           )}
-          {isRecording && <span className="text-[11px] text-red-500 shrink-0">{recordingSeconds}s</span>}
         </div>
       )}
       {viewingImages && (

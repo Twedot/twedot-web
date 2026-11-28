@@ -159,6 +159,44 @@ function groupMessages(messages: ChatMessage[]): MessageGroup[] {
   return groups;
 }
 
+function VideoBubble({ src, width, maxHeight, isMine, color, borderRadius }: { src: string; width: number; maxHeight: number; isMine: boolean; color: string; borderRadius: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const handlePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.play().then(() => setPlaying(true)).catch(() => {});
+  };
+
+  return (
+    <div className="relative bg-black" style={{ width, borderRadius, overflow: "hidden" }}>
+      <video
+        ref={videoRef}
+        src={src}
+        preload="metadata"
+        playsInline
+        controls={playing}
+        onPause={() => setPlaying(false)}
+        onPlay={() => setPlaying(true)}
+        onEnded={() => setPlaying(false)}
+        className="block object-cover"
+        style={{ width, maxHeight }}
+      />
+      {!playing && (
+        <button
+          onClick={handlePlay}
+          className="absolute inset-0 flex items-center justify-center bg-black/30"
+        >
+          <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
+            <IoPlayOutline size={20} style={{ color: "#000", marginLeft: 2 }} />
+          </div>
+        </button>
+      )}
+    </div>
+  );
+}
+
 const WAVEFORM_BARS = 20;
 const BAR_HEIGHTS = Array.from({ length: WAVEFORM_BARS }, () => 3 + Math.random() * 12);
 
@@ -561,8 +599,8 @@ export default function ChatWindow({ userId }: { userId: string }) {
                                   className="rounded-xl overflow-hidden p-[1px] relative"
                                   style={{ backgroundColor: isMine ? color : "var(--feed-bg)", borderTopRightRadius: isMine ? 3 : 12, borderTopLeftRadius: !isMine ? 3 : 12 }}
                                 >
-                                  <video src={videoUrl} controls className="w-[170px] max-h-[210px] rounded-[11px] object-cover block" />
-                                  <div className="absolute bottom-1 right-1.5 bg-black/50 rounded-full px-1 py-0.5">
+                                  <VideoBubble src={videoUrl} width={170} maxHeight={210} isMine={isMine} color={color} borderRadius="11px" />
+                                  <div className="absolute bottom-1 right-1.5 bg-black/50 rounded-full px-1 py-0.5 z-10 pointer-events-none">
                                     <span className="text-[8px] text-white/90">{timeLabel(toDate(msg.timestamp))}</span>
                                   </div>
                                 </div>
